@@ -42,8 +42,15 @@ Route::redirect('/', '/dashboard')->name('home');
         return 'Migration and seeding complete.';
     });
     Route::get('/link-storage', function () {
-        Artisan::call('storage:link');
-        return 'Storage link created!';
+        $target = storage_path('app/public');
+        $link = public_path('storage');
+
+        if (!File::exists($link)) {
+            File::copyDirectory($target, $link);
+            return 'Storage files copied manually.';
+        }
+
+        return 'Storage folder already exists.';
     });
 // Route::view('dashboard', 'dashboard')
 //     ->middleware(['auth', 'verified'])
