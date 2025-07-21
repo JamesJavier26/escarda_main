@@ -41,6 +41,10 @@ Route::redirect('/', '/dashboard')->name('home');
         Artisan::call('db:seed', ['--force' => true]);
         return 'Migration and seeding complete.';
     });
+    Route::get('/link-storage', function () {
+        Artisan::call('storage:link');
+        return 'Storage link created!';
+    });
 // Route::view('dashboard', 'dashboard')
 //     ->middleware(['auth', 'verified'])
 //     ->name('dashboard');
