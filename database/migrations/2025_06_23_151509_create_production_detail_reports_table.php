@@ -35,7 +35,7 @@ return new class extends Migration
             $table->json('salang_1')->nullable();
             $table->json('salang_2')->nullable();
             $table->json('salang_3')->nullable();
-
+            $table->string('pdr_status')->default(value: 'pending'); 
             $table->text('remarks')->nullable();
 
 

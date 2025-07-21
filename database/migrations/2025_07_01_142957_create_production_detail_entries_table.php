@@ -33,7 +33,6 @@ return new class extends Migration
             $table->decimal('balance', 8, 2)->default(0);
 
             $table->text('remarks')->nullable();
-            $table->string('pdr_status')->default(value: 'pending'); 
             $table->timestamps();
         });
     }

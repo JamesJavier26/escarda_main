@@ -135,7 +135,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-sm text-center text-gray-600 dark:text-gray-300">No result found.</td>
+                            <td colspan="7" class="px-6 py-4 text-sm text-center text-gray-600 dark:text-gray-300">No result found.</td>
                         </tr>
                     @endforelse
                 </tbody>
