@@ -162,7 +162,7 @@ Route::middleware(['auth'])->group(function () {
             return \App\Models\Customer::where('name', 'like', "%$term%")
                 ->orWhere('tin_no', 'like', "%$term%")
                 ->limit(10)
-                ->get(['id', 'name', 'address', 'email', 'telno', 'faxno', 'terms_of_payment']);
+                ->get(['id', 'name', 'address', 'email', 'telno', 'tin_no', 'website']);
         });
 
         Route::get('/api/items', function () {

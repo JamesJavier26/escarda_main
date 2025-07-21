@@ -1,8 +1,15 @@
 @php
     $editing = isset($pricing_estimate) && $pricing_estimate->exists;
-    $initialCustomer = $editing && $pricing_estimate->customer
-        ? $pricing_estimate->customer->toJson()
-        : 'null';
+    // $initialCustomer = $editing && $pricing_estimate->customer
+    //     ? $pricing_estimate->customer->toJson()
+    //     : 'null';
+    $initialCustomer = 'null';
+
+    if (old('customer_id')) {
+        $initialCustomer = \App\Models\Customer::find(old('customer_id'))?->toJson() ?? 'null';
+    } elseif ($editing && $pricing_estimate->customer) {
+        $initialCustomer = $pricing_estimate->customer->toJson();
+    }
 
     $initialRows = [];
 
@@ -124,8 +131,8 @@
                 </div>
                 
                 <div>
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Fax No:</p>
-                    <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.telefax : '--'">--</p>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">TIN No:</p>
+                    <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.tin_no : '--'">--</p>
                 </div>
                 
                 <div>
@@ -144,6 +151,10 @@
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Address</p>
                     <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.address : '--'">--</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Website</p>
+                    <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.website : '--'">--</p>
                 </div>
             </div>
         </div>

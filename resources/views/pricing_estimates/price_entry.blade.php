@@ -1,4 +1,4 @@
-<x-layouts.app>
+<x-layouts.app title="Price Estimate">
     @php
         $items = $pricingEstimate->pe_items->map(function ($item) {
             return array_merge($item->toArray(), [

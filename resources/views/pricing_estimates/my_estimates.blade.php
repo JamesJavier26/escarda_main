@@ -1,4 +1,4 @@
-<x-layouts.app>
+<x-layouts.app title="Price Estimate">
     {{-- Page Header --}}
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">My Pricing Estimates</h1>
