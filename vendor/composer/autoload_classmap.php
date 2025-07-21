@@ -10,6 +10,7 @@ return array(
     'App\\Events\\MessageSent' => $baseDir . '/app/Events/MessageSent.php',
     'App\\Events\\NotificationSent' => $baseDir . '/app/Events/NotificationSent.php',
     'App\\Helpers\\Helper' => $baseDir . '/app/Helpers/Helper.php',
+    'App\\Http\\Controllers\\ActivityLogController' => $baseDir . '/app/Http/Controllers/ActivityLogController.php',
     'App\\Http\\Controllers\\AddressController' => $baseDir . '/app/Http/Controllers/AddressController.php',
     'App\\Http\\Controllers\\Auth\\ConfirmationController' => $baseDir . '/app/Http/Controllers/Auth/ConfirmationController.php',
     'App\\Http\\Controllers\\Auth\\LoginController' => $baseDir . '/app/Http/Controllers/Auth/LoginController.php',

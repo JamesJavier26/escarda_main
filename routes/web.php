@@ -44,6 +44,11 @@ Route::redirect('/', '/dashboard')->name('home');
 //     Route::get('dashboard',[DashboardController::class, 'index'])->name('dashboard');
 // });
 Route::middleware(['auth'])->group(function () {
+    Route::get('/run-migrate', function () {
+        Artisan::call('migrate:fresh', ['--force' => true]); // optional: change to 'migrate' if you don't want to wipe tables
+        Artisan::call('db:seed', ['--force' => true]);
+        return 'Migration and seeding complete.';
+    });
     // Route::middleware(['role:super-admin'])->group(function () {
 
         Route::get('dashboard',[DashboardController::class, 'index'])->name('dashboard');

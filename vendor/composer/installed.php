@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laraveldaily/starter-kit',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '439b2fe7cf7b0d76932e9f5306427672fe997eb7',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -584,9 +584,9 @@
             'dev_requirement' => false,
         ),
         'laraveldaily/starter-kit' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '439b2fe7cf7b0d76932e9f5306427672fe997eb7',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -797,9 +797,9 @@
             'dev_requirement' => false,
         ),
         'openspout/openspout' => array(
-            'pretty_version' => 'v4.30.0',
-            'version' => '4.30.0.0',
-            'reference' => 'df9b0f4d229c37c3caa5a9252a6ad8a94efb0fb5',
+            'pretty_version' => 'v4.30.1',
+            'version' => '4.30.1.0',
+            'reference' => '4550fc0dbf01aff86d12691f8a7f6ce22d2b2edc',
             'type' => 'library',
             'install_path' => __DIR__ . '/../openspout/openspout',
             'aliases' => array(),
