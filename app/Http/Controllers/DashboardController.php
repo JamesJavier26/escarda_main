@@ -22,7 +22,7 @@ public function index()
     $user = Auth::user();
 
     if ($user->hasRole(['super-admin', 'admin'])) {
-        return $this->sales_dashboard();
+        return $this->admin_dashboard();
     }
 
     if ($user->hasRole('sales-representative')) {
