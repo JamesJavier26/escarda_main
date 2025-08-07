@@ -318,77 +318,78 @@ class PricingEstimateController extends Controller
      */
     public function destroy(PricingEstimate $pricingEstimate)
     {
-        //
+        $pricingEstimate->delete();
+        return back()->with('success', 'Price Estimate deleted.');
     }
-public function generateQuote(PDF $pdf, Request $request)   // ← Laravel will inject it
-{
-    $pe_no = $request->input('pe_no');
-    $price_estimates = PricingEstimate::with(['customer','salesRep','pe_items','currency'])->where('pe_no',$pe_no)->first();
-    // dd($price_estimates);
-    $data = [
-        'pe_no'        => $pe_no,
-        'price_estimates' => $price_estimates,
-        'date'         => now()->format('F d, Y'),
-        'setting'      => Setting::all(),
+    public function generateQuote(PDF $pdf, Request $request)   // ← Laravel will inject it
+    {
+        $pe_no = $request->input('pe_no');
+        $price_estimates = PricingEstimate::with(['customer','salesRep','pe_items','currency'])->where('pe_no',$pe_no)->first();
+        // dd($price_estimates);
+        $data = [
+            'pe_no'        => $pe_no,
+            'price_estimates' => $price_estimates,
+            'date'         => now()->format('F d, Y'),
+            'setting'      => Setting::all(),
 
-    ];
+        ];
 
-    $pdf->loadView('reports.generateQuote', $data)
-        ->setPaper('a4', 'portrait');
+        $pdf->loadView('reports.generateQuote', $data)
+            ->setPaper('a4', 'portrait');
 
-    return $pdf->stream('PE.pdf');
-}
-public function generateSales(PDF $pdf, Request $request)   // ← Laravel will inject it
-{
-    $so_no = $request->input('so_no');
-    $salesOrder = SalesOrder::with(['customer', 'salesRep.employee'])
-    ->where('so_no',$so_no)
-    ->latest()
-    ->first();
+        return $pdf->stream('PE.pdf');
+    }
+    public function generateSales(PDF $pdf, Request $request)   // ← Laravel will inject it
+    {
+        $so_no = $request->input('so_no');
+        $salesOrder = SalesOrder::with(['customer', 'salesRep.employee'])
+        ->where('so_no',$so_no)
+        ->latest()
+        ->first();
 
-    $data = [
-        'so_no'        => $so_no,
-        'salesOrder' => $salesOrder,
-        'date'         => now()->format('F d, Y'),
-        'setting'      => Setting::all(),
-        'price_estimates' => PricingEstimate::with(['customer','salesRep','pe_items','currency'])->where('id',1)->first(),
+        $data = [
+            'so_no'        => $so_no,
+            'salesOrder' => $salesOrder,
+            'date'         => now()->format('F d, Y'),
+            'setting'      => Setting::all(),
+            'price_estimates' => PricingEstimate::with(['customer','salesRep','pe_items','currency'])->where('id',1)->first(),
 
-    ];
+        ];
 
-    $pdf->loadView('reports.generateSales', $data)
-        ->setPaper('a4', 'portrait');
+        $pdf->loadView('reports.generateSales', $data)
+            ->setPaper('a4', 'portrait');
 
-    return $pdf->stream('PE.pdf');
-}
-public function generateJO(PDF $pdf, Request $request)   
-{
-    $jo_no = $request->input('jo_no');
+        return $pdf->stream('PE.pdf');
+    }
+    public function generateJO(PDF $pdf, Request $request)   
+    {
+        $jo_no = $request->input('jo_no');
 
-    $data = [
-        'date'         => now()->format('F d, Y'),
-        'setting'      => Setting::all(),
-    ];
+        $data = [
+            'date'         => now()->format('F d, Y'),
+            'setting'      => Setting::all(),
+        ];
 
-    $pdf->loadView('reports.generateJO', $data)
-        ->setPaper('a4', 'portrait');
+        $pdf->loadView('reports.generateJO', $data)
+            ->setPaper('a4', 'portrait');
 
-    return $pdf->stream('PE.pdf');
-}
-public function generatePDR(PDF $pdf, Request $request)   
-{
-    $jo_no = $request->input('jo_no');
-    $report = ProductionDetailReport::where('jo_no',$jo_no)->first();
-    $data = [
-        'date'         => now()->format('F d, Y'),
-        'setting'      => Setting::all(),
-        'report'        => $report
-    ];
+        return $pdf->stream('PE.pdf');
+    }
+    public function generatePDR(PDF $pdf, Request $request)   
+    {
+        $jo_no = $request->input('jo_no');
+        $report = ProductionDetailReport::where('jo_no',$jo_no)->first();
+        $data = [
+            'date'         => now()->format('F d, Y'),
+            'setting'      => Setting::all(),
+            'report'        => $report
+        ];
 
-    $pdf->loadView('reports.generatePDR', $data)
-        ->setPaper('a4', 'portrait');
+        $pdf->loadView('reports.generatePDR', $data)
+            ->setPaper('a4', 'portrait');
 
-    return $pdf->stream('PE.pdf');
-}
+        return $pdf->stream('PE.pdf');
+    }
 
     private function saveNewUploads(PricingEstimate $estimate, Request $request): void
     {
@@ -413,35 +414,35 @@ public function generatePDR(PDF $pdf, Request $request)
     }
 
 
-public function updateUnitPrice(Request $request, PricingEstimateItem $item)
-{
-    $validated = $request->validate([
-        'price_factor' => 'required|array',
-        'factor_rate' => 'required|numeric',
-        'sum_charge' => 'nullable|numeric',
-        'quantity' => 'required|integer|min:1',
-        'unit_price' => 'required|numeric', // This is the FINAL price after override/discount
-        'notes' => 'nullable|string',
-        'discount_type' => 'nullable|string|in:percentage,fixed',
-        'discount_amount' => 'nullable|numeric|min:0',
-    ]);
+    public function updateUnitPrice(Request $request, PricingEstimateItem $item)
+    {
+        $validated = $request->validate([
+            'price_factor' => 'required|array',
+            'factor_rate' => 'required|numeric',
+            'sum_charge' => 'nullable|numeric',
+            'quantity' => 'required|integer|min:1',
+            'unit_price' => 'required|numeric', // This is the FINAL price after override/discount
+            'notes' => 'nullable|string',
+            'discount_type' => 'nullable|string|in:percentage,fixed',
+            'discount_amount' => 'nullable|numeric|min:0',
+        ]);
 
-    $item->update([
-        'price_factor' => $validated['price_factor'],
-        'factor_rate' => $validated['factor_rate'],
-        'sum_charge' => $validated['sum_charge'],
-        'quantity' => $validated['quantity'],
-        'unit_price' => $validated['unit_price'], // Final price stored here
-        'notes' => $validated['notes'],
-        'discount_type' => $validated['discount_type'] ?? null,
-        'discount_amount' => $validated['discount_amount'] ?? null,
-    ]);
+        $item->update([
+            'price_factor' => $validated['price_factor'],
+            'factor_rate' => $validated['factor_rate'],
+            'sum_charge' => $validated['sum_charge'],
+            'quantity' => $validated['quantity'],
+            'unit_price' => $validated['unit_price'], // Final price stored here
+            'notes' => $validated['notes'],
+            'discount_type' => $validated['discount_type'] ?? null,
+            'discount_amount' => $validated['discount_amount'] ?? null,
+        ]);
 
-    // return response()->json($item->refresh());
-    return response()->json($item->fresh()->append('final_unit_price'));
+        // return response()->json($item->refresh());
+        return response()->json($item->fresh()->append('final_unit_price'));
 
-    
-}
+        
+    }
 
     public function updateRemarks(Request $request, PricingEstimateItem $item)
     {
@@ -587,7 +588,6 @@ public function updateUnitPrice(Request $request, PricingEstimateItem $item)
 
         return redirect()->route('quotations.index')->with('error', 'Unable to generate quotation.');
     }
-
 
     public function reject($pricing_estimate_id, Request $request)
     {

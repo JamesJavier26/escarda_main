@@ -127,7 +127,7 @@
                                                     if (result.isConfirmed) $refs.deleteForm.submit()
                                                 })"
                                                 class="w-8 h-8 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white"
-                                                title="Delete User">
+                                                title="Delete Customer">
                                                 <i class="far fa-trash-alt text-xs"></i>
                                             </button>
                                         </form>

@@ -123,7 +123,7 @@
                                     @if (!in_array($pe->pe_status, ['approved','pending', 'canceled']))
                                         <button type="button"
                                             onclick="confirmCancel({{ $pe->id }})"
-                                            class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                                            class="flex items-center justify-center w-8 h-8 text-white bg-amber-500 hover:bg-amber-600 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
                                             title="Cancel PE">
                                             <i class="fas fa-ban text-xs"></i>
                                         </button>
@@ -137,6 +137,29 @@
                                             @method('PATCH')
                                         </form>
                                     @endif
+                                    <div x-data>
+                                        <form action="{{ route('pricing-estimates.destroy', $pe->id) }}" method="POST" x-ref="deleteForm">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button"
+                                                @click="Swal.fire({
+                                                    title: 'Delete this Price Estimate?',
+                                                    text: 'This action cannot be undone.',
+                                                    icon: 'warning',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#e3342f',
+                                                    cancelButtonColor: '#6b7280',
+                                                    confirmButtonText: 'Yes, delete it!',
+                                                    reverseButtons: true
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) $refs.deleteForm.submit()
+                                                })"
+                                                class="w-8 h-8 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white"
+                                                title="Delete Price Estimate">
+                                                <i class="far fa-trash-alt text-xs"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
