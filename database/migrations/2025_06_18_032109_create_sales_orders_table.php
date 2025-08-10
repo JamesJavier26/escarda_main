@@ -22,14 +22,14 @@ return new class extends Migration
             $table->string('po_no')->nullable();
             $table->foreignId('sr_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('jo_no')->nullable();
-            $table->boolean('is_vat')->default(true);
+            $table->string('tax_status');
             $table->string('approval_status')->nullable(); //Cancel Yes
             $table->timestamp('approval_date')->nullable();
             $table->longText('remarks')->nullable();
             $table->string('so_status')->default(value: 'pending'); 
             $table->string('contact_person')->nullable();
             $table->string('contact_no')->nullable();
-            $table->text('delivery_date')->nullable();
+            $table->date('delivery_date')->nullable()->change();
             $table->foreignId('quotation_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('currency_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_notified')->default(true);

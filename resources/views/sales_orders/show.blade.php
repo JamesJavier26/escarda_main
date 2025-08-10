@@ -97,15 +97,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">VAT</p>
-                    @php
-                        $vatOptions = config('selectOptions.vat_options');
-                    @endphp
-
-                    <p class="font-medium">
-                        {{ $vatOptions[$salesOrder->is_vat]}}
-
-                    </p>
-
+                    <p class="font-medium">{{ $salesOrder->tax_status ?? 'N/A' }}</p>
 
                 </div>
                 <div>
@@ -181,8 +173,11 @@
                             $subQTY = $salesOrder->jobOrder->jo_items->sum('quantity');
                             $partialTotal = $subtotal * $subQTY;
 
-                            $vat = 0;
-                            if ($salesOrder->is_vat == 1) {
+                            if ($salesOrder->tax_status === 'Tax Exempt') {
+                                $vat = 0;
+                            } elseif ($salesOrder->tax_status === 'VAT Inclusive') {
+                                $vat = $partialTotal - ($partialTotal / 1.12);
+                            } elseif ($salesOrder->tax_status === 'VAT Exclusive') {
                                 $vat = $partialTotal * 0.12;
                             }
 

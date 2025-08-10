@@ -25,11 +25,17 @@ class QuotationController extends Controller
 
     public function index(Request $request)
     {
+        $user = auth()->user();
         $perPage = in_array($request->input('perPage'), [10, 25, 50, 100])
             ? (int) $request->input('perPage')
             : 10;
 
         $query = Quotation::with(['pricing_estimate.customer', 'salesOrder']);
+
+        // If user is NOT super-admin or admin, limit quotations to only those created by the user
+        if (! $user->hasAnyRole(['super-admin', 'admin'])) {
+            $query->where('created_by', $user->id);
+        }
 
         // Search logic
         if ($search = $request->input('search')) {
@@ -68,10 +74,11 @@ class QuotationController extends Controller
             'quotations'         => $quotations,
             'totalQuotations'    => Quotation::count(),
             'approvedQuotation'  => Quotation::where('quote_status', 'approved')->count(),
-            'pendingQuotation'    => Quotation::where('quote_status', 'pending')->count(),
+            'pendingQuotation'   => Quotation::where('quote_status', 'pending')->count(),
             'rejectQuotation'    => Quotation::where('quote_status', 'rejected')->count(),
         ]);
     }
+
 
     public function quote_items($pe_id)
     {
@@ -365,7 +372,7 @@ class QuotationController extends Controller
                 'po_no' => '', 
                 'sr_id' => auth()->id(),
                 'jo_no' => $joNo,
-                'is_vat' => true,
+                'tax_status' => $quotation->pricing_estimate->customer->tax_status,
                 'approval_status' => 'draft',
                 'so_status' => 'draft',
                 'quotation_id' => $quotation->id,
@@ -416,7 +423,7 @@ class QuotationController extends Controller
                     'thickness' => $peItem->thickness ?? null,
                     'quantity' => $peItem->quantity,
                     'unit_id' => $peItem->unit_id,
-                    'unit_price' => $peItem->unit_price,
+                    'unit_price' => $peItem->final_unit_price ?? $peItem->unit_price,
                 ]);
             }
 

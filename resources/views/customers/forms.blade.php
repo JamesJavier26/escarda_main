@@ -169,86 +169,84 @@
 
             {{-- Fifth Row --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                {{-- Terms of Payment --}}
-                <div>
-                    <label for="terms_of_payment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Terms of Payment
+            {{-- Terms of Payment --}}
+            <div>
+                <label for="terms_of_payment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Terms of Payment
+                </label>
+                <select id="terms_of_payment" name="terms_of_payment"
+                    class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                        border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
+                        focus:ring-blue-500 focus:border-transparent">
+                    <option value="30 days" {{ old('terms_of_payment', $customer->terms_of_payment) == '30 days' ? 'selected' : '' }}>30 days</option>
+                    <option value="60 days" {{ old('terms_of_payment', $customer->terms_of_payment) == '60 days' ? 'selected' : '' }}>60 days</option>
+                    <option value="90 days" {{ old('terms_of_payment', $customer->terms_of_payment) == '90 days' ? 'selected' : '' }}>90 days</option>
+                    <option value="COD" {{ old('terms_of_payment', $customer->terms_of_payment) == 'COD' ? 'selected' : '' }}>COD</option>
+                </select>
+            </div>
+
+            {{-- Business Type --}}
+            <div x-data="businessTypeSelector('{{ old('business_type', $customer->business_type ?? '') }}')" 
+                x-init="fetchTypes()" 
+                class="space-y-2">
+
+                <!-- Label and Add Button -->
+                <div class="flex items-center justify-between">
+                    <label for="business_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Business Type
                     </label>
-                    <input id="terms_of_payment" name="terms_of_payment" type="text"
-                        value="{{ old('terms_of_payment', $customer->terms_of_payment) }}"
-                        placeholder="e.g. 30 days"
-                        class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                               border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                               focus:ring-blue-500 focus:border-transparent">
+                    <button type="button" @click="showModal = true" class="text-xs text-blue-500 hover:underline">
+                        + Add Business Type
+                    </button>
                 </div>
 
-                {{-- Business Type --}}
-                <div x-data="businessTypeSelector('{{ old('business_type', $customer->business_type ?? '') }}')" 
-                    x-init="fetchTypes()" 
-                    class="space-y-2">
-                    
-                    <!-- Label and Add Button -->
-                    <div class="flex items-center justify-between">
-                        <label for="business_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Business Type
-                        </label>
-                        <button type="button" @click="showModal = true" class="text-xs text-blue-500 hover:underline">
-                            + Add Business Type
-                        </button>
-                    </div>
+                <!-- Error State -->
+                <div x-show="error" class="text-sm text-red-500" x-text="error"></div>
 
-                    <!-- Loading State -->
-                    {{-- <div x-show="isLoading" class="text-sm text-gray-500">Loading business types...</div> --}}
+                <!-- Select Dropdown -->
+                <select 
+                    id="business_type" 
+                    name="business_type" 
+                    x-model="selected"
+                    x-bind:disabled="isLoading"
+                    class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:ring-blue-500">
+                    <option value="" disabled>Select business type</option>
+                    <template x-for="type in types" :key="type">
+                        <option :value="type" x-text="type" :selected="type === selected"></option>
+                    </template>
+                </select>
 
-                    <!-- Error State -->
-                    <div x-show="error" class="text-sm text-red-500" x-text="error"></div>
+                <!-- Modal -->
+                <div 
+                    x-show="showModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                    x-transition.opacity
+                    x-cloak>
+                    <div @click.outside="showModal = false"
+                        class="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Add Business Type</h2>
 
-                    <!-- Select Dropdown -->
-                    <select 
-                        id="business_type" 
-                        name="business_type" 
-                        x-model="selected"
-                        x-bind:disabled="isLoading"
-                        class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:ring-blue-500">
-                        <option value="" disabled>Select business type</option>
-                        <template x-for="type in types" :key="type">
-                            <option :value="type" x-text="type" :selected="type === selected"></option>
-                        </template>
-                    </select>
-
-                    <!-- Modal -->
-                    <div 
-                        x-show="showModal"
-                        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                        x-transition.opacity
-                        x-cloak
+                        <input 
+                            x-model="newType"
+                            type="text"
+                            placeholder="Enter new business type"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                        <div @click.outside="showModal = false"
-                            class="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                            <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Add Business Type</h2>
 
-                            <input 
-                                x-model="newType"
-                                type="text"
-                                placeholder="Enter new business type"
-                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-
-                            <div class="flex justify-end mt-4 space-x-3">
-                                <button type="button" @click="showModal = false"
-                                        class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-md">
-                                    Cancel
-                                </button>
-                                <button type="button" @click="addNewType"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                    Save
-                                </button>
-                            </div>
+                        <div class="flex justify-end mt-4 space-x-3">
+                            <button type="button" @click="showModal = false"
+                                    class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-md">
+                                Cancel
+                            </button>
+                            <button type="button" @click="addNewType"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                Save
+                            </button>
                         </div>
                     </div>
                 </div>
-
             </div>
+        </div>
 
             {{-- Sixth Row --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -283,18 +281,22 @@
                 </div>
             </div>
 
-            {{-- Tax Exempt --}}
+            {{-- Tax Status --}}
             <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label for="tax_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tax Status
                 </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" name="tax_exempt" value="1"
-                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:ring-blue-500 dark:bg-gray-700"
-                        @checked(old('tax_exempt', $customer->tax_exempt))>
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Tax Exempt</span>
-                </label>
+                <select id="tax_status" name="tax_status"
+                    class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                        border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
+                        focus:ring-blue-500 focus:border-transparent">
+                    <option value="Tax Exempt" {{ old('tax_status', $customer->tax_status) == 'Tax Exempt' ? 'selected' : '' }}>Tax Exempt</option>
+                    <option value="VAT Inclusive" {{ old('tax_status', $customer->tax_status) == 'VAT Inclusive' ? 'selected' : '' }}>VAT Inclusive</option>
+                    <option value="VAT Exclusive" {{ old('tax_status', $customer->tax_status) == 'VAT Exclusive' ? 'selected' : '' }}>VAT Exclusive</option>
+                </select>
             </div>
+
+            {{-- Business Address --}}
 
             {{-- Remarks --}}
             <div class="mt-4">

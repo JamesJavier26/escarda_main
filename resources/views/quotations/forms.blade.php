@@ -25,7 +25,7 @@
         <div class="grid grid-cols-1 gap-6 w-full">
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                 <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
-                <h2 class="text-xl font-semibold text-gray-100">Customer Details</h2>
+                <h2 class="text-xl font-semibold text-black-100">Customer Details</h2>
                 <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">P.E NO: #{{$pricing_estimate->pe_no}}</span>
                 </div>
 
@@ -34,17 +34,17 @@
                 <div class="space-y-3">
                     <div>
                     <p class="text-sm font-medium text-gray-400">Name</p>
-                    <p class="text-gray-100">{{ $pricing_estimate->customer->name }}</p>
+                    <p class="text-black-100">{{ $pricing_estimate->customer->name }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">P.R No:</p>
-                    <p class="text-gray-100 font-mono">#{{ $pricing_estimate->pr_no }}</p>
+                    <p class="text-black-100 font-mono">#{{ $pricing_estimate->pr_no }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">Attention</p>
-                    <p class="text-gray-100">{{ $pricing_estimate->customer->telno }}</p>
+                    <p class="text-black-100">{{ $pricing_estimate->attention }}</p>
                     </div>
                 </div>
 
@@ -52,12 +52,7 @@
                 <div class="space-y-3">
                     <div>
                     <p class="text-sm font-medium text-gray-400">Terms</p>
-                    <p class="text-gray-100">{{ $pricing_estimate->customer->email }}</p>
-                    </div>
-                    
-                    <div>
-                    <p class="text-sm font-medium text-gray-400">Delivery Date</p>
-                    <p class="text-gray-100">{{ $pricing_estimate->customer->address }}</p>
+                    <p class="text-black-100">{{ $pricing_estimate->terms }}</p>
                     </div>
                 </div>
                 </div>
@@ -67,8 +62,8 @@
         
         <div class="grid grid-cols-1 gap-6 w-full mb-6">
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-100 mb-4 border-b border-gray-600">Quote Remarks</h2>
-                <p class="text-gray-100 whitespace-pre-line">
+                <h2 class="text-xl font-semibold text-black-100 mb-4 border-b border-gray-600">Quote Remarks</h2>
+                <p class="text-black-100 whitespace-pre-line">
                     {{ $quotation->quote_remarks ?? '—' }}
                 </p>
             </div>
@@ -156,11 +151,19 @@
                         <thead class="bg-gray-50 dark:bg-gray-800">
                             <th class="px-2 py-4 text-center align-middle">
                                 <input type="checkbox" 
+                                    x-ref="selectAll"
                                     @click="$event.target.checked 
-                                        ? $store.quotationSelection.selected = @json($pe_items->pluck('id')) 
-                                        : $store.quotationSelection.selected = []"
+                                        ? $store.quotationSelection.selected = @json(
+                                            $pe_items->filter(function($item) use ($pe_items) {
+                                                return $pe_items->where('parent_item_id', $item->id)->isEmpty() || $item->parent_item_id !== null;
+                                            })->pluck('id')->values()
+                                        ) 
+                                        : $store.quotationSelection.selected = [];
+                                        
+                                        // force all checkboxes to reflect visually
+                                        document.querySelectorAll('input[name=\'selected_items[]\']').forEach(el => el.checked = $event.target.checked);"
                                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mx-auto">
-                            </th>
+                                    </th>
                             <th class="px-2 py-4 w-16 whitespace-nowrap text-left text-sm font-medium text-gray-700 dark:text-gray-200">
                                 #
                             </th>
@@ -208,11 +211,33 @@
                                         <div class="text-xs text-gray-500 dark:text-gray-400">{{ $pe_item->item_description }}</div>
                                     </td>
                                     <td class="px-4 py-2 text-center">{{ $hasOffers ? '—' : $pe_item->quantity }}</td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-2 text-sm text-center">
                                         @if (!$hasOffers)
-                                            ₱{{ number_format($pe_item->final_unit_price, 2) }}
+                                            <div class="flex flex-col items-center">
+                                                <!-- Final / Discounted Price -->
+                                                <span class="text-base font-semibold text-gray-900 dark:text-white">
+                                                    ₱{{ number_format($pe_item->final_unit_price ?? $pe_item->unit_price, 2) }}
+                                                </span>
+
+                                                @if ($pe_item->discount_amount > 0)
+                                                    <div class="flex flex-col text-xs text-green-600 dark:text-green-400">
+                                                        <!-- Original Price with Strikethrough -->
+                                                        <span class="line-through text-gray-500 dark:text-gray-400">
+                                                            ₱{{ number_format($pe_item->unit_price, 2) }}
+                                                        </span>
+
+                                                        <!-- Discount Label -->
+                                                        <span>
+                                                            ({{ $pe_item->discount_type === 'percentage'
+                                                                ? $pe_item->discount_amount . '% off'
+                                                                : '₱' . number_format($pe_item->discount_amount, 2) . ' off'
+                                                            }})
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         @else
-                                            —
+                                            <span class="text-gray-500 dark:text-gray-400">—</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -245,14 +270,26 @@
                                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $offer->item_description }}</div>
                                             </td>
                                             <td class="px-4 py-2 text-center">{{ $offer->quantity }}</td>
-                                            <td class="px-4 py-2 text-center">
-                                                ₱{{ number_format($offer->final_unit_price, 2) }}
+                                            <td class="px-4 py-2 text-sm text-center">
+                                                <!-- Discounted Price -->
+                                                <span class="text-base font-semibold text-gray-900 dark:text-white">
+                                                    ₱{{ number_format($offer->final_unit_price ?? $offer->unit_price, 2) }}
+                                                </span>
+
                                                 @if ($offer->discount_amount > 0)
-                                                    <div class="text-xs text-green-600 dark:text-green-400">
-                                                        ({{ $offer->discount_type === 'percentage' 
-                                                            ? $offer->discount_amount . '% off' 
-                                                            : '₱' . number_format($offer->discount_amount, 2) . ' off' 
-                                                        }})
+                                                    <div class="flex flex-col text-xs text-green-600 dark:text-green-400">
+                                                        <!-- Original Price with Strikethrough -->
+                                                        <span class="line-through text-gray-500 dark:text-gray-400">
+                                                            ₱{{ number_format($offer->unit_price, 2) }}
+                                                        </span>
+
+                                                        <!-- Discount Label -->
+                                                        <span>
+                                                            ({{ $offer->discount_type === 'percentage'
+                                                                ? $offer->discount_amount . '% off'
+                                                                : '₱' . number_format($offer->discount_amount, 2) . ' off'
+                                                            }})
+                                                        </span>
                                                     </div>
                                                 @endif
                                             </td>

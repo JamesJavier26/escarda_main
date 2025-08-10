@@ -25,7 +25,7 @@
     @include('sales_orders.forms',[
         'so_no'             => $so_no,
         'sales_order'  => $sales_order,
-        'comments'  => $comments,
+        'comments'  => [],
         'initialRows'       => []
 
     ])

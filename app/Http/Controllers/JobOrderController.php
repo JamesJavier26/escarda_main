@@ -102,6 +102,7 @@ class JobOrderController extends Controller
      */
     public function store(Request $request)
     {
+        $jobOrder->load('items.pricingEstimateItem');
         $validated = $request->validate([
             'job_order_id' => 'required|exists:job_orders,id',
             'jo_no' => 'required|string',
@@ -188,6 +189,7 @@ class JobOrderController extends Controller
      */
     public function update(Request $request, JobOrder $jobOrder)
     {
+        $jobOrder->load('items.pricingEstimateItem');
         $validated = $request->validate([
             'duedate' => ['nullable', 'date'],
             'remarks' => ['nullable', 'string'],

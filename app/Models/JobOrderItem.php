@@ -34,7 +34,24 @@ class JobOrderItem extends Model
     public function unit(){
         return $this->belongsTo(Unit::class,'unit_id');
     }
+    public function pricingEstimateItem()
+    {
+        return $this->belongsTo(PricingEstimateItem::class, 'pricing_item_id');
+    }
     
     public function mould()    { return $this->belongsTo(Mould::class); }
     public function material()    { return $this->belongsTo(Material::class); }
+    
+    protected $appends = ['final_unit_price'];
+
+    public function getFinalUnitPriceAttribute()
+    {
+        logger()->debug('FinalUnitPrice Debug', [
+                'unit_price' => $this->unit_price,
+                'discount' => $this->discount,
+                'calculated' => $this->unit_price - ($this->discount ?? 0),
+            ]);
+
+            return $this->unit_price - ($this->discount ?? 0);
+    }
 }

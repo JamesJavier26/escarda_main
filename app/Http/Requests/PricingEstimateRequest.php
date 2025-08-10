@@ -54,7 +54,7 @@ class PricingEstimateRequest extends FormRequest
             'delivery_date' => ['nullable', 'string'],
             'remarks'       => ['nullable', 'string'],
             'pe_status'     => ['required', Rule::in(['draft', 'pending', 'approved'])],
-            'vat'           => ['nullable', 'integer', 'min:0'],
+            'vat'           => ['nullable', 'string', 'min:0'],
             'pe_remarks'    => ['nullable', 'string'],
             'sr_remarks'    => ['nullable', 'string'],
             'currency_id'   => ['nullable', 'exists:currencies,id'],

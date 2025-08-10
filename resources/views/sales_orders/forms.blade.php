@@ -1,39 +1,45 @@
 @php
     $editing = $sales_order->exists;
     $initialCustomer = $editing && $sales_order->customer
-    ? $sales_order->customer->toJson()
-    : 'null';
+        ? $sales_order->customer->toJson()
+        : 'null';
 
     $initialRows = [];
-    if(old('new_items')) {
-        foreach(old('new_items') as $uid => $item) {
+
+    if (old('new_items')) {
+        foreach (old('new_items') as $uid => $item) {
             $initialRows[] = [
-                'local_uid' => $uid,
+                'local_uid' => is_numeric($uid) ? (int)$uid : (int)substr($uid, 4), // strip prefix if needed
                 'item_id' => $item['item_id'] ?? null,
                 'name' => $item['name'] ?? '',
                 'description' => $item['description'] ?? '',
                 'quantity' => $item['quantity'] ?? 1,
-                'unit_price' => $item['unit_price'] ?? 0,
-                'unit_id'     => $item['unit_id'] ?? null,
-                'unit_name'    => $item['unit_name'] ?? '',
+                'unit_price' => $item['final_unit_price'] ?? $item['unit_price'] ?? 0,
+                'unit_id' => $item['unit_id'] ?? null,
+                'unit_name' => $item['unit_name'] ?? '',
             ];
         }
-    } elseif($editing) {
-        $initialRows = $sales_order->jobOrder->jo_items->map(function($item) {
+    } elseif ($editing) {
+        $initialRows = $sales_order->jobOrder->jo_items->map(function ($item, $index) {
+            $pricingItem = $item->pricingEstimateItem;
+
             return [
-                'pricing_item_id' => $item->id,
+                'pricing_item_id' => $pricingItem?->id,
                 'item_id' => $item->item_id,
                 'name' => $item->item_name,
                 'description' => $item->item_description,
                 'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'unit_id'         => $item->unit_id,
-                'unit_name'     => $item->unit->name,
-
+                'unit_price' => $pricingItem?->final_unit_price ?? $item->unit_price,
+                'final_unit_price' => $pricingItem?->final_unit_price ?? $item->unit_price,
+                'unit_id' => $item->unit_id,
+                'unit_name' => $item->unit->name ?? '',
+                'local_uid' => $index, // numeric index safe for nextLocalId
             ];
         })->toArray();
     }
 @endphp
+
+
 <style>
     /* Chrome, Safari, Edge, Opera */
     input::-webkit-outer-spin-button,
@@ -82,8 +88,9 @@
                                     border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
                                     focus:ring-blue-500 focus:border-transparent">
 
-                        {{-- Hidden FK --}}
-                        <input type="text" name="customer_id" :value="chosen?.id">
+                        {{-- hidden FK that will actually be saved --}}
+                          <input type="hidden" name="customer_id" :value="chosen?.id">
+                          {{-- <input type="text" name="customer_id" :value="1"> --}}
 
                         {{-- Dropdown --}}
                         <template x-if="showResults">
@@ -103,7 +110,7 @@
             </div>
 
             {{-- Customer Info Card (Both Modes) --}}
-            <div class="grid grid-cols-1 gap-6 w-full">
+            <div class="grid grid-cols-1 gap-6 w-full" x-init="init()" x-on:item-added.window="receiveItems($event.detail)"id="itemsTable">
                 <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                     <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
                         <h2 class="text-xl font-semibold text-gray-100">Customer Details</h2>
@@ -125,6 +132,16 @@
                                 <p class="text-sm font-medium text-gray-400">Telephone</p>
                                 <p class="text-gray-100" x-text="chosen?.telno ?? '--'">--</p>
                             </div>
+                                <div>
+                                    <label for="tax_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Status</label>
+                                    <select name="tax_status"
+                                        x-model="$store.order.tax_status"
+                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="Tax Exempt">Tax Exempt</option>
+                                        <option value="VAT Inclusive">VAT Inclusive</option>
+                                        <option value="VAT Exclusive">VAT Exclusive</option>
+                                    </select>
+                                </div>
                         </div>
 
                         <div class="space-y-3">
@@ -136,6 +153,20 @@
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Address</p>
                                 <p class="text-gray-100" x-text="chosen?.address ?? '--'">--</p>
+                            </div>
+
+                            <div>
+                                <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
+                                <select name="terms"
+                                        :value="chosen?.terms_of_payment || ''"
+                                        @change="if (chosen) chosen.terms_of_payment = $event.target.value"
+                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">-</option>
+                                    <option value="COD">COD</option>
+                                    <option value="30 days">30 days</option>
+                                    <option value="60 days">60 days</option>
+                                    <option value="90 days">90 days</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -164,19 +195,6 @@
                         :value="old('attention', $sales_order->attention)" 
                     />
 
-                    {{-- Terms after Attention --}}
-                    <div>
-                        <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
-                        <select name="terms" 
-                            class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            @foreach(config('selectOptions.terms') as $term)
-                                <option value="{{ $term }}" {{ old('terms', $sales_order->terms) === $term ? 'selected' : '' }}>
-                                    {{ $term }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     {{-- Move P.O# to bottom (solo) --}}
                     <div>
                         <label for="po_no" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -198,10 +216,10 @@
                 {{-- Right Column --}}
                 <div class="space-y-4">
                     <x-forms.input 
-                        label="Delivery Date" 
-                        name="delivery_date" 
-                        type="text" 
-                        :value="old('delivery_date', $sales_order->delivery_date)" 
+                    label="Delivery Date" 
+                    name="delivery_date" 
+                    type="date" 
+                    :value="old('delivery_date', $sales_order->delivery_date)" 
                     />   
 
                     <div>
@@ -215,16 +233,6 @@
                                     {{ $currency->symbol }} — {{ $currency->name }}
                                 </option>
                             @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="is_vat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">VAT</label>
-                        <select name="is_vat" 
-                            class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="1" {{ old('is_vat', $sales_order->vat) == 1 ? 'selected' : '' }}>VAT Include</option>
-                            <option value="2" {{ old('is_vat', $sales_order->vat) == 2 ? 'selected' : '' }}>VAT Exclude</option>
-                            <option value="3" {{ old('is_vat', $sales_order->is_vat) == 3 ? 'selected' : '' }}>Zero (0) Rated</option>
                         </select>
                     </div>
                 </div>
@@ -400,12 +408,7 @@
             </div>
             
             <div class="p-4 overflow-x-auto">
-                <div
-                    x-data="itemsTable({ initialRows: @js($initialRows) })"
-                    x-init="init()"
-                    x-on:item-added.window="receiveItems($event.detail)"
-                    id="itemsTable"
-                >
+                <div x-data="itemsTable({ initialRows: @js($initialRows) })" x-init="init()" x-on:item-added.window="receiveItems($event.detail)"id="itemsTable">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
@@ -420,7 +423,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            <template x-for="(row, idx) in rows" :key="row.pricing_item_id || row.local_uid">
+                            <template x-for="(row, idx) in rows" :key="row.pricing_item_id ?? row.local_uid">
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" x-show="!row._delete">
                                     <td x-text="idx + 1" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"></td>
                                     
@@ -525,7 +528,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="4" class="px-4 py-2 text-right font-semibold text-sm text-gray-700 dark:text-gray-300">VAT (12%):</td>
+                                <td colspan="4" class="px-4 py-2 text-right font-semibold text-sm text-gray-700 dark:text-gray-300">VAT:</td>
                                 <td class="px-4 py-2 text-right text-sm text-gray-800 dark:text-white" x-text="formatCurrency(vat())"></td>
                                 <td></td>
                             </tr>
@@ -821,7 +824,7 @@
                         type="button"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                        Cancel
+                        Close
                     </button>
                 </div>
             </div>
@@ -904,7 +907,12 @@ function commentSection(initialComments, salesOrderId) {
 </script>
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('customerLookup', (initialCustomer = null, locked = false) => ({
+
+    Alpine.store('order', {
+        tax_status: @json($salesOrder->tax_status ?? 'Tax Exempt')
+    });
+
+        Alpine.data('customerLookup', (initialCustomer = null, locked = false) => ({
         query: initialCustomer?.name ?? '',
         chosen: initialCustomer,
         results: [],
@@ -912,6 +920,12 @@ document.addEventListener('alpine:init', () => {
         isLoading: false,
         error: null,
         locked,
+
+        init() {
+            if (this.chosen?.tax_status) {
+                this.$store.order.tax_status = this.chosen.tax_status;
+            }
+        },
 
         async search() {
             if (this.locked || this.query.trim().length < 2) {
@@ -947,6 +961,10 @@ document.addEventListener('alpine:init', () => {
             this.query = cust.name || '';
             this.showResults = false;
             this.$dispatch('customer-selected', cust);
+
+            if (cust.tax_status) {
+                this.$store.order.tax_status = cust.tax_status;
+            }
         }
     }));
 
@@ -1038,29 +1056,32 @@ document.addEventListener('alpine:init', () => {
             }
         }
     }));
-    Alpine.data('itemsTable', ({ initialRows = [] }) => ({
-        rows: initialRows,
+    Alpine.data('itemsTable', (params) => ({
+        initialRows: params.initialRows || [],
+        rows: [],
         nextLocalId: 0,
-        
+
         init() {
-            // Initialize with existing items if editing
-            if (initialRows.length > 0) {
-                this.rows = initialRows;
-                this.nextLocalId = Math.max(...initialRows.map(r => r.local_uid || 0)) + 1;
+
+            if (this.initialRows.length > 0) {
+                this.rows = this.initialRows.map((row, i) => {
+                    return {
+                        ...row,
+                        local_uid: typeof row.local_uid === 'number' ? row.local_uid : i
+                    };
+                });
+
+                this.nextLocalId = Math.max(...this.rows.map(r => r.local_uid ?? 0)) + 1;
             }
         },
-        
+
         receiveItems(items) {
-            // Handle both single item and array of items
             const newItems = Array.isArray(items) ? items : [items];
-            
             newItems.forEach(item => {
-                // Check if item already exists in the table
-                const exists = this.rows.some(row => 
-                    (row.item_id && row.item_id === item.item_id) || 
+                const exists = this.rows.some(row =>
+                    (row.item_id && row.item_id === item.item_id) ||
                     (row.pricing_item_id && row.pricing_item_id === item.pricing_item_id)
                 );
-                
                 if (!exists) {
                     this.rows.push({
                         ...item,
@@ -1069,7 +1090,7 @@ document.addEventListener('alpine:init', () => {
                 }
             });
         },
-        
+
         deleteItem(row, index) {
             if (row.pricing_item_id) {
                 this.rows[index]._delete = true;
@@ -1077,11 +1098,9 @@ document.addEventListener('alpine:init', () => {
                 this.rows.splice(index, 1);
             }
         },
-    
-        
+
         hiddenFields(row) {
             const prefix = row.pricing_item_id ? `items[${row.pricing_item_id}]` : `new_items[${row.local_uid}]`;
-
             return [
                 [`${prefix}[item_id]`, row.item_id],
                 [`${prefix}[name]`, row.name],
@@ -1092,18 +1111,18 @@ document.addEventListener('alpine:init', () => {
                 [`${prefix}[_delete]`, row._delete ? 1 : 0]
             ];
         },
-        
+
         formatCurrency(value) {
             return new Intl.NumberFormat('en-PH', {
                 style: 'currency',
                 currency: 'PHP'
             }).format(value || 0);
         },
-        
+
         calculateSubtotal(row) {
             return (row.quantity || 1) * (row.unit_price || 0);
         },
-        
+
         subtotal() {
             return this.rows.reduce((sum, row) => {
                 const qty = Number(row.quantity) || 0;
@@ -1111,14 +1130,38 @@ document.addEventListener('alpine:init', () => {
                 return sum + (qty * price);
             }, 0);
         },
+
         vat() {
-            return this.subtotal() * 0.12; 
+            const taxStatus = this.$store.order.tax_status;
+
+            if (taxStatus === 'Tax Exempt') {
+                return 0;
+            }
+            if (taxStatus === 'VAT Inclusive') {
+                return this.subtotal() - (this.subtotal() / 1.12);
+            }
+            if (taxStatus === 'VAT Exclusive') {
+                return this.subtotal() * 0.12;
+            }
+            return 0;
         },
-        
+
         total() {
-            return this.subtotal() + this.vat();
+            const taxStatus = this.$store.order.tax_status;
+
+            if (taxStatus === 'VAT Inclusive') {
+                return this.subtotal();
+            }
+            if (taxStatus === 'VAT Exclusive') {
+                return this.subtotal() + this.vat();
+            }
+            if (taxStatus === 'Tax Exempt') {
+                return this.subtotal();
+            }
+            return this.subtotal();
         }
     }));
+
     
     Alpine.data('soApproval', ({ soID }) => ({
         isSubmitting: false,
@@ -1201,5 +1244,4 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 });
-
 </script>

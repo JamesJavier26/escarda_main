@@ -107,7 +107,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Remarks</p>
-                    <p class="text-gray-100 whitespace-pre-line">{{ $pricingEstimate->remarks ?? '--' }}</p>
+                    <p class="text-gray-100 whitespace-pre-line">{{ $pricingEstimate->pe_remarks ?? '--' }}</p>
                 </div>
             </div>
         </div>
@@ -187,18 +187,31 @@
                             <td class="px-4 py-2 text-sm">
                                 <template x-if="item.__type === 'offer' || item.__type === 'parent'">
                                     <div class="flex flex-col">
-                                        <span>₱<span x-text="formatCurrency(item.final_unit_price ?? item.unit_price)"></span></span>
+                                        <!-- Discounted Price -->
+                                        <span class="text-base font-semibold text-gray-900 dark:text-white">
+                                            ₱<span x-text="formatCurrency(item.final_unit_price ?? item.unit_price)"></span>
+                                        </span>
+
+                                        <!-- Discount Tag -->
                                         <template x-if="item.discount_amount > 0">
-                                            <span class="text-xs text-green-500 dark:text-green-400">
-                                                (<span x-text="item.discount_type === 'percentage' ? 
-                                                    `${item.discount_amount}% off` : 
-                                                    `₱${formatCurrency(item.discount_amount)} off`"></span>)
-                                            </span>
+                                            <div class="flex flex-col text-xs text-green-500 dark:text-green-400">
+                                                <!-- Original Price with Strikethrough -->
+                                                <span class="line-through text-gray-500 dark:text-gray-400">
+                                                    ₱<span x-text="formatCurrency(item.unit_price)"></span>
+                                                </span>
+
+                                                <!-- Discount Label -->
+                                                <span>
+                                                    (<span x-text="item.discount_type === 'percentage' ? 
+                                                        `${item.discount_amount}% off` : 
+                                                        `₱${formatCurrency(item.discount_amount)} off`"></span>)
+                                                </span>
+                                            </div>
                                         </template>
                                     </div>
                                 </template>
                             </td>
-
+                            
                             <!-- Actions -->
                             @if (
                                 $pricingEstimate->pe_status === 'pending' &&
@@ -246,7 +259,7 @@
             <div class="mb-6">
                 <p class="text-sm font-medium text-gray-400">Remarks</p>
                 <p class="text-gray-100 whitespace-pre-line">
-                    {{ $pricingEstimate->remarks ?? '—' }}
+                    {{ $pricingEstimate->pe_remarks ?? '—' }}
                 </p>
             </div>
 
@@ -898,6 +911,7 @@ displayItems() {
 
         async applyPrice() {
             this.isSubmitting = true;
+            this.overridePrice = '';
             
             const payload = {
                 price_factor: this.factorRates,
@@ -910,6 +924,7 @@ displayItems() {
                 notes: this.notes,
                 discount_type: this.discountType,
                 discount_amount: this.discountAmount
+                
             };
 
             try {

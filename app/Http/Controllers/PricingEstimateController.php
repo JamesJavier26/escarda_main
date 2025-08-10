@@ -35,7 +35,7 @@ class PricingEstimateController extends Controller
             : 10;
 
         // Base query: exclude drafts, eager load relationships, count related
-        $query = PricingEstimate::with(['customer', 'salesRep'])
+        $query = PricingEstimate::with(['customer', 'salesRep.employee'])
             ->withCount(['pe_items', 'quotations'])
             ->where('pe_status', '!=', 'draft');
 
@@ -84,7 +84,7 @@ class PricingEstimateController extends Controller
             ? (int) $request->input('perPage') 
             : 10;
 
-        $query = PricingEstimate::with(['customer', 'salesRep'])
+        $query = PricingEstimate::with(['customer', 'salesRep.employee'])
             ->withCount(['pe_items', 'quotations'])
             ->where('sr_id', $user->id);
 
@@ -130,18 +130,22 @@ class PricingEstimateController extends Controller
      */
     public function create()
     {
+        $customers = Customer::select('id', 'name', 'address', 'email', 'telno', 'tin_no', 'website', 'tax_status')->get();
+
         $current = (int) PricingEstimate::max('pe_no');
         $startAt = 2015;
         $pe_no = $current ? $current + 1 : $startAt;
 
-        $currencies = Currency::where('is_active',true)->get();
+        $currencies = Currency::where('is_active', true)->get();
+
         return view('pricing_estimates.create', [
             'pricing_estimate' => new PricingEstimate,
             'currencies' => $currencies,
             'pe_no' => $pe_no,
             'categories' => ItemCategory::orderBy('name')->get(),
-            'units'      => Unit::orderBy('name')->get(),
-            'users' => User::with('employee')->orderBy('username')->get()
+            'units' => Unit::orderBy('name')->get(),
+            'users' => User::with('employee')->orderBy('username')->get(),
+            'customers' => $customers,
         ]);
     }
 
@@ -157,6 +161,7 @@ class PricingEstimateController extends Controller
     {
         
         $data  = $request->validated();
+        
         $estimate = PricingEstimate::create($data);
         foreach ($request->input('new_items', []) as $data) {
             if (!empty($data['_delete'])) continue;
@@ -176,7 +181,7 @@ class PricingEstimateController extends Controller
         $this->saveNewUploads($estimate, $request);
 
         return redirect()
-            ->route('pricing-estimates.edit', $estimate)
+            ->route('pricing-estimates.create')
             ->with('success', 'Pricing Estimate saved successfully.');
     }
 
@@ -185,6 +190,7 @@ class PricingEstimateController extends Controller
      */
     public function show(PricingEstimate $pricingEstimate)
     {
+        $pricingEstimate->load('salesRep.employee');
         return view('pricing_estimates.show', ['pricingEstimate'=> $pricingEstimate]);
     }
 
@@ -197,17 +203,18 @@ class PricingEstimateController extends Controller
             return redirect()->back()->with('error', 'You cannot edit a Pricing Estimate that is pending, approved or canceled.');
         }
 
+        $pricingEstimate->load('customer', 'salesRep.employee');
 
         return view('pricing_estimates.edit', [
             'pricing_estimate' => $pricingEstimate,
-            'currencies'    => Currency::where('is_active',true)->get(),
-            'pe_no'     => $pricingEstimate->pe_no,
-            'categories' => ItemCategory::orderBy('name')->get(),
-            'units'      => Unit::orderBy('name')->get(),
-            'users' => User::with('employee')->orderBy('username')->get()
-
+            'currencies'       => Currency::where('is_active', true)->get(),
+            'pe_no'            => $pricingEstimate->pe_no,
+            'categories'       => ItemCategory::orderBy('name')->get(),
+            'units'            => Unit::orderBy('name')->get(),
+            'users'            => User::with('employee')->orderBy('username')->get(),
+            'initialCustomer'  => json_encode($pricingEstimate->customer), // ✅ Final change
+            'editing'          => true,
         ]);
-
     }
 
     /**
@@ -325,7 +332,7 @@ class PricingEstimateController extends Controller
     {
         $pe_no = $request->input('pe_no');
         $price_estimates = PricingEstimate::with(['customer','salesRep','pe_items','currency'])->where('pe_no',$pe_no)->first();
-        // dd($price_estimates);
+        //  dd($price_estimates);
         $data = [
             'pe_no'        => $pe_no,
             'price_estimates' => $price_estimates,
@@ -440,8 +447,6 @@ class PricingEstimateController extends Controller
 
         // return response()->json($item->refresh());
         return response()->json($item->fresh()->append('final_unit_price'));
-
-        
     }
 
     public function updateRemarks(Request $request, PricingEstimateItem $item)
@@ -504,8 +509,8 @@ class PricingEstimateController extends Controller
 
     public function priceEntry($pe_id)
     {
-        $pricingEstimate = PricingEstimate::with('pe_items')->findOrFail($pe_id);
-
+            $pricingEstimate = PricingEstimate::with(['pe_items', 'salesRep.employee', 'customer'])
+                        ->findOrFail($pe_id);
         // optional: restrict access
         // if ($pricingEstimate->sr_id !== auth()->id()) {
         //     abort(403);

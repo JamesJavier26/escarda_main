@@ -147,9 +147,15 @@
                     @forelse ($salesOrders as $order)
                         <tr>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                                <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-md dark:bg-blue-900 dark:text-blue-200">
-                                    {{ $order->so_no }}
-                                </span>
+                                <span class="font-medium">{{ $order->so_no }}</span><br/>
+                                @if ($order->quotation)
+                                    <span class="text-blue-600 text-xs font-semibold">
+                                        <a href="#"
+                                        onclick="openQuotePopup('{{ route('reports.quotations', $order->quotation->pricing_estimate->pe_no) }}'); return false;">
+                                            Quote #{{ $order->quotation->quote_no }}
+                                        </a>
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                 {{ optional($order->customer)->name ?? '—' }}
@@ -216,12 +222,14 @@
                                     </a>
 
                                     {{-- Edit --}}
-                                    @if($order->sr_id == auth()->id())
-                                        <a href="{{ route('sales-orders.edit', $order) }}"
-                                            class="w-8 h-8 flex items-center justify-center rounded-full bg-green-600 hover:bg-green-700 text-white">
-                                            <i class="fas fa-pencil-alt text-xs"></i>
-                                        </a>
-                                    @endif
+                                    @hasrole('super-admin')
+                                        @if($order->so_status !== 'approved')
+                                            <a href="{{ route('sales-orders.edit', $order) }}"
+                                                class="w-8 h-8 flex items-center justify-center rounded-full bg-green-600 hover:bg-green-700 text-white">
+                                                <i class="fas fa-pencil-alt text-xs"></i>
+                                            </a>
+                                        @endif
+                                    @endhasrole
                                   
                                     {{-- Delete --}}
                                     @hasrole('super-admin|admin|operation-manager')
@@ -273,3 +281,24 @@
 
   
 </x-layouts.app>
+
+<script>
+    function openQuotePopup(url) {
+        const width = 1000;
+        const height = 800;
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
+
+        const popup = window.open(
+            url,
+            '_blank',
+            `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,
+             width=${width},height=${height},top=${top},left=${left}`
+        );
+
+        // Optional: Try focusing popup
+        if (popup) {
+            popup.focus();
+        }
+    }
+</script>

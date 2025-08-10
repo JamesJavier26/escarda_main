@@ -183,21 +183,6 @@
                 </tr>
             </thead>
             <tbody>
-                {{-- @foreach ($price_estimates->pe_items as $key => $pe_item)
-                    <tr class="row-border-bottom">
-                        <td>{{ $pe_item->item->number }}</td>
-                        <td>{{ $key + 1 }}</td>
-                        <td>{{ $pe_item->quantity }}</td>
-                        <td>{{ $pe_item->unit->name }}</td>
-                        <td class="wrap-text">
-                            {{ $pe_item->item->description }}<br/>
-                            <i>{{ $pe_item->remarks }}<br/></i><br/>
-                            <span style="color:blue">{{ $pe_item->notes }}</span>
-                        </td>
-                        <td class="text-center">₱{{ $pe_item->unit_price }} / {{ $pe_item->unit->name }}</td>
-                        <td class="text-right">₱{{ number_format($pe_item->unit_price * $pe_item->quantity,2) }}</td>
-                    </tr>   
-                @endforeach --}}
                 @php
                     $peItems = $price_estimates->pe_items->where('is_offer', 0);
                 @endphp
@@ -208,6 +193,9 @@
                                     ->where('is_offer', 1)
                                     ->where('parent_item_id', $pe_item->id);
                         $hasOffers = $offers->isNotEmpty();
+
+                        // Compute discounted unit price
+                        $discountedUnitPrice = $pe_item->final_unit_price ?? $pe_item->unit_price;
                     @endphp
 
                     {{-- Main item row --}}
@@ -226,24 +214,64 @@
                             <td class="text-center">-</td>
                             <td class="text-right">-</td>
                         @else
-                            <td class="text-center">₱{{ number_format($pe_item->final_unit_price, 2) }} / {{ $pe_item->unit->name }}</td>
-                            <td class="text-right">₱{{ number_format($pe_item->final_unit_price * $pe_item->quantity, 2) }}</td>
+                            {{-- Unit price with discount display --}}
+                            <td class="text-center">
+                                @if ($pe_item->discount_amount > 0)
+                                    <div style="text-align:center;">
+                                        <span style="text-decoration: line-through; color: gray;">
+                                            ₱{{ number_format($pe_item->unit_price, 2) }} / {{ $pe_item->unit->name }}
+                                        </span><br>
+                                        <span style="font-weight: bold; color: black;">
+                                            ₱{{ number_format($discountedUnitPrice, 2) }} / {{ $pe_item->unit->name }}
+                                        </span><br>
+                                        <span style="font-size: 10px; color: green;">
+                                            (
+                                            @if ($pe_item->discount_type === 'percentage')
+                                                {{ $pe_item->discount_amount }}% off
+                                            @else
+                                                ₱{{ number_format($pe_item->discount_amount, 2) }} off
+                                            @endif
+                                            )
+                                        </span>
+                                    </div>
+                                @else
+                                    ₱{{ number_format($pe_item->unit_price, 2) }} / {{ $pe_item->unit->name }}
+                                @endif
+                            </td>
+
+                            {{-- Total price with discount display --}}
+                            <td class="text-right">
+                                @if ($pe_item->discount_amount > 0)
+                                    <div style="text-align:right;">
+                                        <span style="text-decoration: line-through; color: gray;">
+                                            ₱{{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
+                                        </span><br>
+                                        <span style="font-weight: bold; color: black;">
+                                            ₱{{ number_format($discountedUnitPrice * $pe_item->quantity, 2) }}
+                                        </span>
+                                    </div>
+                                @else
+                                    ₱{{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
+                                @endif
+                            </td>
                         @endif
                     </tr>
 
                     {{-- Offer block --}}
                     @if ($hasOffers)
-                        {{-- "List of Offers" header --}}
-                        <tr >
+                        <tr>
                             <td></td>
                             <td></td>
-                            <td style="background-color: #f0f0f0;" colspan="5" class="text-center font-semibold">
-                                List of Offers
+                            <td style="background-color: #f0f0f0;" colspan="5" class="text-center" >
+                                <strong>List of Offers</strong>
                             </td>
                         </tr>
 
                         @foreach ($offers->values() as $i => $offer)
-                            @php $isLastOffer = $i === $offers->count() - 1; @endphp
+                            @php 
+                                $isLastOffer = $i === $offers->count() - 1;
+                                $offerDiscountedPrice = $offer->final_unit_price ?? $offer->unit_price;
+                            @endphp
                             <tr class="{{ $isLastOffer ? 'row-border-bottom' : '' }}">
                                 <td></td>
                                 <td></td>
@@ -254,55 +282,118 @@
                                     <i>{{ $offer->pe_remarks }}</i><br/>
                                     <span style="color:blue">{{ $offer->notes }}</span>
                                 </td>
-                                <td class="text-center">₱{{ number_format($offer->final_unit_price, 2) }} / {{ $offer->unit->name }}</td>
-                                <td class="text-right">₱{{ number_format($offer->final_unit_price * $offer->quantity, 2) }}</td>
+
+                                {{-- Offer Unit Price --}}
+                                <td class="text-center">
+                                    @if ($offer->discount_amount > 0)
+                                        <div style="text-align:center;">
+                                            <span style="text-decoration: line-through; color: gray;">
+                                                ₱{{ number_format($offer->unit_price, 2) }} / {{ $offer->unit->name }}
+                                            </span><br>
+                                            <span style="font-weight: bold; color: black;">
+                                                ₱{{ number_format($offerDiscountedPrice, 2) }} / {{ $offer->unit->name }}
+                                            </span><br>
+                                            <span style="font-size: 10px; color: green;">
+                                                (
+                                                @if ($offer->discount_type === 'percentage')
+                                                    {{ $offer->discount_amount }}% off
+                                                @else
+                                                    ₱{{ number_format($offer->discount_amount, 2) }} off
+                                                @endif
+                                                )
+                                            </span>
+                                        </div>
+                                    @else
+                                        ₱{{ number_format($offer->unit_price, 2) }} / {{ $offer->unit->name }}
+                                    @endif
+                                </td>
+
+                                {{-- Offer Total Price --}}
+                                <td class="text-right">
+                                    @if ($offer->discount_amount > 0)
+                                        <div style="text-align:right;">
+                                            <span style="text-decoration: line-through; color: gray;">
+                                                ₱{{ number_format($offer->unit_price * $offer->quantity, 2) }}
+                                            </span><br>
+                                            <span style="font-weight: bold; color: black;">
+                                                ₱{{ number_format($offerDiscountedPrice * $offer->quantity, 2) }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        ₱{{ number_format($offer->unit_price * $offer->quantity, 2) }}
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     @endif
                 @endforeach
-
-
-
-
             </tbody>
+
         </table>
-        @php
-            $subtotal = $price_estimates->pe_items->sum('final_unit_price');
-            $subQTY = $price_estimates->pe_items->sum('quantity');
-            $partialTotal = $subtotal * $subQTY;
-            $vat = $partialTotal * 0.12;
-            $vatOption = $price_estimates->vat; 
-        @endphp
+    @php
+        $subtotal = $price_estimates->pe_items->sum(function ($item) {
+            return ($item->final_unit_price ?? $item->unit_price) * $item->quantity;
+        });
+
+        // Prefer overridden VAT value in pricing_estimates if available
+        $taxStatus = $price_estimates->vat ?? $price_estimates->customer->tax_status ?? 'Tax Exempt';
+        $vatRate = 0.12;
+
+        $vatAmount = 0;
+        $total = $subtotal;
+        $subtotalExVat = $subtotal;
+
+        if ($taxStatus === 'VAT Inclusive') {
+            $subtotalExVat = $subtotal / (1 + $vatRate);
+            $vatAmount = $subtotal - $subtotalExVat;
+        } elseif ($taxStatus === 'VAT Exclusive') {
+            $vatAmount = $subtotal * $vatRate;
+            $total = $subtotal + $vatAmount;
+        }
+    @endphp
+
         <table class="no-border" style="width: 35%; float:right">
-            @if ($vatOption == '1') {{-- VAT Include --}}
+            @if ($taxStatus === 'VAT Inclusive')
                 <tr>
-                    <td class="text-right" style="padding: 2px 0;"><strong>Subtotal:</strong></td>
-                    <td class="text-right" style="padding: 2px 0;">₱{{ number_format($partialTotal, 2) }}</td>
+                    <td class="text-right" style="padding: 2px 0;"><strong>Subtotal (Excl. VAT):</strong></td>
+                    <td class="text-right" style="padding: 2px 0;">₱{{ number_format($subtotalExVat, 2) }}</td>
                 </tr>
                 <tr>
                     <td class="text-right" style="padding: 2px 0;"><strong>VAT (12%):</strong></td>
-                    <td class="text-right" style="padding: 2px 0;">₱{{ number_format($vat, 2) }}</td>
+                    <td class="text-right" style="padding: 2px 0;">₱{{ number_format($vatAmount, 2) }}</td>
                 </tr>
                 <tr>
                     <td class="text-right" style="padding: 2px 0;"><strong><u>VAT INCLUDED:</u></strong></td>
                     <td class="text-right border-bottom" style="padding: 2px 0;">
-                        ₱{{ number_format($partialTotal + $vat, 2) }}
+                        ₱{{ number_format($subtotal, 2) }}
+                    </td>
+                </tr>
+            @elseif ($taxStatus === 'VAT Exclusive')
+                <tr>
+                    <td class="text-right" style="padding: 2px 0;"><strong>Subtotal:</strong></td>
+                    <td class="text-right" style="padding: 2px 0;">₱{{ number_format($subtotalExVat, 2) }}</td>
+                </tr>
+                <tr>
+                    <td class="text-right" style="padding: 2px 0;"><strong>VAT (12%):</strong></td>
+                    <td class="text-right" style="padding: 2px 0;">₱{{ number_format($vatAmount, 2) }}</td>
+                </tr>
+                <tr>
+                    <td class="text-right" style="padding: 2px 0;"><strong><u>TOTAL:</u></strong></td>
+                    <td class="text-right border-bottom" style="padding: 2px 0;">
+                        ₱{{ number_format($total, 2) }}
                     </td>
                 </tr>
             @else
+                {{-- Tax Exempt --}}
                 <tr>
-                    <td class="text-right" style="padding: 2px 0;"><strong>Total:</strong></td>
+                    <td class="text-right" style="padding: 2px 0;"><strong><u>TOTAL:</u></strong></td>
                     <td class="text-right border-bottom" style="padding: 2px 0;">
-                        ₱{{ number_format($partialTotal, 2) }}
+                        ₱{{ number_format($subtotal, 2) }}
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2" class="text-right" style="padding: 2px 0;">
-                        @if ($vatOption == '2')
-                            <strong><u>{{ config('selectOptions.vat_options.2') }}</u></strong>
-                        @elseif ($vatOption == '3')
-                            <strong><u>{{ config('selectOptions.vat_options.3') }}</u></strong>
-                        @endif
+                        <strong><u>Tax Exempt</u></strong>
                     </td>
                 </tr>
             @endif

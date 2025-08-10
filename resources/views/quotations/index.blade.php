@@ -147,11 +147,14 @@
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                 <span class="font-medium">{{ $quote->quote_no }}</span><br/>
                                 @if($quote->salesOrder)
+                                    @php
+                                        $routeName = $quote->quote_status === 'approved' ? 'sales-orders.show' : 'sales-orders.edit';
+                                    @endphp
                                     <span class="text-blue-600 text-xs font-semibold">
-                                        <a href="{{ route('sales-orders.edit', $quote->salesOrder) }}">SO #{{ $quote->salesOrder->so_no }}</a>
+                                        <a href="{{ route($routeName, $quote->salesOrder) }}">
+                                            SO #{{ $quote->salesOrder->so_no }}
+                                        </a>
                                     </span>
-                                @else
-                                    <span class="text-gray-400 text-xs">—</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">

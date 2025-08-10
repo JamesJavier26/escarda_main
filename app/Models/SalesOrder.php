@@ -26,6 +26,7 @@ class SalesOrder extends Model
         'quotation_id',
         'currency_id',
         'is_notified',
+        'tax_status',
         'so_status'
     ];
     public function customer() {
@@ -59,6 +60,21 @@ class SalesOrder extends Model
     public function attachments()
     {
         return $this->hasMany(SalesOrderAttachment::class);
+    }
+
+    public static function generateSONumber()
+    {
+        $last = self::latest('id')->first();
+
+        if (!$last) {
+            return 'SO-0001';
+        }
+
+        $lastNumber = (int) substr($last->so_no, 3);
+
+        $newNumber = $lastNumber + 1;
+
+        return 'SO-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 
 }

@@ -64,7 +64,7 @@ class CustomerController extends Controller
             'business_style' => 'nullable|string|max:100',
             'customer_category' => 'nullable|string|max:50',
             'remarks' => 'nullable|string',
-            'tax_exempt' => 'boolean',
+            'tax_status' => 'required|string',
         ]);
 
         // Create the customer
@@ -111,7 +111,7 @@ class CustomerController extends Controller
             'business_style' => 'nullable|string|max:100',
             'customer_category' => 'nullable|string|max:50',
             'remarks' => 'nullable|string',
-            'tax_exempt' => 'boolean',
+            'tax_status' => 'required|string',
         ]);
 
         // Update the customer

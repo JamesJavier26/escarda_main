@@ -10,7 +10,7 @@ class PricingEstimateItem extends Model
 
     protected $fillable = [
         'pricing_estimate_id','item_id', 'item_name', 'item_description', 'pe_remarks', 'unit_id',
-        'mould_id', 'discount_type', 'discount_amount', 'quantity',
+        'mould_id', 'discount_type', 'discount_amount', 'quantity', 'tax_status',
         'unit_price', 'price_factor', 'factor_rate', 'per_quantity',
         'quot', 'notes', 'offer', 'is_offer','parent_item_id', 'sum_charge',
         'ref_item_id', 'is_active',
@@ -41,20 +41,22 @@ class PricingEstimateItem extends Model
         return $this->hasMany(PricingEstimateItem::class, 'parent_item_id');
     }
 
+    protected $appends = ['final_unit_price'];
+
     public function getFinalUnitPriceAttribute()
     {
+        // Make sure the logic returns the correct final price
         $price = $this->unit_price;
 
         if ($this->discount_type === 'percentage') {
-            $discount = ($price * $this->discount_amount) / 100;
+            return $price * (1 - ($this->discount_amount / 100));
         } elseif ($this->discount_type === 'fixed') {
-            $discount = $this->discount_amount;
-        } else {
-            $discount = 0;
+            return $price - $this->discount_amount;
         }
 
-        return max(0, $price - $discount); // prevent negative prices
+        return $price;
     }
+
 
 
 }

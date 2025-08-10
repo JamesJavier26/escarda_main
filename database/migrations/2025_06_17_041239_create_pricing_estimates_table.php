@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('delivery_date')->nullable();
             $table->longText('remarks')->nullable();
             $table->string('pe_status'); //pending, approved 
-            $table->integer('vat')->default(0);
+            $table->string('vat');
             $table->longText('pe_remarks')->nullable();
             $table->longText('sr_remarks')->nullable();
             $table->string('currency_id')->nullable()->constrained('currencies')->onDelete('set null');

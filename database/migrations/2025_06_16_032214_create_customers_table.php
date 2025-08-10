@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('business_style')->nullable();
             $table->string('customer_category')->nullable(); // ['retail', 'wholesale', 'VIP', etc.])
             $table->longText('remarks')->nullable();
-            $table->boolean('tax_exempt')->default(true);
+            $table->string('tax_status');
             $table->timestamps();
         });
     }

@@ -1,50 +1,51 @@
 @php
     $editing = isset($pricing_estimate) && $pricing_estimate->exists;
-    // $initialCustomer = $editing && $pricing_estimate->customer
-    //     ? $pricing_estimate->customer->toJson()
-    //     : 'null';
-    $initialCustomer = 'null';
 
-    if (old('customer_id')) {
-        $initialCustomer = \App\Models\Customer::find(old('customer_id'))?->toJson() ?? 'null';
-    } elseif ($editing && $pricing_estimate->customer) {
-        $initialCustomer = $pricing_estimate->customer->toJson();
-    }
+        $initialCustomer = 'null';
 
+        if (old('customer_id')) {
+            $cust = \App\Models\Customer::find(old('customer_id'));
+            $initialCustomer = $cust ? $cust->only([
+                'id', 'name', 'address', 'email', 'telno', 'tin_no', 'website', 'tax_status', 'terms_of_payment'
+            ]) : null;
+        } elseif ($editing && $pricing_estimate->customer) {
+            $initialCustomer = $pricing_estimate->customer->only([
+                'id', 'name', 'address', 'email', 'telno', 'tin_no', 'website', 'tax_status', 'terms_of_payment'
+            ]);
+        }
+
+    // Setup initial pricing rows
     $initialRows = [];
 
-    if(old('new_items')) {
-        foreach(old('new_items') as $uid => $item) {
+    if (old('new_items')) {
+        foreach (old('new_items') as $uid => $item) {
             $initialRows[] = [
-                'local_uid' => $uid,
-                'item_id' => $item['item_id'] ?? null,
-                'name' => $item['name'] ?? '',
+                'local_uid'   => $uid,
+                'item_id'     => $item['item_id'] ?? null,
+                'name'        => $item['name'] ?? '',
                 'description' => $item['description'] ?? '',
-                'quantity' => $item['quantity'] ?? 1,
-                'unit_price' => $item['unit_price'] ?? 0,
+                'quantity'    => $item['quantity'] ?? 1,
+                'unit_price'  => $item['unit_price'] ?? 0,
                 'unit_id'     => $item['unit_id'] ?? null,
-                'pe_remarks' => $item['pe_remarks'] ?? '',
-                'notes' => $item['notes'] ?? '',
+                'pe_remarks'  => $item['pe_remarks'] ?? '',
+                'notes'       => $item['notes'] ?? '',
             ];
         }
-    } elseif($editing) {
-        $initialRows = $pricing_estimate->pe_items->map(function($item) {
+    } elseif ($editing) {
+        $initialRows = $pricing_estimate->pe_items->map(function ($item) {
             return [
                 'pricing_item_id' => $item->id,
-                'item_id' => $item->item_id,
-                'name' => $item->item_name,
-                'description' => $item->item_description,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
+                'item_id'         => $item->item_id,
+                'name'            => $item->item_name,
+                'description'     => $item->item_description,
+                'quantity'        => $item->quantity,
+                'unit_price'      => $item->unit_price,
                 'unit_id'         => $item->unit_id,
-                'pe_remarks' => $item->pe_remarks,
-                'notes' => $item->notes,
+                'pe_remarks'      => $item->pe_remarks,
+                'notes'           => $item->notes,
             ];
         })->toArray();
     }
-    $vatOptions = config('selectOptions.vat_options'); 
-    $selectedVat = old('vat', $pricing_estimate->vat);
-    
 @endphp
 
 <style>
@@ -74,7 +75,7 @@
             @method('PUT')
         @endif
 
-        <div x-data="customerLookup({{ $initialCustomer }}, {{ $editing ? 'true' : 'false' }})">
+        <div x-data="customerLookup(@js($initialCustomer), {{ $editing ? 'true' : 'false' }})">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                 <div class="col-span-1 space-y-4">
                     <div class="relative mb-6" x-show="!locked">
@@ -125,46 +126,76 @@
                         </span>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Personal Info -->
-                        <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Personal Info (Left Column) -->
+                        <div class="space-y-4">
                             <div>
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Name</p>
-                                <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.name : '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100 min-h-[1.5rem]" x-text="chosen ? chosen.name : '--'">--</p>
                             </div>
                             
                             <div>
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">TIN No:</p>
-                                <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.tin_no : '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100 min-h-[1.5rem]" x-text="chosen ? chosen.tin_no : '--'">--</p>
                             </div>
                             
                             <div>
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Telephone No:</p>
-                                <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.telno : '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100 min-h-[1.5rem]" x-text="chosen ? chosen.telno : '--'">--</p>
+                            </div>
+
+                            <!-- VAT Dropdown -->
+                            <div>
+                                <label for="vat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">VAT</label>
+                                <select name="vat"
+                                        :value="chosen?.tax_status || ''"
+                                        @change="if (chosen) chosen.tax_status = $event.target.value"
+                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">-</option>
+                                    <option value="Tax Exempt">Tax Exempt</option>
+                                    <option value="VAT Inclusive">VAT Inclusive</option>
+                                    <option value="VAT Exclusive">VAT Exclusive</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- Contact Info -->
-                        <div class="space-y-3">
+                        <!-- Contact Info + Terms (Right Column) -->
+                        <div class="space-y-4">
                             <div>
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Email</p>
-                                <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.email : '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100 min-h-[1.5rem]" x-text="chosen ? chosen.email : '--'">--</p>
                             </div>
                             
                             <div>
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Address</p>
-                                <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.address : '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100 min-h-[1.5rem]" x-text="chosen ? chosen.address : '--'">--</p>
                             </div>
+
                             <div>
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Website</p>
-                                <p class="text-gray-900 dark:text-gray-100" x-text="chosen ? chosen.website : '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100 min-h-[1.5rem]" x-text="chosen ? chosen.website : '--'">--</p>
+                            </div>
+
+                            <!-- Terms Dropdown -->
+                            <div>
+                                <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
+                                <select name="terms"
+                                        :value="chosen?.terms_of_payment || ''"
+                                        @change="if (chosen) chosen.terms_of_payment = $event.target.value"
+                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">-</option>
+                                    <option value="COD">COD</option>
+                                    <option value="30 days">30 days</option>
+                                    <option value="60 days">60 days</option>
+                                    <option value="90 days">90 days</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
+        
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Other Information</h2>
 
@@ -182,19 +213,7 @@
                         name="attention" 
                         type="text" 
                         :value="old('attention', $pricing_estimate->attention)" 
-                    />
-
-                    <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
-                    <select name="terms" 
-                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-
-                        @foreach(config('selectOptions.terms') as $term)
-                            <option value="{{ $term }}" {{ old('terms', $pricing_estimate->terms) === $term ? 'selected' : '' }}>
-                                {{ $term }}
-                            </option>
-                        @endforeach
-
-                    </select>
+                    />        
                     <label for="sr_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Sales Representative
                     </label>
@@ -212,13 +231,13 @@
                     </select>
                 </div>
 
-                <div class="space-y-4">
-                    <x-forms.input 
+                <div class="space-y-4" >
+                    <!-- <x-forms.input 
                         label="Delivery Date" 
                         name="delivery_date" 
                         type="text" 
                         :value="old('delivery_date', $pricing_estimate->delivery_date)" 
-                    />   
+                    />    -->
 
                     <label for="currency_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                     <select name="currency_id" 
@@ -228,16 +247,6 @@
                                 value="{{ $currency->id }}" 
                                 {{ old('currency_id', $pricing_estimate->currency_id) == $currency->id ? 'selected' : '' }}>
                                 {{ $currency->symbol }} — {{ $currency->name }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                    <label for="vat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">VAT</label>
-                    <select name="vat" 
-                            class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        @foreach($vatOptions as $key => $label)
-                            <option value="{{ $key }}" {{ $selectedVat == $key ? 'selected' : '' }}>
-                                {{ $label }}
                             </option>
                         @endforeach
                     </select>
@@ -844,6 +853,12 @@ document.addEventListener('alpine:init', () => {
         error: null,
         locked,
 
+        init() {
+            if (initialCustomer) {
+                Object.assign(this, initialCustomer);
+            }
+        },
+
         async search() {
             if (this.locked || this.query.trim().length < 2) {
                 this.showResults = false;
@@ -878,6 +893,7 @@ document.addEventListener('alpine:init', () => {
             this.query = cust.name || '';
             this.showResults = false;
             this.$dispatch('customer-selected', cust);
+            console.log('Selected customer:', cust);
         }
     }));
 
@@ -1331,12 +1347,25 @@ document.addEventListener('alpine:init', () => {
         },
         
         vat() {
-            return this.subtotal() * 0.12; // Assuming 12% VAT
+            const status = this.chosen?.tax_status;
+            if (status === 'VAT Inclusive') {
+                return this.subtotal() * (12 / 112);
+            } else if (status === 'VAT Exclusive') {
+                return this.subtotal() * 0.12;
+            } else if (status === 'Tax Exempt') {
+                return 0;
+            }
+            return 0;
         },
         
         total() {
-            return this.subtotal() + this.vat();
-        }
+            const status = this.chosen?.tax_status;
+            if (status === 'VAT Inclusive' || status === 'Tax Exempt') {
+                return this.subtotal(); // Already includes VAT or no VAT at all
+            } else if (status === 'VAT Exclusive') {
+                return this.subtotal() + this.vat();
+            }
+        },
     }));
     
     Alpine.data('pricingEstimateForm', () => ({

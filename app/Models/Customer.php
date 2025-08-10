@@ -22,10 +22,10 @@ class Customer extends Model
         'business_style',
         'customer_category',
         'remarks',
-        'tax_exempt'
+        'tax_status'
     ];
 
-    protected $casts = [
-        'tax_exempt' => 'boolean',
-    ];
+    // protected $casts = [
+    //     'tax_exempt' => 'boolean',
+    // ];
 }

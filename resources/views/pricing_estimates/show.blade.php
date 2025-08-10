@@ -31,7 +31,7 @@
             @php
                 $backRoute = auth()->user()->hasAnyRole(['admin', 'super-admin'])
                     ? route('pricing-estimates.index')
-                    : route('pricing-estimates.my_estimates');
+                    : route('pricing-estimates.my');
             @endphp
             <a href="{{ $backRoute }}"
                class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-sm transition-colors duration-200 flex items-center justify-center gap-2">

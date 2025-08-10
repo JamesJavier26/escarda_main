@@ -146,14 +146,14 @@
 
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 text-center">{{ $pe->pe_items_count }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">{{ optional($pe->salesRep->employee)->full_name ?? '—' }}</td>
-<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-    <div class="flex flex-col">
-        <span class="font-medium">{{ $pe->created_at->format('M j, Y') }}</span>
-        <span class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Updated {{ $pe->updated_at->diffForHumans() }}
-        </span>
-    </div>
-</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                                <div class="flex flex-col">
+                                    <span class="font-medium">{{ $pe->created_at->format('M j, Y') }}</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Updated {{ $pe->updated_at->diffForHumans() }}
+                                    </span>
+                                </div>
+                            </td>
 
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
                                 <x-status-badge :status="$pe->pe_status">{{ ucfirst($pe->pe_status) }}</x-status-badge>
@@ -161,7 +161,7 @@
                                     $status = $pe->pe_status;
                                     $hasMissingPrices = $pe->pe_items->contains(fn($item) => $item->unit_price === null || $item->unit_price == 0);
                                 @endphp
-                                @if ($hasMissingPrices)
+                                @if ($hasMissingPrices && $pe->pe_status !== 'approved')
                                     <br/><span class="text-xs italic text-red-600 dark:text-red-400">No Unit Price</span>
                                 @endif
                             </td>
@@ -177,13 +177,13 @@
                                     </a>
 
                                     {{-- Edit Button (Conditional) --}}
-                                    @if($pe->sr_id == Auth::user()->id)
-                                    <a href="{{ route('pricing-estimates.edit', $pe->id) }}" 
-                                    class="flex items-center justify-center w-8 h-8 text-white bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                                    title="Edit Pricing Estimate">
-                                        <i class="fas fa-pencil-alt text-sm"></i>
-                                        <span class="sr-only">Edit</span>
-                                    </a>
+                                    @if($pe->sr_id == Auth::user()->id && $pe->pe_status !== 'approved')
+                                        <a href="{{ route('pricing-estimates.edit', $pe->id) }}" 
+                                        class="flex items-center justify-center w-8 h-8 text-white bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        title="Edit Pricing Estimate">
+                                            <i class="fas fa-pencil-alt text-sm"></i>
+                                            <span class="sr-only">Edit</span>
+                                        </a>
                                     @endif
 
                                     {{-- Delete Button --}}
