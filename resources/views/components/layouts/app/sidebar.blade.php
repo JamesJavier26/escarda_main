@@ -29,6 +29,9 @@
                             <x-layouts.sidebar-link href="{{ route('quotations.index') }}" icon='fas-file-invoice'
                                 :active="request()->routeIs('quotations*')">Quotations</x-layouts.sidebar-link>
 
+                            <x-layouts.sidebar-link href="{{ route('temporary_quotations.index') }}" icon='fas-file-invoice'
+                                :active="request()->routeIs('temporary_quotations*')">Temporary Quotation</x-layouts.sidebar-link>
+
                             <x-layouts.sidebar-link href="{{ route('sales-orders.index') }}" icon='fas-shopping-cart'
                                 :active="request()->routeIs('sales-orders*')">Sales Order</x-layouts.sidebar-link>
                             @endhasrole

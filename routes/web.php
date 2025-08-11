@@ -20,6 +20,7 @@ use App\Http\Controllers\ProductionDetailController;
 use App\Http\Controllers\ProductionDetailEntryController;
 use App\Http\Controllers\ProductionDetailReportController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\TemporaryQuotationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SalesOrderController;
@@ -136,6 +137,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::delete('production-detail-entries/{production_detail_entry}', [ProductionDetailEntryController::class, 'destroy'])
             ->name('production-detail-entries.destroy');
+
+        Route::resource('temporary_quotations', TemporaryQuotationController::class);
 
         // MASTER DATA
         Route::resource('customers', CustomerController::class)->except(['show']);
