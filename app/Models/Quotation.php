@@ -9,7 +9,7 @@ class Quotation extends Model
     // protected $table = "quotations";
     protected $fillable = [
         'quote_no','version','parent_id', 'pricing_estimate_id', 'quote_date', 
-        'currency_id', 'quote_status','revision_reason','rejected_pdf_path', 'is_final','quote_remarks'
+        'currency_id', 'quote_status','is_sent','revision_reason','rejected_pdf_path', 'is_final','quote_remarks'
     ];
     public function pricing_estimate()
     {
@@ -23,5 +23,9 @@ class Quotation extends Model
     public function salesOrder()
     {
         return $this->hasOne(SalesOrder::class);
+    }
+        public function getIsSentLabelAttribute()
+    {
+        return $this->is_sent ? 'Sent' : 'Not Sent';
     }
 }

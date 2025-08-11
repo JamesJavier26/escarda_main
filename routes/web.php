@@ -194,6 +194,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/quotations/{quotation}/approve', [QuotationController::class, 'approve'])->name('quotations.approve');
         Route::post('/quotations/{quotation}/reject', [QuotationController::class, 'reject'])->name('quotations.reject');
         Route::post('/quotations/{quotation}/export-to-sales-order', [QuotationController::class, 'exportToSalesOrder'])->name('quotations.export-to-sales-order');
+        Route::patch('/quotations/{quotation}/toggle-sent', [QuotationController::class, 'toggleSentStatus'])->name('quotations.toggleSent');
         
         Route::get('quotations/items/{pe_id}', [QuotationController::class,'quote_items'])->name('quotations.items');
         

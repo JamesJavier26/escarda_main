@@ -20,6 +20,7 @@ return new class extends Migration
             $table->timestamp('quote_date');
             $table->foreignId(column: 'currency_id')->constrained('currencies')->cascadeOnDelete();
             $table->string( 'quote_status');
+            $table->boolean('is_sent')->default(false)->after('status');
             $table->text('revision_reason')->nullable();
             $table->string('rejected_pdf_path')->nullable();
             $table->boolean('is_final')->default(false);

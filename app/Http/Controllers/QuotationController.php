@@ -260,77 +260,6 @@ class QuotationController extends Controller
         return response()->json(['message' => 'Quotation has been disapproved.']);
     }
 
-    // public function exportToSalesOrder1(Quotation $quotation)
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         // Validate the quotation is approved
-    //         if ($quotation->quote_status !== 'approved') {
-    //             throw new \Exception('Only approved quotations can be exported to sales orders');
-    //         }
-
-    //         $current = (int) SalesOrder::max('so_no');
-    //         $startAt = 6442;
-    //         $so_no = $current ? $current + 1 : $startAt;
-    //         // Generate SO and JO numbers (same number for both)
-    //         $soNo = $so_no;
-    //         $joNo = $so_no;
-
-    //         // Create Sales Order
-    //         $salesOrder = SalesOrder::create([
-    //             'so_no' => $soNo,
-    //             'date_ordered' => now(),
-    //             'customer_id' => $quotation->pricing_estimate->customer_id,
-    //             'pr_no' => $quotation->pricing_estimate->pr_no,
-    //             'attention' => $quotation->pricing_estimate->customer->telno,
-    //             'po_no' => '', 
-    //             'sr_id' => auth()->id(),
-    //             'jo_no' => $joNo, 
-    //             'is_vat' => true,
-    //             'approval_status' => 'draft',
-    //             'quotation_id' => $quotation->id,
-    //             'currency_id' => $quotation->currency_id,
-    //             'is_notified' => false,
-    //         ]);
-
-    //         // Create Job Order
-    //         $jobOrder = JobOrder::create([
-    //             'jo_no' => $joNo,
-    //             'sales_order_id' => $salesOrder->id,
-    //             'user_id' => auth()->id(),
-    //             'jo_status' => 'draft',
-    //             'approval_status' => 'draft',
-    //             'approval_date' => null,
-    //         ]);
-
-    //         // Copy items from Price Estimate to Job Order Items
-    //         foreach ($quotation->pricing_estimate->pe_items as $peItem) {
-    //             JobOrderItem::create([
-    //                 'job_order_id' => $jobOrder->id,
-    //                 'sales_order_id' => $salesOrder->id,
-    //                 'item_id' => $peItem->item_id,
-    //                 'mould_id' => $peItem->mould_id ?? null,
-    //                 'material_id' => $peItem->material_id ?? null,
-    //                 'hardness' => $peItem->hardness ?? null,
-    //                 'thickness' => $peItem->thickness ?? null,
-    //                 'quantity' => $peItem->quantity,
-    //                 'unit_id' => $peItem->unit_id,
-    //                 'unit_price' => $peItem->unit_price,
-    //             ]);
-    //         }
-
-    //         DB::commit();
-
-    //         return redirect()->route('sales-orders.edit', $salesOrder)
-    //             ->with('success', 'Sales Order created successfully');
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return back()->with('error', 'Failed to create sales order: ' . $e->getMessage());
-    //     }
-    // }
-
 
     public function exportToSalesOrder(Quotation $quotation, Request $request)
     {
@@ -508,6 +437,14 @@ class QuotationController extends Controller
 
         // Fallback
         return redirect()->route('quotations.index')->with('error', 'Unable to generate quotation.');
+    }
+    
+    public function toggleSentStatus(Quotation $quotation)
+    {
+        $quotation->is_sent = !$quotation->is_sent;
+        $quotation->save();
+
+        return redirect()->back()->with('success', 'Quotation sent status updated.');
     }
 
 }

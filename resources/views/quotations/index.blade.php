@@ -166,13 +166,31 @@
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                 {{ \Carbon\Carbon::parse($quote->quote_date)->format('M d, Y') }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 flex items-center space-x-2">
                                 <x-status-badge :status="$quote->quote_status">
                                     {{ $quote->quote_status === 'rejected' ? 'Disapproved' : ucfirst($quote->quote_status) }}
                                 </x-status-badge>
+                                
+                                @if($quote->is_sent)
+                                    <span class="inline-block bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded whitespace-nowrap">
+                                        Sent
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-right">
                                 <div class="flex justify-end items-center space-x-2">
+                                            @if ($quote->quote_status === 'approved')
+                                                <form method="POST" action="{{ route('quotations.toggleSent', $quote->id) }}">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit"
+                                                        class="w-8 h-8 flex items-center justify-center rounded-full
+                                                            {{ $quote->is_sent ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600' }}"
+                                                        title="{{ $quote->is_sent ? 'Mark as Not Sent' : 'Mark as Sent' }}">
+                                                        <i class="fas fa-envelope text-sm"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                     @hasrole('super-admin|admin')
                                     <a href="{{ route('quotations.edit', $quote) }}"
                                         class="flex items-center justify-center w-8 h-8 text-white bg-green-600 hover:bg-green-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition"
