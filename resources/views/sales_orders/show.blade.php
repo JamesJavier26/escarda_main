@@ -359,15 +359,16 @@
         Alpine.data('salesOrderApproval', ({ approveUrl, rejectUrl }) => ({
             async confirmAction(action) {
                 const isApprove = action === 'approve';
+                const isReject = action === 'reject';
 
                 const result = await Swal.fire({
-                    title: isApprove ? 'Approve Sales Order?' : 'Disapprove Sales Order?',
+                    title: isApprove ? 'Approve Sales Order?' : 'Reject Sales Order?',
                     text: isApprove
                         ? 'Are you sure you want to approve this Sales Order?'
-                        : 'Are you sure you want to disapprove this Sales Order?',
-                    icon: isApprove ? 'success' : 'warning',
+                        : 'Are you sure you want to reject this Sales Order?',
+                    icon: isApprove ? 'success' : 'error',
                     showCancelButton: true,
-                    confirmButtonText: isApprove ? 'Yes, Approve' : 'Yes, Disapprove',
+                    confirmButtonText: isApprove ? 'Yes, Approve' : 'Yes, Reject',
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: isApprove ? '#16a34a' : '#dc2626',
                     cancelButtonColor: '#6b7280'
@@ -375,14 +376,11 @@
 
                 if (!result.isConfirmed) return;
 
-                // Show loader while request is sent
                 Swal.fire({
                     title: 'Please wait...',
-                    text: isApprove ? 'Approving Sales Order...' : 'Disapproving Sales Order...',
+                    text: isApprove ? 'Approving Sales Order...' : 'Rejecting Sales Order...',
                     allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
+                    didOpen: () => Swal.showLoading()
                 });
 
                 try {
@@ -395,14 +393,14 @@
                     });
 
                     if (!response.ok) {
-                        const data = await response.json();
+                        const data = await response.json().catch(() => ({}));
                         throw new Error(data.message || 'Request failed.');
                     }
 
                     Swal.fire({
                         icon: 'success',
                         title: 'Success!',
-                        text: isApprove ? 'Sales Order approved.' : 'Sales Order disapproved.',
+                        text: isApprove ? 'Sales Order approved.' : 'Sales Order rejected.',
                         timer: 1500,
                         showConfirmButton: false
                     });
@@ -416,7 +414,6 @@
                     Swal.fire('Error', err.message || 'Something went wrong.', 'error');
                 }
             }
-
         }));
     });
 </script>

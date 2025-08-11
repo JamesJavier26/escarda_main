@@ -19,6 +19,7 @@ class SalesOrder extends Model
         'is_vat',
         'approval_status',
         'approval_date',
+        'approved_by',
         'remarks',
         'contact_person',
         'contact_no',
@@ -29,6 +30,11 @@ class SalesOrder extends Model
         'tax_status',
         'so_status'
     ];
+
+    protected $casts = [
+    'approval_date' => 'datetime',
+    ];
+
     public function customer() {
         return $this->belongsTo(Customer::class);
     }
@@ -60,6 +66,10 @@ class SalesOrder extends Model
     public function attachments()
     {
         return $this->hasMany(SalesOrderAttachment::class);
+    }
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     public static function generateSONumber()

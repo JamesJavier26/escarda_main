@@ -37,9 +37,10 @@ class SalesOrderController extends Controller
             'customer',
             'salesRep.employee',
             'quotation',
+            'approver',
             'jobOrder.jo_items'
         ]);
-
+        
         // Role-based visibility
         if ($user->hasRole(['super-admin', 'admin'])) {
             $query->where(function ($q) use ($userId) {
@@ -136,11 +137,12 @@ class SalesOrderController extends Controller
                 'pr_no' => $quotation->pr_no ?? null,
                 'po_no' => $quotation->po_no ?? null,
                 'attention' => $quotation->attention ?? null,
-                'delivery_date' => $quotation->delivery_date ?? null,
+                'delivery_date' => $request->input('delivery_date'),
                 'remarks' => $quotation->remarks ?? null,
                 'currency_id' => $quotation->currency_id ?? null,
                 'tax_status' => $quotation->pricing_estimate->customer->tax_status?? $quotation->tax_status ?? null,
                 'sr_id' => $quotation->sr_id ?? auth()->id(),
+                'so_status' => 'pending',
             ])
         ]);
     }
@@ -434,7 +436,7 @@ class SalesOrderController extends Controller
         ]);
 
         $sales_order->update([
-            'so_status' => 'draft',
+            'so_status' => 'rejected',
         ]);
         notify_user(
             $sales_order->sr_id,

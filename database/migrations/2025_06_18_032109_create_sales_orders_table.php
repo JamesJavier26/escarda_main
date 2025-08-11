@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignId('sr_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('jo_no')->nullable();
             $table->string('tax_status');
-            $table->string('approval_status')->nullable(); //Cancel Yes
+            $table->string('approval_status')->nullable();
             $table->timestamp('approval_date')->nullable();
             $table->longText('remarks')->nullable();
             $table->string('so_status')->default(value: 'pending'); 
@@ -33,6 +33,7 @@ return new class extends Migration
             $table->foreignId('quotation_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('currency_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_notified')->default(true);
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

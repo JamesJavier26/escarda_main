@@ -49,7 +49,7 @@ class SalesOrderRequest extends FormRequest
             'terms'         => ['nullable', 'string'],
             // 'so_status'     => ['required', 'in:draft,pending,approved'],
             'remarks'       => ['nullable', 'string'],
-            'delivery_date' => ['nullable', 'string'],
+            'delivery_date' => ['required', 'string'],
             'currency_id'   => ['nullable', 'exists:currencies,id'],
             'is_vat'           => ['nullable', 'integer', 'min:0'],
                          

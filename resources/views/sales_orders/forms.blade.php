@@ -132,16 +132,19 @@
                                 <p class="text-sm font-medium text-gray-400">Telephone</p>
                                 <p class="text-gray-100" x-text="chosen?.telno ?? '--'">--</p>
                             </div>
-                                <div>
-                                    <label for="tax_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Status</label>
-                                    <select name="tax_status"
-                                        x-model="$store.order.tax_status"
-                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="Tax Exempt">Tax Exempt</option>
-                                        <option value="VAT Inclusive">VAT Inclusive</option>
-                                        <option value="VAT Exclusive">VAT Exclusive</option>
-                                    </select>
-                                </div>
+                            <div x-data="{ editing: {{ $editing ? 'true' : 'false' }} }">
+                                <label for="tax_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Status</label>
+                                <select name="tax_status"
+                                    x-model="$store.order.tax_status"
+                                    :disabled="editing"
+                                    class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    :class="editing ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''">
+                                    <option value="">-</option>
+                                    <option value="Tax Exempt">Tax Exempt</option>
+                                    <option value="VAT Inclusive">VAT Inclusive</option>
+                                    <option value="VAT Exclusive">VAT Exclusive</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="space-y-3">
@@ -155,18 +158,20 @@
                                 <p class="text-gray-100" x-text="chosen?.address ?? '--'">--</p>
                             </div>
 
-                            <div>
-                                <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
-                                <select name="terms"
-                                        :value="chosen?.terms_of_payment || ''"
-                                        @change="if (chosen) chosen.terms_of_payment = $event.target.value"
-                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="">-</option>
-                                    <option value="COD">COD</option>
-                                    <option value="30 days">30 days</option>
-                                    <option value="60 days">60 days</option>
-                                    <option value="90 days">90 days</option>
-                                </select>
+                            <div x-data="{ editing: {{ $editing ? 'true' : 'false' }} }">
+                            <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
+                            <select name="terms"
+                                    :value="chosen?.terms_of_payment || ''"
+                                    @change="if (chosen) chosen.terms_of_payment = $event.target.value"
+                                    :disabled="editing"
+                                    class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    :class="editing ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''">
+                                <option value="">-</option>
+                                <option value="COD">COD</option>
+                                <option value="30 days">30 days</option>
+                                <option value="60 days">60 days</option>
+                                <option value="90 days">90 days</option>
+                            </select>
                             </div>
                         </div>
                     </div>
@@ -214,14 +219,8 @@
                 </div>
 
                 {{-- Right Column --}}
-                <div class="space-y-4">
-                    <x-forms.input 
-                    label="Delivery Date" 
-                    name="delivery_date" 
-                    type="date" 
-                    :value="old('delivery_date', $sales_order->delivery_date)" 
-                    />   
-
+                <div class="space-y-4"> 
+                    <x-forms.input label="Delivery Date" name="delivery_date" type="date" :value="old('delivery_date', $sales_order->delivery_date)" />   
                     <div>
                         <label for="currency_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                         <select name="currency_id" 
@@ -621,7 +620,7 @@
                     </a>
                 @endif
 
-                @if($sales_order->so_status !== 'pending')
+                @if($sales_order->so_status == 'pending')
                     <button type="submit"
                             class="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white
                                 bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -909,7 +908,7 @@ function commentSection(initialComments, salesOrderId) {
 document.addEventListener('alpine:init', () => {
 
     Alpine.store('order', {
-        tax_status: @json($salesOrder->tax_status ?? 'Tax Exempt')
+        tax_status: @json($salesOrder->tax_status ?? '')
     });
 
         Alpine.data('customerLookup', (initialCustomer = null, locked = false) => ({

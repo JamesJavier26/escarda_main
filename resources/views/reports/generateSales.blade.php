@@ -97,7 +97,12 @@
                     <table class="no-border" style="width: 100%;">
                         <tr><td class="text-center" style="padding: 0 0 1px 0;"><strong>NO. {{ $salesOrder->so_no }}</strong></td></tr>
                         <tr><td style="padding: 0 0 1px 0;"><strong>DATE ORDERED:</strong> {{ $salesOrder->date_ordered }}</td></tr>
-                        <tr><td style="padding: 0 0 1px 0;"><strong>DATE OF DELIVERY:</strong> {{ $salesOrder->delivery_date }}</td></tr>
+                        <tr>
+                            <td style="padding: 0 0 1px 0;">
+                                <strong>DATE OF DELIVERY:</strong> 
+                                {{ \Carbon\Carbon::parse($salesOrder->delivery_date)->format('F j, Y') }}
+                            </td>
+                        </tr>
                         <tr><td style="padding: 0 0 1px 0;"><strong>TEL. NO:</strong> {{ $salesOrder->customer->telno }}</td></tr>
                         <tr><td style="padding: 0 0 1px 0;"><strong>J.O. NO:</strong> {{ $salesOrder->jobOrder->jo_no }}</td> </tr>
                         <tr><td style="padding: 0 0 1px 0;"><strong>P.O. NO:</strong> {{ $salesOrder->po_no }}</td></tr>
@@ -107,14 +112,32 @@
         </table>
 
         @php
-            $total = 0;
+            // Sum up total from jo_items
+            $subtotal = 0;
             foreach ($salesOrder->jobOrder->jo_items as $item) {
-                $total += $item->unit_price * $item->quantity;
+                $subtotal += ($item->unit_price ?? 0) * ($item->quantity ?? 0);
             }
 
-            $isVat = $salesOrder->is_vat == 1;
-            $vatAmount = $isVat ? $total * 0.12 : 0;
-            $grandTotal = $total + $vatAmount;
+            $vatRate = 0.12;
+            $taxStatus = $salesOrder->tax_status ?? 'Tax Exempt';
+
+            $vatAmount = 0;
+            $grandTotal = $subtotal;
+
+            if ($taxStatus === 'VAT Inclusive') {
+                // Subtotal already includes VAT, extract VAT portion
+                $subtotalExVat = $subtotal / (1 + $vatRate);
+                $vatAmount = $subtotal - $subtotalExVat;
+                $grandTotal = $subtotal; // total includes VAT already
+            } elseif ($taxStatus === 'VAT Exclusive') {
+                // VAT to be added on top
+                $vatAmount = $subtotal * $vatRate;
+                $grandTotal = $subtotal + $vatAmount;
+            } else {
+                // Tax Exempt
+                $vatAmount = 0;
+                $grandTotal = $subtotal;
+            }
         @endphp
 
         <table class="">
@@ -153,11 +176,11 @@
                 <tr>
                     <td></td><td></td><td></td>
                     <td class="text-center font-semibold">TOTAL SALES</td>
-                    <td class="text-center">₱{{ number_format($total, 2) }}</td>
+                    <td class="text-center">₱{{ number_format($subtotal, 2) }}</td>
                 </tr>
                 <tr>
                     <td></td><td></td><td></td>
-                    <td class="text-center font-semibold">VAT 12%</td>
+                    <td class="text-center font-semibold">{{ $taxStatus }} 12%</td>
                     <td class="text-center">₱{{ number_format($vatAmount, 2) }}</td>
                 </tr>
                 <tr>
@@ -199,7 +222,17 @@
        <table class="no-border" style="width: 100%;">
             <tr>
                 <td class="text-left w-10" style="padding: 2px 0;"><strong>APPROVED:</strong></td>
-                <td style="padding: 2px 0;">Yes (6/20/2025 05:50:50 PM)</td>
+                <td style="padding: 2px 0;">
+                    @if ($salesOrder->so_status === 'approved')
+                        <strong>YES ({{ $salesOrder->updated_at->format('m/d/Y h:i:s A') }})</strong>
+                    @else
+                        <strong>NO</strong>
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <td class="text-left w-10" style="padding: 2px 0;"><strong>APPROVER:</strong></td>
+                <td style="padding: 2px 0;"><strong> {{ $salesOrder->approver?->username ?? '—' }}<strong></td>
             </tr>
         </table>
        <table class="no-border" style="width: 100%;">

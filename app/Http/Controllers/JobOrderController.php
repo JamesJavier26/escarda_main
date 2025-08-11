@@ -254,7 +254,9 @@ class JobOrderController extends Controller
 
             if ($jobOrder->salesOrder) {
                 $jobOrder->salesOrder->update([
-                    'so_status' => 'approved'
+                    'so_status' => 'approved',
+                    'approved_by' => auth()->id(),
+                    'approval_date' => now(), 
                 ]);
             }
 
