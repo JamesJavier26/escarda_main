@@ -98,13 +98,12 @@
                     <table class="no-border" style="width: 100%;">
                         <tr>
                             <td class="text-center" style="padding: 2px 0;">
-                                <strong>NO. {{ $jobOrder->jo_no }}</strong>
+                                <strong>JO NO. {{ $jobOrder->jo_no }}</strong>
                             </td>
                         </tr>
                         <tr><td style="padding: 2px 0;"><strong>P.R. #:</strong> {{ $jobOrder->salesOrder->pr_no ?? '—' }}</td></tr>
                         <tr><td style="padding: 2px 0;"><strong>P.O #:</strong> {{ $jobOrder->salesOrder->po_no ?? '—' }}</td></tr>
                         <tr><td style="padding: 2px 0;"><strong>S.O #:</strong> {{ $jobOrder->salesOrder->so_no ?? '—' }}</td></tr>
-                        <tr><td style="padding: 2px 0;"><strong>J.O. NO:</strong> {{ $jobOrder->jo_no }}</td></tr>
                         <tr><td style="padding: 2px 0;"><strong>Due Date:</strong> {{ \Carbon\Carbon::parse($jobOrder->due_date)->format('F d, Y') }}</td></tr>
                     </table>
                 </td>
