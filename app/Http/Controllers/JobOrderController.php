@@ -73,8 +73,8 @@ class JobOrderController extends Controller
             'jobOrders'         => $jobOrders,
             'totalJobOrders'    => $baseStatQuery->count(),
             'pendingJobOrders'  => (clone $baseStatQuery)->where('jo_status', 'pending')->count(),
-            'approvedJobOrders' => (clone $baseStatQuery)->where('approval_status', 'approved')->count(),
-            'cancelledJobOrders'=> (clone $baseStatQuery)->where('approval_status', 'cancel')->count(),
+            'deliveredJobOrders' => (clone $baseStatQuery)->where('jo_status', 'delivered')->count(),
+            'cancelledJobOrders'=> (clone $baseStatQuery)->where('jo_status', 'cancel')->count(),
         ]);
     }
 
@@ -91,7 +91,7 @@ class JobOrderController extends Controller
 
         return view('job_orders.create', [
             'jo_no'         => $jo_no,
-            'job_order'   => $job_order,
+            'job_order'   => new JobOrder(),
             'materials' => Material::all(),
             'moulds' => Mould::all(),
         ]);
@@ -189,7 +189,7 @@ class JobOrderController extends Controller
      */
     public function update(Request $request, JobOrder $jobOrder)
     {
-        $jobOrder->load('items.pricingEstimateItem');
+        $jobOrder->load('jo_items.pricingEstimateItem');
         $validated = $request->validate([
             'duedate' => ['nullable', 'date'],
             'remarks' => ['nullable', 'string'],
@@ -300,6 +300,7 @@ class JobOrderController extends Controller
     public function markAsDelivered(JobOrder $job_order)
     {
         $job_order->jo_status = 'delivered';
+        $job_order->approval_date = now();
         $job_order->save();
 
         return redirect()->back()->with('success', 'Job Order marked as delivered.');

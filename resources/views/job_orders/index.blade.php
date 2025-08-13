@@ -38,8 +38,8 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Approved JOs</p>
-                    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-1">{{ $approvedJobOrders ?? 0 }}</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Delivered JOs</p>
+                    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-1">{{ $deliveredJobOrders ?? 0 }}</p>
                 </div>
                 <div class="bg-green-100 dark:bg-green-900 p-3 rounded-full">
                     <i class="fas fa-check-circle text-green-500 dark:text-green-300 text-xl"></i>
@@ -154,7 +154,7 @@
                                 {{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                                {{ optional($order->salesOrder->customer)->name ?? '—' }}
+                                {{ $order->salesOrder?->customer?->name ?? '—' }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                 {{ optional($order->salesOrder)->so_no ?? '—' }}
@@ -163,10 +163,15 @@
                                 {{ $order->jo_items->count() }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                                <x-status-badge :status="$order->approval_status">{{ ucfirst($order->approval_status) }}</x-status-badge>
+                                <x-status-badge :status="$order->jo_status">{{ ucfirst($order->jo_status) }}</x-status-badge>
                             </td>
                             <td class="px-6 py-4 text-sm text-right">
                                 <div class="flex justify-end items-center space-x-2">
+                                        <a href="{{ route('reports.jobOrder', $order->jo_no) }}" target="_blank"
+                                        class="flex items-center justify-center w-8 h-8 text-white bg-gray-600 hover:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 transition"
+                                        title="Print Sales Order">
+                                        <i class="fas fa-print text-sm"></i>
+                                    </a>
                                     @hasrole('super-admin|admin')
                                     <a href="{{ route('job-orders.show', $order) }}"
                                         class="flex items-center justify-center w-8 h-8 text-white bg-blue-600 hover:bg-blue-700 rounded-full"

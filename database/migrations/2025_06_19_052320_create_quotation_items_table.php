@@ -21,7 +21,7 @@ return new class extends Migration
             $table->longtext('remarks');
             $table->foreignId('unit_id')->constrained()->onDelete('cascade');
             $table->foreignId('mould_id')->nullable()->constrained('moulds')->onDelete('cascade');
-
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->enum('discount_type', ['percentage','fixed'])->default('percentage')->nullable();
             $table->decimal('discount_amount',8,2)->default(0)->nullable();
             $table->integer('quantity')->default(0)->nullable();

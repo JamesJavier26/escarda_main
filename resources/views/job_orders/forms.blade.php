@@ -37,7 +37,7 @@
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">P.R No:</p>
-                    <p class="text-gray-100 font-mono">#{{ $job_order->pr_no }}</p>
+                    <p class="text-gray-100 font-mono">#{{ $job_order->salesOrder->pr_no }}</p>
                     </div>
                     
                     <div>
@@ -236,7 +236,6 @@
             <div class="space-y-6">
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Delivery Details</h2>
-                    
                     <div>
                         {{-- <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Detail</label> --}}
                         <textarea name="delivery_details" rows="3"
@@ -252,7 +251,7 @@
             <div class="flex items-center justify-between mt-10">
                 {{-- LEFT SIDE BUTTONS: Back, Print, Save --}}
                 <div class="flex space-x-4">
-                    <a href="{{ route('quotations.index') }}"
+                    <a href="{{ route('job-orders.index') }}"
                     class="px-4 py-2 rounded-md shadow-sm text-sm font-medium
                             text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700
                             border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600
@@ -336,14 +335,14 @@
 
         @endif
     </form>
-    @if($job_order->jo_status !== 'delivered')
-    <form method="POST"
-        id="mark-delivered-form"
-        action="{{ route('job-orders.mark-delivered', $job_order) }}"
-        class="hidden">
-        @csrf
-        @method('PATCH')
-    </form>
+    @if($job_order->exists && $job_order->jo_status !== 'delivered')
+        <form method="POST"
+            id="mark-delivered-form"
+            action="{{ route('job-orders.mark-delivered', $job_order) }}"
+            class="hidden">
+            @csrf
+            @method('PATCH')
+        </form>
     @endif
 
 </div>

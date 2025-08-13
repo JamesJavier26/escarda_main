@@ -12,6 +12,8 @@ $classes = match($status) {
     'approved' => 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400',
     'rejected' => 'bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-400',
 
+    'delivered' => 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400',
+
      'completed' => 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400',
     default => 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400'
 };

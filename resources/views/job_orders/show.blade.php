@@ -53,10 +53,10 @@
                 </div>
                 <div>
                     @php
-                        $status = $jobOrder->approval_status;
+                        $status = $jobOrder->jo_status;
                     @endphp
                     <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                    <x-status-badge :status="$jobOrder->approval_status">{{ ucfirst($status) }}</x-status-badge>
+                    <x-status-badge :status="$jobOrder->jo_status">{{ ucfirst($status) }}</x-status-badge>
                 </div>
 
 

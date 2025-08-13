@@ -135,7 +135,7 @@ class SalesOrderController extends Controller
             'salesReps'         => Employee::all(),
             'sales_order'       => new SalesOrder([
                 'pr_no' => $quotation->pr_no ?? null,
-                'po_no' => $quotation->po_no ?? null,
+                'po_no' => $request->po_no ?? null,
                 'attention' => $quotation->attention ?? null,
                 'delivery_date' => $request->input('delivery_date'),
                 'remarks' => $quotation->remarks ?? null,
