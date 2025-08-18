@@ -203,7 +203,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pricing-estimates/my/estimates', [PricingEstimateController::class, 'my_estimates'])->name('pricing-estimates.my');
         Route::get('/pricing-estimates/{pe_id}/price-entry', [PricingEstimateController::class, 'priceEntry'])->name('pricing-estimates.price-entry');
         Route::post('/pricing-estimate-add-offer', [PricingEstimateController::class, 'addOffer']);
-
+        Route::delete('/pricing-estimates/{estimate}', [PricingEstimateController::class, 'destroy'])
+            ->name('pricing-estimates.destroy');
+        Route::delete('/pricing-estimates/item/{item}', [PricingEstimateController::class, 'destroyItem'])
+            ->name('pricing-estimate-item.destroy');
+            
 
         // });
         Route::patch('/pricing-estimate-items/{item}/apply-discount', [PricingEstimateController::class, 'applyDiscount']);

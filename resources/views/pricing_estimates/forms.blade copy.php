@@ -65,7 +65,7 @@
             <div class="grid grid-cols-1 gap-6 w-full">
                 <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                     <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
-                    <h2 class="text-xl font-semibold text-gray-100">Customer Details</h2>
+                    <h2 class="text-xl font-semiboldtext-gray-900 dark:text-gray-100">Customer Details</h2>
                     <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">P.E NO: #{{$pe_no}}</span>
                     </div>
 
@@ -74,17 +74,17 @@
                     <div class="space-y-3">
                         <div>
                             <p class="text-sm font-medium text-gray-400">Name</p>
-                            <p class="text-gray-100" x-text="chosen ? chosen.name : '--'">--</p>
+                            <p class="text-gray-900 dark:text-gray-100"" x-text="chosen ? chosen.name : '--'">--</p>
                         </div>
                         
                         <div>
                             <p class="text-sm font-medium text-gray-400">Fax No:</p>
-                            <p class="text-gray-100" x-text="chosen ? chosen.telefax : '--'">--</p>
+                            <p class="text-gray-900 dark:text-gray-100"" x-text="chosen ? chosen.telefax : '--'">--</p>
                         </div>
                         
                         <div>
                             <p class="text-sm font-medium text-gray-400">Telephone No:</p>
-                            <p class="text-gray-100" x-text="chosen ? chosen.telno : '--'">--</p>
+                            <p class="text-gray-900 dark:text-gray-100"" x-text="chosen ? chosen.telno : '--'">--</p>
                         </div>
                     </div>
 
@@ -92,12 +92,12 @@
                     <div class="space-y-3">
                         <div>
                         <p class="text-sm font-medium text-gray-400">Email</p>
-                        <p class="text-gray-100" x-text="chosen ? chosen.email : '--'">--</p>
+                        <p class="text-gray-900 dark:text-gray-100"" x-text="chosen ? chosen.email : '--'">--</p>
                         </div>
                         
                         <div>
                         <p class="text-sm font-medium text-gray-400">Address</p>
-                        <p class="text-gray-100" x-text="chosen ? chosen.address : '--'">--</p>
+                        <p class="text-gray-900 dark:text-gray-100"" x-text="chosen ? chosen.address : '--'">--</p>
                         </div>
                     </div>
                     </div>

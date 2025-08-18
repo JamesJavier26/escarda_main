@@ -69,6 +69,7 @@ class PricingEstimateRequest extends FormRequest
             'items.*.unit_id' => ['nullable', 'exists:units,id'],
             'items.*.pe_remarks' => ['nullable', 'string'],
             'items.*.notes' => ['nullable', 'string'],
+            'items.*.internal_notes' => ['nullable', 'string'],
 
             'new_items' => ['array'],
             'new_items.*.item_id' => ['nullable', 'exists:items,id'],
@@ -79,6 +80,7 @@ class PricingEstimateRequest extends FormRequest
             'new_items.*.unit_id' => ['nullable', 'exists:units,id'],
             'new_items.*.pe_remarks' => ['nullable', 'string'],
             'new_items.*.notes' => ['nullable', 'string'],
+            'new_items.*.internal_notes' => ['nullable', 'string'],
 
             'items_or_new' => [
                 function ($attribute, $value, $fail) {

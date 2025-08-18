@@ -19,7 +19,7 @@
         <div class="grid grid-cols-1 gap-6 w-full">
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                 <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
-                <h2 class="text-xl font-semibold text-gray-100">Customer Details</h2>
+                <h2 class="text-xl font-semiboldtext-gray-900 dark:text-gray-100">Customer Details</h2>
                 <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">S.O NO: #{{$sales_order->so_no}}</span>
                 </div>
 
@@ -28,17 +28,17 @@
                 <div class="space-y-3">
                     <div>
                     <p class="text-sm font-medium text-gray-400">Name</p>
-                    <p class="text-gray-100">{{ $sales_order->customer->name }}</p>
+                    <p class="text-gray-900 dark:text-gray-100"">{{ $sales_order->customer->name }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">P.R No:</p>
-                    <p class="text-gray-100 font-mono">#{{ $sales_order->pr_no }}</p>
+                    <p class="text-gray-900 dark:text-gray-100" font-mono">#{{ $sales_order->pr_no }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">Telephone</p>
-                    <p class="text-gray-100">{{ $sales_order->customer->telno }}</p>
+                    <p class="text-gray-900 dark:text-gray-100"">{{ $sales_order->customer->telno }}</p>
                     </div>
                 </div>
 
@@ -46,12 +46,12 @@
                 <div class="space-y-3">
                     <div>
                     <p class="text-sm font-medium text-gray-400">Email</p>
-                    <p class="text-gray-100">{{ $sales_order->customer->email }}</p>
+                    <p class="text-gray-900 dark:text-gray-100"">{{ $sales_order->customer->email }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">Address</p>
-                    <p class="text-gray-100">{{ $sales_order->customer->address }}</p>
+                    <p class="text-gray-900 dark:text-gray-100"">{{ $sales_order->customer->address }}</p>
                     </div>
                 </div>
                 </div>
@@ -111,7 +111,7 @@
                                     </div>
                                 </td>
 
-                                {{-- <td class="px-4 py-3 text-right">{{ $item->quantity }} {{ $item->unit->name ?? '' }}</td> --}}
+                                {{-- <td class="px-4 py-3 text-right">{{ $item->quantity }} {{ $item->unit->short_name ?? '' }}</td> --}}
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end space-x-1">
                                         <input 
@@ -122,7 +122,7 @@
                                             min="0" step="any"
                                         />
                                         <span class="text-sm text-gray-700 dark:text-gray-300">
-                                            {{ $item->unit->name ?? '' }}
+                                            {{ $item->unit->short_name ?? '' }}
                                         </span>
                                     </div>
                                 </td>

@@ -46,10 +46,10 @@
                             {{ $quotation->customer->name ?? 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {{ $quotation->currency->code ?? 'N/A' }}
+                            {{ $quotation->currency->symbol ?? 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {{ $quotation->user->name ?? 'N/A' }}
+                            {{ $quotation->user->username ?? 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                             {{ $quotation->created_at->format('Y-m-d') }}

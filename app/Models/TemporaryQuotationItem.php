@@ -15,7 +15,6 @@ class TemporaryQuotationItem extends Model
         'unit_id',
         'quantity',
         'unit_price',
-        // Add other columns you want to handle (discounts, notes, etc.)
     ];
 
     public function temporaryQuotation()

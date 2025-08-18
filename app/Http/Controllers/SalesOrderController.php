@@ -11,6 +11,7 @@ use App\Models\SalesOrderComment;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\PricingEstimate;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -140,7 +141,7 @@ class SalesOrderController extends Controller
                 'delivery_date' => $request->input('delivery_date'),
                 'remarks' => $quotation->remarks ?? null,
                 'currency_id' => $quotation->currency_id ?? null,
-                'tax_status' => $quotation->pricing_estimate->customer->tax_status?? $quotation->tax_status ?? null,
+                'tax_status' => $quotation->pricing_estimate->vat ?? null,
                 'sr_id' => $quotation->sr_id ?? auth()->id(),
                 'so_status' => 'pending',
             ])
@@ -232,7 +233,7 @@ class SalesOrderController extends Controller
      */
     public function edit(SalesOrder $salesOrder)
     {
-        $salesOrder->load(['customer', 'salesRep.employee']);
+        $salesOrder->load(['customer', 'salesRep.employee','pricing_estimate']);
 
         return view('sales_orders.edit', [
             'so_no'             => $salesOrder->so_no,
@@ -249,44 +250,24 @@ class SalesOrderController extends Controller
     }
 
 
-    /**
-     * Update the specified resource in storage.
-     */
-    // public function update(Request $request, SalesOrder $salesOrder)
-    // {
-
-    //     $validated = $request->validate([
-    //         'po_no' => ['required', 'string'],
-    //         'remarks' => ['required', 'string'],
-    //     ]);
-
-    //     $salesOrder->update($validated);
-
-    //     return redirect()->route('sales-orders.edit', $salesOrder)
-    //         ->with('success', 'Sales Order updated successfully');
-
-
-    // }
-
     public function update(SalesOrderRequest $request, SalesOrder $salesOrder)
 {
     try {
         DB::beginTransaction();
 
         $data = $request->validated();
-        $taxStatus = $request->input('tax_status', $salesOrder->customer->tax_status);
 
         $salesOrder->update([
-            'pr_no'         => $data['pr_no'],
-            'po_no'         => $data['po_no'],
-            'attention'     => $data['attention'],
-            'customer_id'   => $data['customer_id'],
-            'delivery_date' => $data['delivery_date'],
-            'sr_id'         => $data['sr_id'],
-            'remarks'       => $data['remarks'],
-            'currency_id'   => $data['currency_id'],
-            'tax_status'    => $taxStatus,
-            'so_status'     => 'draft',
+        'pr_no'         => $data['pr_no'] ?? $salesOrder->pr_no,
+        'po_no'         => $data['po_no'] ?? $salesOrder->po_no,
+        'attention'     => $data['attention'] ?? $salesOrder->attention,
+        'customer_id'   => $data['customer_id'] ?? $salesOrder->customer_id,
+        'delivery_date' => $data['delivery_date'] ?? $salesOrder->delivery_date,
+        'sr_id'         => $data['sr_id'] ?? $salesOrder->sr_id,
+        'remarks'       => $data['remarks'] ?? $salesOrder->remarks,
+        'currency_id'   => $data['currency_id'] ?? $salesOrder->currency_id,
+        'tax_status'    => $data['tax_status'] ?? $salesOrder->tax_status,
+        'so_status'     => 'draft',
         ]);
 
         $jobOrder = $salesOrder->jobOrder;

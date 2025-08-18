@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sr_id')->nullable()->constrained('users')->onDelete('set null'); //sales rep
             $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete()->after('id');
             $table->string('attention');
             $table->string('terms');
             $table->string('pr_no');

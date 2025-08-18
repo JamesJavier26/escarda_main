@@ -20,7 +20,8 @@ class TemporaryQuotation extends Model
         'vat',
         'pe_remarks',
         'sr_remarks',
-        'currency_id'
+        'currency_id',
+        'created_by'
     ];
 
     public function customer()
@@ -40,5 +41,9 @@ class TemporaryQuotation extends Model
     public function items()
     {
         return $this->hasMany(TemporaryQuotationItem::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

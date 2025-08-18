@@ -148,9 +148,8 @@
                                         @change="if (chosen) chosen.tax_status = $event.target.value"
                                         class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option value="">-</option>
-                                    <option value="Tax Exempt">Tax Exempt</option>
+                                    <option value="Zero Rated">Zero Rated</option>
                                     <option value="VAT Inclusive">VAT Inclusive</option>
-                                    <option value="VAT Exclusive">VAT Exclusive</option>
                                 </select>
                             </div>
                         </div>
@@ -499,7 +498,7 @@
                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2">
                         <option disabled selected value="">-- Select unit --</option>
                         @foreach ($units as $unit)
-                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                            <option value="{{ $unit->id }}">{{ $unit->short_name }}</option>
                         @endforeach
                     </select>
 
@@ -982,22 +981,18 @@ document.addEventListener('alpine:init', () => {
         nextLocalId: 0,
         
         init() {
-            // Initialize with existing items if editing
-            if (initialRows.length > 0) {
-                this.rows = initialRows;
-                this.nextLocalId = Math.max(...initialRows.map(r => r.local_uid || 0)) + 1;
-            }
+            this.rows = initialRows.map((r, i) => ({
+                ...r,
+                local_uid: r.local_uid ?? this.nextLocalId++
+            }));
+
             window.addEventListener('item-updated', (e) => {
                 const updated = e.detail;
                 const index = this.rows.findIndex(r => r.pricing_item_id === updated.pricing_item_id);
                 if (index !== -1) {
                     this.rows[index].pe_remarks = updated.pe_remarks;
-
-                    // ✅ Trigger Alpine reactivity
-                    this.rows = JSON.parse(JSON.stringify(this.rows));
                 }
             });
-            
         },
         
         receiveItems(items) {
@@ -1097,19 +1092,19 @@ document.addEventListener('alpine:init', () => {
                 }
             });
         },
-        
         hiddenFields(row) {
-            const prefix = row.pricing_item_id ? `items[${row.pricing_item_id}]` : `new_items[${row.local_uid}]`;
+            const prefix = row.id ? `items[${row.id}]` : `new_items[${row.local_uid}]`;
 
             return [
+                [`${prefix}[id]`, row.id || ''], // ✅ important for update
                 [`${prefix}[item_id]`, row.item_id],
-                [`${prefix}[name]`, row.name],
-                [`${prefix}[description]`, row.description],
+                [`${prefix}[item_name]`, row.name],
+                [`${prefix}[item_description]`, row.description],
                 [`${prefix}[quantity]`, row.quantity],
                 [`${prefix}[unit_price]`, row.unit_price],
                 [`${prefix}[unit_id]`, row.unit_id],
                 [`${prefix}[pe_remarks]`, row.pe_remarks || ''],
-                [`${prefix}[notes]`, row.notes || ''],
+                [`${prefix}[remarks]`, row.notes || ''],
                 [`${prefix}[_delete]`, row._delete ? 1 : 0]
             ];
         },
@@ -1133,9 +1128,7 @@ document.addEventListener('alpine:init', () => {
             const status = this.chosen?.tax_status;
             if (status === 'VAT Inclusive') {
                 return this.subtotal() * (12 / 112);
-            } else if (status === 'VAT Exclusive') {
-                return this.subtotal() * 0.12;
-            } else if (status === 'Tax Exempt') {
+            }else if (status === 'Zero Rated') {
                 return 0;
             }
             return 0;
@@ -1143,10 +1136,8 @@ document.addEventListener('alpine:init', () => {
         
         total() {
             const status = this.chosen?.tax_status;
-            if (status === 'VAT Inclusive' || status === 'Tax Exempt') {
+            if (status === 'VAT Inclusive' || status === 'Zero Rated') {
                 return this.subtotal(); // Already includes VAT or no VAT at all
-            } else if (status === 'VAT Exclusive') {
-                return this.subtotal() + this.vat();
             }
         },
     }));

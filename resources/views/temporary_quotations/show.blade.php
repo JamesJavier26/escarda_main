@@ -117,43 +117,47 @@
                 @endforeach
 
                 @php
-                    // Calculate subtotal: sum of item unit_price * quantity
-                    $subtotal = $temporaryQuotation->items->sum(function ($item) {
-                        return $item->unit_price * $item->quantity;
-                    });
+                // Calculate subtotal: sum of item unit_price * quantity
+                $subtotal = $temporaryQuotation->items->sum(function ($item) {
+                    return $item->unit_price * $item->quantity;
+                });
 
-                    $taxStatus = $temporaryQuotation->customer->tax_status ?? 'Tax Exempt';
+                $taxStatus = $temporaryQuotation->customer->tax_status ?? 'Zero Rated';
+                $vatRate = 0.12;
 
-                    if ($taxStatus === 'Tax Exempt') {
-                        $vat = 0;
-                    } elseif ($taxStatus === 'VAT Inclusive') {
-                        $vat = $subtotal - ($subtotal / 1.12);
-                    } elseif ($taxStatus === 'VAT Exclusive') {
-                        $vat = $subtotal * 0.12;
-                    } else {
-                        $vat = 0; // fallback if unexpected tax_status
-                    }
+                if ($taxStatus === 'Zero Rated') {
+                    $vat = 0;
+                    $vatableSales = $subtotal;
+                    $grandTotal = $subtotal;
+                } elseif ($taxStatus === 'VAT Inclusive') {
+                    $vatableSales = $subtotal / (1 + $vatRate); // extract vatable portion
+                    $vat = $subtotal - $vatableSales; // VAT portion
+                    $grandTotal = $subtotal; // total already includes VAT
+                } else {
+                    // fallback for unexpected status
+                    $vat = 0;
+                    $vatableSales = $subtotal;
+                    $grandTotal = $subtotal;
+                }
+            @endphp
 
-                    $grandTotal = ($taxStatus === 'VAT Exclusive') ? $subtotal + $vat : $subtotal;
-                @endphp
+            {{-- Totals --}}
+            <tr class="bg-gray-50 dark:bg-gray-700">
+                <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Total Vatable Sales</td>
+                <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($vatableSales, 2) }}</td>
+            </tr>
 
-                {{-- Totals --}}
-                <tr class="bg-gray-50 dark:bg-gray-700">
-                    <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Subtotal</td>
-                    <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($subtotal, 2) }}</td>
-                </tr>
+            @if ($vat > 0)
+            <tr class="bg-gray-50 dark:bg-gray-700">
+                <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">VAT (12%)</td>
+                <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
+            </tr>
+            @endif
 
-                @if ($vat > 0)
-                <tr class="bg-gray-50 dark:bg-gray-700">
-                    <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">{{ $taxStatus }} 12%</td>
-                    <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
-                </tr>
-                @endif
-
-                <tr class="bg-gray-100 dark:bg-gray-600">
-                    <td colspan="4" class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">Total</td>
-                    <td class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
-                </tr>
+            <tr class="bg-gray-100 dark:bg-gray-600">
+                <td colspan="4" class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">Total Sales Amount</td>
+                <td class="px-6 py-4 text-right font-bold text-sm text-gray-900 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
+            </tr>
             </tbody>
         </table>
     </div>

@@ -94,41 +94,41 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Customer</p>
-                                <p class="text-gray-100" x-text="selected?.customer_name || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.customer_name || '--'">--</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-400">SO No.</p>
-                                <p class="text-gray-100" x-text="selected?.so_no || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.so_no || '--'">--</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-400">PO No.</p>
-                                <p class="text-gray-100" x-text="selected?.po_no || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.po_no || '--'">--</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-400">PR No.</p>
-                                <p class="text-gray-100" x-text="selected?.pr_no || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.pr_no || '--'">--</p>
                             </div>
                         </div>
 
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Sales Representative</p>
-                                <p class="text-gray-100" x-text="selected?.sales_rep || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.sales_rep || '--'">--</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Delivery Details</p>
-                                <p class="text-gray-100" x-text="selected?.delivery_details || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.delivery_details || '--'">--</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Remarks</p>
-                                <p class="text-gray-100" x-text="selected?.remarks || '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="selected?.remarks || '--'">--</p>
                             </div>
                         </div>
 
                         {{-- Selected Item Preview --}}
                         <div class="col-span-2 mt-6 border-t border-gray-600 pt-4" x-show="isEditMode && selectedJoItemObj">
                             <p class="text-sm font-medium text-gray-400">Selected Item</p>
-                            <p class="text-base text-gray-100" x-text="(selectedJoItemObj?.item_name || '--') + ' — ' + (selectedJoItemObj?.item_desc || '')"></p>
+                            <p class="text-basetext-gray-900 dark:text-gray-100" x-text="(selectedJoItemObj?.item_name || '--') + ' — ' + (selectedJoItemObj?.item_desc || '')"></p>
                         </div>
                     </div>
                 </div>

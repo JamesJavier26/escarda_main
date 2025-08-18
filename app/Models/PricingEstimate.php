@@ -8,7 +8,7 @@ class PricingEstimate extends Model
 {
     protected $fillable = [
         'pe_no', 'sr_id', 'customer_id', 'attention', 'terms', 'pr_no',
-        'delivery_date', 'remarks', 'pe_status', 'vat',
+        'delivery_date', 'remarks', 'pe_status', 'vat', 'created_by',
         'pe_remarks', 'sr_remarks', 'currency_id',
     ];
     public function customer() {
@@ -34,6 +34,10 @@ class PricingEstimate extends Model
     public function quotations()
     {
         return $this->hasMany(Quotation::class);
+    }
+    public function sales_orders()
+    {
+        return $this->hasMany(SalesOrder::class);
     }
     public function getapprovedQuotationAttribute()
     {

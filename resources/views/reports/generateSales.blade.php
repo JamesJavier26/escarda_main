@@ -68,14 +68,28 @@
         <img src="{{ public_path('images/letterhead.png') }}" alt="Letterhead"
             style="width: 50%; height: auto;">
     </header>
-    {{-- <footer>
-        <p class="text-left row-border-bottom pb-2">
-            <strong>NOTE:</strong> <i>Approval of this quotation is system generated, no signature required.</i>
-        </p>
-        <p class="text-left">
-            <strong>Website:</strong> <a href="http://www.escardastrading.com" target="_blank">http://www.escardastrading.com</a>
-        </p>
-    </footer> --}}
+    <footer>
+        <div style="display: flex; align-items: flex-start; gap: 10px; position: relative;">
+            {{-- Logo on the left --}}
+            <img src="{{ public_path('images/smile.png') }}" alt="Logo" style="position: absolute; left: 0px; top: -30px; height: 70px;">
+
+            <div style="font-size: 10px; width: 100%;">
+                {{-- Item information at the top --}}
+                <div style="margin-bottom: 8px;">
+                    <p style="margin: 2px 0;">&nbsp;</p>
+                    <p style="margin: 2px 0;">&nbsp;</p>
+                </div>
+
+                {{-- Original content below --}}
+                <p class="text-left row-border-bottom" style="margin: 2px 0;">
+                    <strong>NOTE:</strong> <i>Approval of this quotation is system generated, no signature required.</i>
+                </p>
+                <p class="text-left" style="margin: 2px 0;">
+                    <strong>Website:</strong> <a href="http://www.escardastrading.com" target="_blank">http://www.escardastrading.com</a>
+                </p>
+            </div>
+        </div>
+    </footer>
 
     <main>
         <table class="text-center"><h2>SALES ORDER</h2></table>
@@ -95,7 +109,7 @@
                 <td style="width: 20%;">&nbsp;</td>
                 <td style="width: 40%; vertical-align: top;">
                     <table class="no-border" style="width: 100%;">
-                        <tr><td class="text-center" style="padding: 0 0 1px 0;"><strong>NO. {{ $salesOrder->so_no }}</strong></td></tr>
+                        <tr><td style="padding: 0 0 1px 0;"><strong>SO NO. {{ $salesOrder->so_no }}</strong></td></tr>
                         <tr><td style="padding: 0 0 1px 0;"><strong>DATE ORDERED:</strong> {{ $salesOrder->date_ordered }}</td></tr>
                         <tr>
                             <td style="padding: 0 0 1px 0;">
@@ -110,35 +124,6 @@
                 </td>
             </tr>
         </table>
-
-        @php
-            // Sum up total from jo_items
-            $subtotal = 0;
-            foreach ($salesOrder->jobOrder->jo_items as $item) {
-                $subtotal += ($item->unit_price ?? 0) * ($item->quantity ?? 0);
-            }
-
-            $vatRate = 0.12;
-            $taxStatus = $salesOrder->tax_status ?? 'Tax Exempt';
-
-            $vatAmount = 0;
-            $grandTotal = $subtotal;
-
-            if ($taxStatus === 'VAT Inclusive') {
-                // Subtotal already includes VAT, extract VAT portion
-                $subtotalExVat = $subtotal / (1 + $vatRate);
-                $vatAmount = $subtotal - $subtotalExVat;
-                $grandTotal = $subtotal; // total includes VAT already
-            } elseif ($taxStatus === 'VAT Exclusive') {
-                // VAT to be added on top
-                $vatAmount = $subtotal * $vatRate;
-                $grandTotal = $subtotal + $vatAmount;
-            } else {
-                // Tax Exempt
-                $vatAmount = 0;
-                $grandTotal = $subtotal;
-            }
-        @endphp
 
         <table class="">
             <thead>
@@ -157,7 +142,7 @@
                     @endphp
                     <tr>
                         <td class="text-center">{{ $item->item->number ?? '—' }}</td>
-                        <td class="text-center">{{ $item->quantity }} {{ $item->unit->name }}</td>
+                        <td class="text-center">{{ $item->quantity }} {{ $item->unit->short_name }}</td>
                         <td class="wrap-text text-center">{{ $item->item_description ?? '—' }}</td>
                         <td class="text-center">₱{{ number_format($item->unit_price, 2) }}</td>
                         <td class="text-center">₱{{ number_format($lineTotal, 2) }}</td>
@@ -171,23 +156,65 @@
                     <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
                 @endfor
 
+                @php
+                    // Sum up total from jo_items
+                    $subtotal = 0;
+                    foreach ($salesOrder->jobOrder->jo_items as $item) {
+                        $subtotal += ($item->unit_price ?? 0) * ($item->quantity ?? 0);
+                    }
 
-                {{-- Totals --}}
+                    $vatRate = 0.12;
+                    $taxStatus = $salesOrder->tax_status ?? 'Zero Rated';
+
+                    $vatAmount = 0;
+                    $grandTotal = $subtotal;
+                    $totalVatableSales = 0;
+                    $zeroRatedSales = 0;
+
+                    if ($taxStatus === 'VAT Inclusive') {
+                        $totalVatableSales = $subtotal / (1 + $vatRate);
+                        $vatAmount = $subtotal - $totalVatableSales;
+                        $grandTotal = $subtotal;
+                    } elseif ($taxStatus === 'Zero Rated') {
+                        $zeroRatedSales = $subtotal;
+                        $grandTotal = $subtotal;
+                    }
+                @endphp
+
                 <tr>
                     <td></td><td></td><td></td>
-                    <td class="text-center font-semibold">TOTAL SALES</td>
-                    <td class="text-center">₱{{ number_format($subtotal, 2) }}</td>
+                    <td class="text-center font-semibold">Total Vatable Sales</td>
+                    <td class="text-center">
+                        @if($totalVatableSales > 0)
+                            ₱{{ number_format($totalVatableSales, 2) }}
+                        @endif
+                    </td>
                 </tr>
+
+                <tr>
+                    <td></td><td></td><td></td>
+                    <td class="text-center font-semibold">Zero Rated Sales</td>
+                    <td class="text-center">
+                        @if($zeroRatedSales > 0)
+                            ₱{{ number_format($zeroRatedSales, 2) }}
+                        @endif
+                    </td>
+                </tr>
+
+                @if($vatAmount > 0)
                 <tr>
                     <td></td><td></td><td></td>
                     <td class="text-center font-semibold">{{ $taxStatus }} 12%</td>
                     <td class="text-center">₱{{ number_format($vatAmount, 2) }}</td>
                 </tr>
+                @endif
+
                 <tr>
                     <td></td><td></td><td></td>
-                    <td class="text-center font-bold">TOTAL AMOUNT</td>
+                    <td class="text-center font-bold">Total Sales Amount</td>
                     <td class="text-center font-bold">₱{{ number_format($grandTotal, 2) }}</td>
                 </tr>
+
             </tbody>
         </table>
 
@@ -233,14 +260,6 @@
             <tr>
                 <td class="text-left w-10" style="padding: 2px 0;"><strong>APPROVER:</strong></td>
                 <td style="padding: 2px 0;"><strong> {{ $salesOrder->approver?->username ?? '—' }}<strong></td>
-            </tr>
-        </table>
-       <table class="no-border" style="width: 100%;">
-            <tr>
-                <td class="text-center" style="padding: 2px 0;"><strong>DELIVERY DETAILS:</strong></td>
-            </tr>
-            <tr>
-                <td class="text-center"></td>
             </tr>
         </table>
     </main>

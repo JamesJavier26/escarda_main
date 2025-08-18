@@ -30,7 +30,7 @@
 <div class="grid grid-cols-1 gap-6 w-full mb-6">
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
-            <h2 class="text-xl font-semibold text-gray-100">Customer & Estimate Details</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Customer & Estimate Details</h2>
             <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">
                 P.E NO: #{{ $pricingEstimate->pe_no }}
             </span>
@@ -41,23 +41,23 @@
             <div class="space-y-3">
                 <div>
                     <p class="text-sm font-medium text-gray-400">Customer Name</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->customer->name ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->customer->name ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Fax No.</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->customer->telefax ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->customer->telefax ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Telephone No.</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->customer->telno ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->customer->telno ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Email</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->customer->email ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->customer->email ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Address</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->customer->address ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->customer->address ?? '--' }}</p>
                 </div>
             </div>
 
@@ -65,26 +65,30 @@
             <div class="space-y-3">
                 <div>
                     <p class="text-sm font-medium text-gray-400">PR No.</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->pr_no ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->pr_no ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Delivery Date</p>
-                    <p class="text-gray-100">
+                    <p class="text-gray-900 dark:text-gray-100">
                         {{-- {{ \Carbon\Carbon::parse($pricingEstimate->delivery_date)->format('F j, Y') }} --}}
                         {{ $pricingEstimate->delivery_date }}
                     </p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Terms</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->terms ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->terms ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Attention</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->attention ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->attention ?? '--' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Currency</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->currency->code ?? 'PHP' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->currency->code ?? 'PHP' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-400">Tax Status</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->vat ?? $pricingEstimate->customer->tax_status }}</p>
                 </div>
             </div>
 
@@ -92,7 +96,7 @@
             <div class="space-y-3">
                 <div>
                     <p class="text-sm font-medium text-gray-400">Sales Representative</p>
-                    <p class="text-gray-100">{{ $pricingEstimate->salesRep->employee->full_name ?? 'N/A' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->salesRep->employee->full_name ?? 'N/A' }}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Estimate Status</p>
@@ -107,7 +111,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-400">Remarks</p>
-                    <p class="text-gray-100 whitespace-pre-line">{{ $pricingEstimate->pe_remarks ?? '--' }}</p>
+                    <p class="text-gray-900 dark:text-gray-100" whitespace-pre-line">{{ $pricingEstimate->pe_remarks ?? '--' }}</p>
                 </div>
             </div>
         </div>
@@ -168,13 +172,13 @@
                                 <template x-if="item.__type === 'offer-header'">
                                     <div class="uppercase tracking-wide text-xs text-gray-500 dark:text-gray-400">Offer List</div>
                                 </template>
-
                                 <template x-if="item.__type === 'offer'">
                                     <div>
                                         <div class="font-semibold" x-text="item.item_name"></div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400" x-text="item.item_desc"></div>
-                                        <template x-if="item.item_description">
-                                            <div class="text-[10px] text-gray-400 dark:text-gray-500 italic mt-1" x-text="item.item_description"></div>
+                                        <template x-if="item.description">
+                                            <div class="text-[10px] text-gray-400 dark:text-gray-500 italic mt-1"
+                                                x-text="item.description">
+                                            </div>
                                         </template>
                                     </div>
                                 </template>
@@ -187,13 +191,13 @@
                             <td class="px-4 py-2 text-sm">
                                 <template x-if="item.__type === 'offer' || item.__type === 'parent'">
                                     <div class="flex flex-col">
-                                        <!-- Discounted Price -->
+                                        <!-- Final (Discounted) Price -->
                                         <span class="text-base font-semibold text-gray-900 dark:text-white">
-                                            ₱<span x-text="formatCurrency(item.final_unit_price ?? item.unit_price)"></span>
+                                            ₱<span x-text="formatCurrency(item.final_unit_price)"></span>
                                         </span>
 
-                                        <!-- Discount Tag -->
-                                        <template x-if="item.discount_amount > 0">
+                                        <!-- Show discount if discounted -->
+                                        <template x-if="(item.unit_price > item.final_unit_price)">
                                             <div class="flex flex-col text-xs text-green-500 dark:text-green-400">
                                                 <!-- Original Price with Strikethrough -->
                                                 <span class="line-through text-gray-500 dark:text-gray-400">
@@ -202,9 +206,11 @@
 
                                                 <!-- Discount Label -->
                                                 <span>
-                                                    (<span x-text="item.discount_type === 'percentage' ? 
-                                                        `${item.discount_amount}% off` : 
-                                                        `₱${formatCurrency(item.discount_amount)} off`"></span>)
+                                                    (<span 
+                                                        x-text="item.discount_type === 'percentage' 
+                                                            ? `${Math.round(((item.unit_price - item.final_unit_price) / item.unit_price) * 100)}% off` 
+                                                            : `₱${formatCurrency(item.unit_price - item.final_unit_price)} off`">
+                                                    </span>)
                                                 </span>
                                             </div>
                                         </template>
@@ -213,36 +219,50 @@
                             </td>
                             
                             <!-- Actions -->
-                            @if (
-                                $pricingEstimate->pe_status === 'pending' &&
-                                !$pricingEstimate->quotations->contains(fn ($q) => $q->quote_status === 'approved' && $q->is_final)
-                            )
                             <td class="px-4 py-3 text-center space-x-2">
-                                <template x-if="item.__type === 'offer'">
-                                    <button type="button" @click="openPriceModal(item)"
-                                        class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
-                                        title="Add Price">
-                                        <i class="fas fa-calculator"></i>
-                                    </button>
-                                </template>
+                                @if (
+                                    $pricingEstimate->pe_status === 'pending' &&
+                                    !$pricingEstimate->quotations->contains(fn ($q) => $q->quote_status === 'approved' && $q->is_final)
+                                )
+                                    <!-- For offer rows -->
+                                    <template x-if="item.__type === 'offer'">
+                                        <div class="flex justify-center space-x-1">
+                                            <button type="button" 
+                                                    @click="openPriceModal(item)"
+                                                    class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
+                                                    title="Add Price">
+                                                <i class="fas fa-calculator"></i>
+                                            </button>
 
-                                <template x-if="item.__type === 'parent' && !hasOfferFor(item.id)">
-                                    <button type="button" @click="openPriceModal(item)"
-                                        class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
-                                        title="Add Price">
-                                        <i class="fas fa-calculator"></i>
-                                    </button>
-                                </template>
+                                            <button type="button" @click="removeOffer(item)"
+                                                class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-gray-700"
+                                                title="Remove Offer">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </template>
 
-                                <template x-if="item.__type === 'parent'">
-                                    <button type="button" @click="openOfferModal(item)"
-                                        class="text-green-500 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-50 dark:hover:bg-gray-700"
-                                        title="Create Offer">
-                                        <i class="fas fa-tag"></i>
-                                    </button>
-                                </template>
+                                    <!-- For parent rows without existing offers -->
+                                    <template x-if="item.__type === 'parent' && !hasOfferFor(item.id)">
+                                        <button type="button" 
+                                                @click="openPriceModal(item)"
+                                                class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
+                                                title="Add Price">
+                                            <i class="fas fa-calculator"></i>
+                                        </button>
+                                    </template>
+
+                                    <!-- For parent rows -->
+                                    <template x-if="item.__type === 'parent'">
+                                        <button type="button" 
+                                                @click="openOfferModal(item)"
+                                                class="text-green-500 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-50 dark:hover:bg-gray-700"
+                                                title="Create Offer">
+                                            <i class="fas fa-tag"></i>
+                                        </button>
+                                    </template>
+                                @endif
                             </td>
-                            @endif
                         </tr>
                     </template>
                 </tbody>
@@ -253,12 +273,12 @@
     {{-- P.E Remarks & Attachments --}}
     <div class="grid grid-cols-1 gap-6 w-full mb-6">
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-100 mb-4 border-b border-gray-600 pb-2">P.E. Remarks & Attachments</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-600 pb-2">P.E. Remarks & Attachments</h2>
 
             {{-- Remarks --}}
             <div class="mb-6">
                 <p class="text-sm font-medium text-gray-400">Remarks</p>
-                <p class="text-gray-100 whitespace-pre-line">
+                <p class="text-gray-900 dark:text-gray-100" whitespace-pre-line">
                     {{ $pricingEstimate->pe_remarks ?? '—' }}
                 </p>
             </div>
@@ -549,8 +569,14 @@
                             </div>
                             
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Notes</label>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Client Notes</label>
                                 <textarea x-model="notes" rows="3"
+                                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 text-sm"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Internal Notes</label>
+                                <textarea x-model="internal_notes" rows="3"
                                     class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 text-sm"></textarea>
                             </div>
                         </div>
@@ -624,65 +650,178 @@
         </div>
     </x-modal>
 
-    <x-modal name="add-offer" maxWidth="2xl">
-        <div x-data="addCustomOffer()" class="bg-white dark:bg-gray-800 p-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Add Offer for: <span x-text="parentItemName" class="text-blue-600 dark:text-blue-300"></span>
-            </h2>
+   <x-modal name="add-offer" maxWidth="6xl">
+    <div x-data="itemSearch()" class="bg-white dark:bg-gray-800 p-6 max-h-[80vh] overflow-y-auto">
 
-            <div class="space-y-4">
+        <!-- Custom Item Section -->
+        <div class="border-b border-gray-300 dark:border-gray-600 pt-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Add Custom Item</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <!-- Item Name -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Item Name</label>
-                    <input type="text" x-model="name"
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter item name">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name *</label>
+                    <input type="text" x-model="customName"
+                           class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
+                           placeholder="Enter item name">
                 </div>
 
-                <!-- Item Description -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Item Description</label>
-                    <textarea x-model="description"
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter item description..."></textarea>
-                </div>
-
-                <!-- Unit -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Select Unit</label>
-                    <select x-model="unit_id"
-                            class="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="">Select Unit</option>
+                <!-- Item Unit -->
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Unit *</label>
+                    <select x-model="customUnit"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2">
+                        <option value="" disabled selected>-- Select unit --</option>
                         @foreach ($units as $unit)
-                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                            <option value="{{ $unit->id }}">{{ $unit->short_name }}</option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Description -->
+                <div class="sm:col-span-2 space-y-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                    <textarea x-model="customDescription" rows="3"
+                              class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
+                              placeholder="Optional description"></textarea>
+                </div>
             </div>
 
-            <!-- Actions -->
-            <div class="mt-6 flex justify-between">
-                <button @click="$dispatch('close')" type="button"
-                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    Cancel
+            <div class="mt-6 mb-3 flex justify-end">
+                <button @click="addCustomItem" :disabled="!customName || !customUnit"
+                        class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Add Custom Item
                 </button>
-
-                <button type="button" @click="addCustomItem" :disabled="isSubmitting"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center min-w-[100px] disabled:opacity-70">
-                    <template x-if="!isSubmitting">
-                        <span>Add Offer</span>
-                    </template>
-                    <template x-if="isSubmitting">
-                        <span class="flex items-center space-x-2">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <span>Adding...</span>
-                        </span>
-                    </template>
-                </button>
-
             </div>
         </div>
-    </x-modal>
+
+        <!-- Existing Items Section -->
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Add Items</h2>
+
+        <!-- Search Controls -->
+        <div class="flex items-center space-x-3 mb-4">
+            <div class="w-1/3">
+                <select x-model="searchField"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2">
+                    <option value="all">All Fields</option>
+                    <option value="number">Item Number</option>
+                    <option value="name">Name</option>
+                    <option value="description">Description</option>
+                </select>
+            </div>
+
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <input type="text" x-model="searchQuery" @input.debounce.300ms="searchItems"
+                       placeholder="Search items..."
+                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+        </div>
+
+        <!-- Items List -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <template x-if="isLoading">
+                <div class="flex justify-center py-8">
+                    <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </template>
+
+            <template x-if="!isLoading && items.length > 0">
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
+                    <template x-for="item in items" :key="item.id">
+                        <li class="py-4 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
+                                       x-text="item.number"></p>
+                                    <p class="text-sm text-gray-900 dark:text-gray-100 font-semibold" x-text="item.name"></p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate"
+                                       x-text="item.description"></p>
+                                </div>
+                                <div class="ml-4 flex-shrink-0">
+                                    <button @click="addItem(item)"
+                                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+
+            <template x-if="!isLoading && items.length === 0 && searchQuery.length > 0">
+                <div class="text-center py-4 text-gray-500 dark:text-gray-400">No items found</div>
+            </template>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-4 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        
+            <!-- Desktop -->
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                    Showing <span class="font-medium" x-text="(currentPage - 1) * perPage + 1"></span> to
+                    <span class="font-medium" x-text="Math.min(currentPage * perPage, totalItems)"></span> of
+                    <span class="font-medium" x-text="totalItems"></span> results
+                </p>
+
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <!-- Prev -->
+                    <button @click="prevPage()" :disabled="currentPage === 1"
+                            class="px-2 py-2 rounded-l-md border bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+
+                    <!-- Page Numbers -->
+                    <template x-for="page in getPageNumbers()" :key="page">
+                        <button @click="goToPage(page)"
+                                :class="currentPage === page ? 'bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-600 text-blue-600 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'"
+                                class="px-4 py-2 border text-sm font-medium"
+                                x-text="page"></button>
+                    </template>
+
+                    <!-- Next -->
+                    <button @click="nextPage()" :disabled="currentPage === lastPage"
+                            class="px-2 py-2 rounded-r-md border bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </nav>
+                    <div class="mt-6 flex justify-end space-x-3">
+                    <button 
+                        @click="$dispatch('close')"
+                        type="button"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-modal>
+
 
 
 </div>
@@ -690,34 +829,71 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('priceTable', () => ({
-        items: @json($items),
-        parentItems: @json($pricingEstimate->pe_items), // All items for reference
-        
+            items: @json($items).map(i => ({
+        ...i,
+        description: i.description ?? i.item_description ?? i.item_desc ?? ''
+        })),
+        parentItems: @json($pricingEstimate->pe_items),
+        removedOffers: [],
+
         getParentItemName(parentId) {
             const parent = this.parentItems.find(i => i.id === parentId);
             return parent ? parent.item_name : 'Original Item';
         },
+
         getOffersFor(parentId) {
             return this.items.filter(i => i.is_offer && i.parent_item_id === parentId);
         },
+
         hasOfferFor(itemId) {
             return this.displayItems().some(i => i.is_offer && i.parent_item_id === itemId);
         },
 
+        removeOffer(item) {
+        if (!confirm('Are you sure you want to delete this offer?')) return;
+
+        // Remove locally
+        this.items = this.items.filter(i => i.id !== item.id);
+
+        // Optional: track removed offers if you need to batch delete later
+        if (!this.removedOffers) this.removedOffers = [];
+        if (item.id) this.removedOffers.push(item.id);
+
+        // Delete from backend immediately via fetch
+        if (item.id) {
+            fetch(`/pricing-estimates/item/${item.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (!res.success) {
+                    alert('Failed to remove offer on server.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('An error occurred while removing the offer.');
+            });
+        }
+    },
+
         getMainItemIndex(currentIdx) {
-            // Count how many non-offer items came before this one
             let count = 0;
             for (let i = 0; i <= currentIdx; i++) {
-                if (!this.displayItems()[i].is_offer) {
-                    count++;
-                }
+                if (!this.displayItems()[i].is_offer) count++;
             }
             return count;
         },
+
         openPriceModal(item) {
             window.dispatchEvent(new CustomEvent('set-price-data', { detail: item }));
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'price-modification' }));
         },
+
         openOfferModal(parentItem) {
             window.dispatchEvent(new CustomEvent('set-offer-data', { 
                 detail: {
@@ -735,63 +911,56 @@ document.addEventListener('alpine:init', () => {
                 maximumFractionDigits: 2
             });
         },
-displayItems() {
-    const list = [];
 
-    this.items.forEach(parent => {
-        if (!parent.is_offer) {
-            const offers = this.items.filter(child => child.is_offer && child.parent_item_id === parent.id);
+        displayItems() {
+            const list = [];
 
-            // Zero out parent pricing if it has offers
-            if (offers.length > 0) {
-                parent = {
-                    ...parent,
-                    quantity: 0,
-                    unit_price: 0,
-                    final_unit_price: 0,
-                    discount_amount: 0,
-                    price_factor: null,
-                    sum_charge: null,
-                    factor_rate: null,
-                };
-            }
+            this.items.forEach(parent => {
+                if (!parent.is_offer) {
+                    const offers = this.items.filter(child => child.is_offer && child.parent_item_id === parent.id);
 
-            list.push({ ...parent, __type: 'parent' });
+                    if (offers.length > 0) {
+                        parent = { ...parent, quantity: 0, unit_price: 0, final_unit_price: 0, discount_amount: 0 };
+                    }
 
-            if (offers.length > 0) {
-                list.push({ __type: 'offer-header', parent_id: parent.id });
+                    list.push({ ...parent, __type: 'parent' });
 
-                offers.forEach(offer => {
-                    list.push({ ...offer, __type: 'offer' });
-                });
-            }
-        }
-    });
+                    if (offers.length > 0) {
+                        list.push({ __type: 'offer-header', parent_id: parent.id });
 
-    return list;
-},
- 
+                        offers.forEach(offer => {
+                            list.push({ ...offer, __type: 'offer' });
+                        });
+                    }
+                }
+            });
+
+            return list;
+        },
+
         init() {
             // Update existing items
             window.addEventListener('item-updated', e => {
                 const updated = e.detail;
                 const index = this.items.findIndex(i => i.id === updated.id);
-                if (index !== -1) {
-                    this.items[index] = updated;
-                } else {
-                    this.items.push(updated);
-                }
+                if (index !== -1) this.items[index] = updated;
+                else this.items.push(updated);
             });
 
-            // 🔥 Add this for new offer items
+            // Add new offer items
             window.addEventListener('item-added', e => {
-                const added = e.detail;
+            const added = e.detail;
+
+            // Make sure description is always set
+            const description = added.description ?? added.item_description ?? '';
 
                 this.items.push({
                     id: added.id,
                     item_id: added.item_id || null,
                     item_name: added.item_name,
-                    item_desc: added.item_description,
+                    item_desc: description,            // For consistency with existing code
+                    item_description: description,     // Populate all keys used in template
+                    description: description,
                     unit_id: added.unit_id,
                     quantity: added.quantity,
                     unit_price: added.unit_price,
@@ -816,6 +985,7 @@ displayItems() {
         unitPrice: 0,
         overridePrice: null,
         notes: '',
+        internal_notes: '',
         discountType: 'percentage',
         discountAmount: 0,
         isSubmitting: false,
@@ -844,6 +1014,7 @@ displayItems() {
                 this.factorRate = this.currentItem.factor_rate || 1.0;
                 this.quantity = this.currentItem.quantity || 1;
                 this.notes = this.currentItem.notes || '';
+                this.internal_notes = this.currentItem.internal || '';
                 this.unitPrice = this.currentItem.unit_price || 0;
                 this.discountType = this.currentItem.discount_type || 'percentage';
                 this.discountAmount = this.currentItem.discount_amount || 0;
@@ -910,113 +1081,196 @@ displayItems() {
         },
 
         async applyPrice() {
-            this.isSubmitting = true;
-            this.overridePrice = '';
-            
-            const payload = {
-                price_factor: this.factorRates,
-                factor_rate: this.factorRate,
-                sum_charge: this.sum_charge,
-                quantity: this.quantity,
-                // unit_price: this.getFinalPrice(),
-                unit_price: this.getOriginalPrice(),
-                final_unit_price: this.getOriginalPrice(),
-                notes: this.notes,
-                discount_type: this.discountType,
-                discount_amount: this.discountAmount
-                
-            };
+        this.isSubmitting = true;
+        this.overridePrice = '';
 
-            try {
-                const response = await fetch(`/pricing-estimate-items/${this.currentItem.id}/update-unit-price`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify(payload)
-                });
+        // Calculate final price with discount
+        const finalPrice = this.getFinalPrice();
+        const originalPrice = this.getOriginalPrice();
 
-                const data = await response.json();
+        if (!this.currentItem.id) {
+            // Unsaved item: just update locally
+            this.currentItem.unit_price = originalPrice;      // keep original for cross-out
+            this.currentItem.final_unit_price = finalPrice;   // show discounted price
+            this.$dispatch('item-updated', { ...this.currentItem });
+            this.$dispatch('close');
 
-                if (!response.ok) {
-                    throw new Error(data.message || 'Failed to update price');
-                }
+            // ✅ Show success toast even for unsaved items
+            Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: 'Price updated successfully!',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+            });
 
-                Object.assign(this.currentItem, data);
-                this.$dispatch('item-updated', data);
-                this.$dispatch('close');
-
-                Swal.fire({
-                    toast: true,
-                    icon: 'success',
-                    title: 'Price updated successfully!',
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    customClass: {
-                        popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
-                    },
-                });
-
-            } catch (error) {
-                console.error('Error:', error);
-                Swal.fire({
-                    toast: true,
-                    icon: 'error',
-                    title: error.message || 'Failed to update remarks',
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    customClass: {
-                        popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
-                    },
-                });
-
-            } finally {
-                this.isSubmitting = false;
-            }
+            this.isSubmitting = false;
+            return;
         }
+
+        // Payload for saved items
+        const payload = {
+            price_factor: this.factorRates,
+            factor_rate: this.factorRate,
+            sum_charge: this.sum_charge,
+            quantity: this.quantity,
+            unit_price: originalPrice,      // for cross-out
+            final_unit_price: finalPrice,   // discounted
+            notes: this.notes,
+            internal_notes: this.internal_notes,
+            discount_type: this.discountType,
+            discount_amount: this.discountAmount
+        };
+
+        try {
+            const response = await fetch(`/pricing-estimate-items/${this.currentItem.id}/update-unit-price`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to update price');
+
+            Object.assign(this.currentItem, data);
+            this.$dispatch('item-updated', data);
+            this.$dispatch('close');
+
+            // ✅ Success toast for saved items
+            Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: 'Price updated successfully!',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+            });
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                toast: true,
+                icon: 'error',
+                title: error.message || 'Failed to update price',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+            });
+        } finally {
+            this.isSubmitting = false;
+        }
+    }
+
+
     }));
 
-    Alpine.data('addCustomOffer', () => ({ 
-        name: '',
-        description: '',
-        unit_id: '',
+    Alpine.data('itemSearch', () => ({
+        searchQuery: '',
+        items: [],
+        isLoading: false,
+        currentPage: 1,
+        lastPage: 1,
+        totalItems: 0,
+        perPage: 10,
+        searchField: 'all',
+        customName: '',
+        customDescription: '',
+        customUnit: '',
         parentItemId: null,
         parentItemName: '',
         pricingEstimateId: null,
         isSubmitting: false,
 
         init() {
+            // Listen for parent item info from event
             window.addEventListener('set-offer-data', (event) => {
-                console.log('Received offer data:', event.detail); // <-- debug all incoming data
                 const { parent_item_id, parent_item_name, pricing_estimate_id } = event.detail;
-
                 this.parentItemId = parent_item_id;
                 this.parentItemName = parent_item_name;
                 this.pricingEstimateId = pricing_estimate_id;
+
+                // Fetch first page when modal opens
+                this.searchItems();
             });
         },
 
+        async searchItems(resetPage = true) {
+            if (resetPage) this.currentPage = 1;
+            this.isLoading = true;
 
-        async addCustomItem() {
-            this.isSubmitting = true;
-            if (!this.name || !this.unit_id) {
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'Missing Fields',
-                    text: 'Item name and unit are required.',
-                    confirmButtonColor: '#2563eb',
-                });
-                this.isSubmitting = false;
+            try {
+                const response = await fetch(`/items/search?q=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&field=${this.searchField}`);
+                const data = await response.json();
+
+                this.items = data.data || [];
+                this.currentPage = data.current_page || 1;
+                this.lastPage = data.last_page || 1;
+                this.totalItems = data.total || 0;
+                this.perPage = data.per_page || 10;
+
+                console.log('Items loaded:', { currentPage: this.currentPage, lastPage: this.lastPage, totalItems: this.totalItems });
+            } catch (error) {
+                console.error('Error fetching items:', error);
+                this.items = [];
+                this.currentPage = this.lastPage = 1;
+                this.totalItems = 0;
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        nextPage() {
+            if (this.currentPage < this.lastPage) {
+                this.currentPage++;
+                this.searchItems(false);
+            }
+        },
+
+        prevPage() {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.searchItems(false);
+            }
+        },
+
+        goToPage(page) {
+            if (page >= 1 && page <= this.lastPage) {
+                this.currentPage = page;
+                this.searchItems(false);
+            }
+        },
+
+        getPageNumbers() {
+            const pages = [];
+            if (this.lastPage <= 5) {
+                for (let i = 1; i <= this.lastPage; i++) pages.push(i);
+            } else {
+                let start = Math.max(this.currentPage - 2, 1);
+                let end = Math.min(this.currentPage + 2, this.lastPage);
+                if (this.currentPage <= 3) end = 5;
+                if (this.currentPage >= this.lastPage - 2) start = this.lastPage - 4;
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
+        },
+
+        async addItem(item) {
+            if (!this.parentItemId || !this.pricingEstimateId) {
+                console.error('Parent or pricing estimate missing');
                 return;
             }
 
             try {
-                const response = await fetch(`/pricing-estimate-add-offer`, {
+                const res = await fetch('/pricing-estimate-add-offer', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1024,58 +1278,133 @@ displayItems() {
                     },
                     body: JSON.stringify({
                         pricing_estimate_id: this.pricingEstimateId,
-                        item_name: this.name,
-                        item_description: this.description,
-                        unit_id: this.unit_id,
+                        item_id: item.id,
+                        item_name: item.name || item.item_name,
+                        item_description: item.description || item.item_description || '',
+                        unit_id: item.unit_id,
                         quantity: 1,
-                        unit_price: 0,
+                        unit_price: item.price || 0,
+                        final_unit_price: item.price || 0, // backend can override
+                        discount_type: 'percentage',
+                        discount_amount: 0,
                         is_offer: true,
                         parent_item_id: this.parentItemId,
                         pe_remarks: '',
-                        notes: ''
+                        notes: '',
+                        internal_notes: ''
                     })
                 });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (response.status === 422 && data.errors) {
-                        const messages = Object.values(data.errors).flat().join('\n');
-                        throw new Error(messages);
-                    }
+                const data = await res.json();
+                if (!res.ok) {
+                    console.error('Validation failed:', data);
                     throw new Error(data.message || 'Failed to add offer');
                 }
 
+                // Ensure frontend can display it
+                this.items.push({
+                    ...data,
+                    __type: 'offer'
+                });
+
+                // Dispatch Alpine event
                 this.$dispatch('item-added', data);
 
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Offer Added',
-                    text: 'The custom offer has been saved.',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
+                // Clear search
+                this.searchQuery = '';
 
-                // Reset and close
-                this.name = '';
-                this.description = '';
-                this.unit_id = '';
-                this.$dispatch('close');
-
-            } catch (error) {
-                console.error(error);
+                // Success toast
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Validation Error',
-                    text: error.message || 'Something went wrong.',
+                    toast: true,
+                    icon: 'success',
+                    title: `Item "${item.name}" added successfully!`,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    customClass: {
+                        popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
+                    },
                 });
-            } finally{
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire({
+                    toast: true,
+                    icon: 'error',
+                    title: e.message || 'Something went wrong',
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    customClass: {
+                        popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
+                    },
+                });
+            }
+        },
+
+
+        async addCustomItem() {
+            if (!this.customName || !this.customUnit) {
+                Swal.fire({ icon: 'warning', title: 'Missing Fields', text: 'Item name and unit are required.' });
+                return;
+            }
+
+            this.isSubmitting = true;
+            try {
+                const res = await fetch('/pricing-estimate-add-offer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        pricing_estimate_id: this.pricingEstimateId,
+                        item_name: this.customName,
+                        item_description: this.customDescription,
+                        unit_id: this.customUnit,
+                        quantity: 1,
+                        unit_price: 0,
+                        final_unit_price: 0,
+                        is_offer: true,
+                        parent_item_id: this.parentItemId,
+                        pe_remarks: '',
+                        notes: '',
+                        internal_notes: ''
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to add custom offer');
+
+                this.$dispatch('item-added', data);
+
+                Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: `Custom item "${data.item_name}" added successfully!`,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: {
+                    popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
+                },
+            });
+
+                this.customName = '';
+                this.customDescription = '';
+                this.customUnit = '';
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: e.message || 'Something went wrong' });
+            } finally {
                 this.isSubmitting = false;
             }
         }
-
-
     }));
+
 
     //for approval
     Alpine.store('PESelection', {

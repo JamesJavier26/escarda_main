@@ -179,7 +179,7 @@
                         <option value="" disabled selected>Select unit</option>
                         @foreach($units as $unit)
                             <option value="{{ $unit->id }}" @selected(old('unit_id', $item->unit_id) == $unit->id)>
-                                {{ $unit->name }}
+                                {{ $unit->short_name }}
                             </option>
                         @endforeach
                     </select>

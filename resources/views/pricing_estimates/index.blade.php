@@ -187,10 +187,11 @@
                                     @endif
 
                                     {{-- Delete Button --}}
-                                    <form action="{{ route('pricing-estimates.destroy', $pe) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this pricing estimate?')" class="inline">
+                                    <form action="{{ route('pricing-estimates.destroy', $pe) }}" method="POST"
+                                        onsubmit="return confirm('Are you sure you want to delete this pricing estimate?')" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" 
+                                        <button type="submit"
                                                 class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                                                 title="Delete Pricing Estimate">
                                             <i class="far fa-trash-alt text-sm"></i>

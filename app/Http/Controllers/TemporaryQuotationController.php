@@ -42,34 +42,45 @@ class TemporaryQuotationController extends Controller
             'pe_remarks' => 'nullable|string',
             'sr_remarks' => 'nullable|string',
             'currency_id' => 'nullable|exists:currencies,id',
+
+            // Items (new)
             'new_items' => 'nullable|array',
             'new_items.*.item_id' => 'nullable|exists:items,id',
-            'new_items.*.name' => 'required|string',
-            'new_items.*.description' => 'nullable|string',
+            'new_items.*.item_name' => 'required|string',       // ✅ fixed
+            'new_items.*.item_description' => 'nullable|string',// ✅ fixed
             'new_items.*.remarks' => 'nullable|string',
             'new_items.*.unit_id' => 'nullable|integer',
             'new_items.*.quantity' => 'required|numeric|min:1',
             'new_items.*.unit_price' => 'required|numeric|min:0',
+            'new_items.*._delete' => 'nullable|boolean',        // ✅ handle delete flag
         ]);
+        $data['created_by'] = auth()->id();
 
+        // Create main quotation
         $temporaryQuotation = TemporaryQuotation::create($data);
 
+        // Attach items
         foreach ($request->input('new_items', []) as $itemData) {
-            if (!empty($itemData['_delete'])) continue;
+            if (!empty($itemData['_delete'])) {
+                continue; // skip deleted
+            }
 
             $temporaryQuotation->items()->create([
-                'item_id' => $itemData['item_id'],
-                'item_name' => $itemData['name'],
-                'item_description' => $itemData['description'] ?? null,
-                'remarks' => $itemData['remarks'] ?? null,
-                'unit_id' => $itemData['unit_id'] ?? null,
-                'quantity' => $itemData['quantity'],
-                'unit_price' => $itemData['unit_price'],
+                'item_id'          => $itemData['item_id'] ?? null,
+                'item_name'        => $itemData['item_name'],           // ✅ fixed
+                'item_description' => $itemData['item_description'] ?? null,
+                'remarks'          => $itemData['remarks'] ?? null,
+                'unit_id'          => $itemData['unit_id'] ?? null,
+                'quantity'         => $itemData['quantity'],
+                'unit_price'       => $itemData['unit_price'],
             ]);
         }
 
-        return redirect()->route('temporary_quotations.index')->with('success', 'Temporary Quotation created successfully.');
+        return redirect()
+            ->route('temporary_quotations.index')
+            ->with('success', 'Temporary Quotation created successfully.');
     }
+
 
     public function show(TemporaryQuotation $temporaryQuotation)
     {
@@ -88,7 +99,7 @@ class TemporaryQuotationController extends Controller
 
     public function update(Request $request, TemporaryQuotation $temporaryQuotation)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'sr_id' => 'nullable|exists:users,id',
             'customer_id' => 'nullable|exists:customers,id',
             'attention' => 'required|string|max:255',
@@ -101,44 +112,67 @@ class TemporaryQuotationController extends Controller
             'sr_remarks' => 'nullable|string',
             'currency_id' => 'nullable|exists:currencies,id',
 
-            // Validation for items
+            // Existing items
             'items' => 'nullable|array',
             'items.*.id' => 'nullable|exists:temporary_quotation_items,id',
-            'items.*.item_name' => 'required|string|max:255',
-            'items.*.quantity' => 'required|numeric|min:0',
-            'items.*.unit_id' => 'nullable|exists:units,id',
+            'items.*.item_id' => 'nullable|exists:items,id',
+            'items.*.item_name' => 'required|string',
             'items.*.item_description' => 'nullable|string',
-            'items.*.pe_remarks' => 'nullable|string',
-            'items.*.final_unit_price' => 'nullable|numeric|min:0',
+            'items.*.remarks' => 'nullable|string',
+            'items.*.unit_id' => 'nullable|integer',
+            'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*._delete' => 'nullable|boolean',
+
+            // New items
+            'new_items' => 'nullable|array',
+            'new_items.*.item_id' => 'nullable|exists:items,id',
+            'new_items.*.item_name' => 'required|string',
+            'new_items.*.item_description' => 'nullable|string',
+            'new_items.*.remarks' => 'nullable|string',
+            'new_items.*.unit_id' => 'nullable|integer',
+            'new_items.*.quantity' => 'required|numeric|min:1',
+            'new_items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $temporaryQuotation->update($validated);
+        // Update main record (excluding items arrays)
+        $temporaryQuotation->update(
+            collect($data)->except(['items','new_items','created_by'])->toArray()
+        );
 
-        // Handle updating items
-        if (isset($validated['items'])) {
-            // Get all existing item IDs
-            $existingIds = $temporaryQuotation->items()->pluck('id')->toArray();
-
-            $submittedIds = collect($validated['items'])->pluck('id')->filter()->toArray();
-
-            // Delete removed items
-            $itemsToDelete = array_diff($existingIds, $submittedIds);
-            if (!empty($itemsToDelete)) {
-                $temporaryQuotation->items()->whereIn('id', $itemsToDelete)->delete();
+        // Handle existing items
+        foreach ($request->input('items', []) as $itemData) {
+            if (!empty($itemData['_delete'])) {
+                $temporaryQuotation->items()->where('id', $itemData['id'])->delete();
+                continue;
             }
-
-            foreach ($validated['items'] as $itemData) {
-                if (isset($itemData['id'])) {
-                    // Update existing
-                    $item = $temporaryQuotation->items()->find($itemData['id']);
-                    if ($item) {
-                        $item->update($itemData);
-                    }
-                } else {
-                    // Create new
-                    $temporaryQuotation->items()->create($itemData);
-                }
+            $item = $temporaryQuotation->items()->find($itemData['id']);
+            if ($item) {
+                $item->update([
+                    'item_id'          => $itemData['item_id'] ?? null,
+                    'item_name'        => $itemData['item_name'],
+                    'item_description' => $itemData['item_description'] ?? null,
+                    'remarks'          => $itemData['remarks'] ?? null,
+                    'unit_id'          => $itemData['unit_id'] ?? null,
+                    'quantity'         => $itemData['quantity'],
+                    'unit_price'       => $itemData['unit_price'],
+                ]);
             }
+        }
+
+        // Handle new items
+        foreach ($request->input('new_items', []) as $itemData) {
+            if (!empty($itemData['_delete'])) continue;
+
+            $temporaryQuotation->items()->create([
+                'item_id'          => $itemData['item_id'] ?? null,
+                'item_name'        => $itemData['item_name'],
+                'item_description' => $itemData['item_description'] ?? null,
+                'remarks'          => $itemData['remarks'] ?? null,
+                'unit_id'          => $itemData['unit_id'] ?? null,
+                'quantity'         => $itemData['quantity'],
+                'unit_price'       => $itemData['unit_price'],
+            ]);
         }
 
         return redirect()->route('temporary_quotations.index')

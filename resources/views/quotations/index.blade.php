@@ -90,9 +90,15 @@
                     <select name="status"
                         class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
                         <option value="">All Statuses</option>
-                        @foreach (['pending', 'approved', 'rejected'] as $status)
+                        @foreach (['pending', 'approved', 'rejected', 'to_send'] as $status)
                             <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
-                                {{ $status === 'rejected' ? 'Disapproved' : ucfirst($status) }}
+                                @if($status === 'rejected')
+                                    Disapproved
+                                @elseif($status === 'to_send')
+                                    To send
+                                @else
+                                    {{ ucfirst($status) }}
+                                @endif
                             </option>
                         @endforeach
                     </select>
@@ -120,7 +126,7 @@
                 </form>
 
         
-                {{-- @hasrole('admin|super-admin')
+                {{-- @hasrole('admin|super-admin|sales-secretary')
                 <a href="{{ route('quotations.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm">
                     <i class="fas fa-plus mr-1"></i> Add New
                 </a>
@@ -193,7 +199,7 @@
                                                     </form>
                                                 @endif
                                             @endif
-                                    @hasrole('super-admin|admin')
+                                    @hasrole('super-admin|admin|sales-secretary')
                                     <a href="{{ route('quotations.edit', $quote) }}"
                                         class="flex items-center justify-center w-8 h-8 text-white bg-green-600 hover:bg-green-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                                         title="Edit Quotation">

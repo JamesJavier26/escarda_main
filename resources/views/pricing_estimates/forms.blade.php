@@ -148,13 +148,12 @@
                             <div>
                                 <label for="vat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">VAT</label>
                                 <select name="vat"
-                                        :value="chosen?.tax_status || ''"
+                                        :value="{{ $pricing_estimate->vat ? "'$pricing_estimate->vat'" : "chosen?.tax_status || ''" }}"
                                         @change="if (chosen) chosen.tax_status = $event.target.value"
                                         class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option value="">-</option>
-                                    <option value="Tax Exempt">Tax Exempt</option>
+                                    <option value="Zero Rated">Zero Rated</option>
                                     <option value="VAT Inclusive">VAT Inclusive</option>
-                                    <option value="VAT Exclusive">VAT Exclusive</option>
                                 </select>
                             </div>
                         </div>
@@ -232,12 +231,12 @@
                 </div>
 
                 <div class="space-y-4" >
-                    <!-- <x-forms.input 
+                    <x-forms.input 
                         label="Delivery Date" 
                         name="delivery_date" 
                         type="text" 
                         :value="old('delivery_date', $pricing_estimate->delivery_date)" 
-                    />    -->
+                    />   
 
                     <label for="currency_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                     <select name="currency_id" 
@@ -542,7 +541,7 @@
         </div>
 
         
-        @hasrole('super-admin|admin|sales-representative')
+        @hasrole('super-admin|admin|sales-representative|sales-secretary')
             <div class="flex justify-between items-center mt-6">
 
                 {{-- Left Side Buttons --}}
@@ -641,7 +640,7 @@
                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2">
                         <option disabled selected value="">-- Select unit --</option>
                         @foreach ($units as $unit)
-                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                            <option value="{{ $unit->id }}">{{ $unit->short_name }}</option>
                         @endforeach
                     </select>
 
@@ -1109,21 +1108,7 @@ document.addEventListener('alpine:init', () => {
                 pe_remarks: '',
                 notes: ''
             });
-            // Swal.fire({
-            //     toast: true,
-            //     icon: 'success',
-            //     title: 'Item added successfully!',
-            //     position: 'top-end',
-            //     showConfirmButton: false,
-            //     timer: 3000,
-            //     timerProgressBar: true,
-            //     customClass: {
-            //         popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
-            //     },
-            // });
-            // this.$dispatch('close');
             this.searchQuery = '';
-            // this.items = [];
         },
        addCustomItem() {
             if (!this.customName || !this.customDescription || !this.customUnit) {
@@ -1152,19 +1137,6 @@ document.addEventListener('alpine:init', () => {
                 pe_remarks: '',
                 notes: ''
             });
-
-            // Swal.fire({
-            //     toast: true,
-            //     icon: 'success',
-            //     title: 'Item added successfully!',
-            //     position: 'top-end',
-            //     showConfirmButton: false,
-            //     timer: 3000,
-            //     timerProgressBar: true,
-            //     customClass: {
-            //         popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
-            //     },
-            // });
 
             // Reset fields
             this.customName = '';
@@ -1350,9 +1322,7 @@ document.addEventListener('alpine:init', () => {
             const status = this.chosen?.tax_status;
             if (status === 'VAT Inclusive') {
                 return this.subtotal() * (12 / 112);
-            } else if (status === 'VAT Exclusive') {
-                return this.subtotal() * 0.12;
-            } else if (status === 'Tax Exempt') {
+            }else if (status === 'Zero Rated') {
                 return 0;
             }
             return 0;
@@ -1360,10 +1330,8 @@ document.addEventListener('alpine:init', () => {
         
         total() {
             const status = this.chosen?.tax_status;
-            if (status === 'VAT Inclusive' || status === 'Tax Exempt') {
+            if (status === 'VAT Inclusive' || status === 'Zero Rated') {
                 return this.subtotal(); // Already includes VAT or no VAT at all
-            } else if (status === 'VAT Exclusive') {
-                return this.subtotal() + this.vat();
             }
         },
     }));

@@ -70,14 +70,28 @@
         <img src="{{ public_path('images/letterhead.png') }}" alt="Letterhead"
             style="width: 50%; height: auto;">
     </header>
-    {{-- <footer>
-        <p class="text-left row-border-bottom pb-2">
-            <strong>NOTE:</strong> <i>Approval of this quotation is system generated, no signature required.</i>
-        </p>
-        <p class="text-left">
-            <strong>Website:</strong> <a href="http://www.escardastrading.com" target="_blank">http://www.escardastrading.com</a>
-        </p>
-    </footer> --}}
+    <footer>
+            <div style="display: flex; align-items: flex-start; gap: 10px; position: relative;">
+                {{-- Logo on the left --}}
+                <img src="{{ public_path('images/smile.png') }}" alt="Logo" style="position: absolute; left: 0px; top: -30px; height: 70px;">
+
+                <div style="font-size: 10px; width: 100%;">
+                    {{-- Item information at the top --}}
+                    <div style="margin-bottom: 8px;">
+                        <p style="margin: 2px 0;">&nbsp;</p>
+                        <p style="margin: 2px 0;">&nbsp;</p>
+                    </div>
+
+                    {{-- Original content below --}}
+                    <p class="text-left row-border-bottom" style="margin: 2px 0;">
+                        <strong>NOTE:</strong> <i>Approval of this quotation is system generated, no signature required.</i>
+                    </p>
+                    <p class="text-left" style="margin: 2px 0;">
+                        <strong>Website:</strong> <a href="http://www.escardastrading.com" target="_blank">http://www.escardastrading.com</a>
+                    </p>
+                </div>
+            </div>
+        </footer>
 
     <main>
         <table class="text-center"><h2>JOB ORDER</h2></table>
@@ -97,7 +111,7 @@
                 <td style="width: 40%; vertical-align: top;">
                     <table class="no-border" style="width: 100%;">
                         <tr>
-                            <td class="text-center" style="padding: 2px 0;">
+                            <td style="padding: 2px 0;">
                                 <strong>JO NO. {{ $jobOrder->jo_no }}</strong>
                             </td>
                         </tr>
@@ -126,7 +140,7 @@
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td class="text-center">{{ $joItem->item->number ?? '—' }}</td>
-                        <td class="text-center">{{ $joItem->quantity }} {{ $joItem->unit->name ?? '' }}</td>
+                        <td class="text-center">{{ $joItem->quantity }} {{ $joItem->unit->short_name ?? '' }}</td>
                        <td class="align-top">
                             <div class="font-medium text-gray-900 dark:text-gray-100">{{ $joItem->item_description }}</div>
                             <div class="mt-1 text-sm text-gray-600 dark:text-gray-400" style="margin-top: 15px">
@@ -138,7 +152,7 @@
                         </td>
 
                         <td style="vertical-align: text-top">
-                            {{ $joItem->quantity }} {{ $joItem->unit->name ?? '' }}
+                            {{ $joItem->quantity }} {{ $joItem->unit->short_name ?? '' }}
                             <br/><br/><br/>
                             <i>Ready to be produced!</i>
                         </td>

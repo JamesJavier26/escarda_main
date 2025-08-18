@@ -82,7 +82,7 @@
                                 {{ $item->category->name ?? '—' }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                                {{ $item->unit->name ?? '—' }}
+                                {{ $item->unit->short_name ?? '—' }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                 {{ $item->barcode ?? '—' }}

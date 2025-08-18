@@ -25,9 +25,10 @@ public function index()
         return $this->admin_dashboard();
     }
 
-    if ($user->hasRole('sales-representative')) {
+    else{
         return $this->sales_dashboard();
     }
+        
 
     // Optional: Handle other roles or fallback
     abort(403, 'Unauthorized');

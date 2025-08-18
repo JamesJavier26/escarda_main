@@ -169,35 +169,49 @@
                         </tr>
                         @endforeach
                         @php
-                            $subtotal = $salesOrder->jobOrder->jo_items->sum('unit_price');
-                            $subQTY = $salesOrder->jobOrder->jo_items->sum('quantity');
-                            $partialTotal = $subtotal * $subQTY;
+                            $partialTotal = $salesOrder->jobOrder->jo_items->sum(function($item) {
+                                return $item->unit_price * $item->quantity;
+                            }); 
 
-                            if ($salesOrder->tax_status === 'Tax Exempt') {
+                            $vatRate = 0.12;
+
+                            $vat = 0;
+                            $vatableSales = 0;
+                            $zeroRatedSales = 0;
+                            $grandTotal = $partialTotal;
+
+                            if ($salesOrder->tax_status === 'Zero Rated') {
                                 $vat = 0;
+                                $vatableSales = 0;
+                                $zeroRatedSales = $partialTotal;
+                                $grandTotal = $partialTotal;
                             } elseif ($salesOrder->tax_status === 'VAT Inclusive') {
-                                $vat = $partialTotal - ($partialTotal / 1.12);
-                            } elseif ($salesOrder->tax_status === 'VAT Exclusive') {
-                                $vat = $partialTotal * 0.12;
+                                $vatableSales = $partialTotal / (1 + $vatRate); // extract vatable amount
+                                $vat = $partialTotal - $vatableSales; // VAT portion
+                                $grandTotal = $partialTotal; // total already includes VAT
                             }
-
-                            $grandTotal = $partialTotal + $vat;
                         @endphp
 
-                        <tr class="bg-gray-50 dark:bg-gray-700">
-                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-gray-100">Subtotal</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($partialTotal, 2) }}</td>
-                        </tr>
-                        @if ($vat > 0)
-                        <tr class="bg-gray-50 dark:bg-gray-700">
-                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-gray-100">VAT (12%)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
-                        </tr>
-                        @endif
-                        <tr class="bg-gray-100 dark:bg-gray-600">
-                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900 dark:text-gray-100">Total Amount</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
-                        </tr>
+                    <tr class="bg-gray-50 dark:bg-gray-700">
+                        <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-gray-100">Total Vatable Sales</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ number_format($vatableSales, 2) }}</td>
+                    </tr>
+
+                    <tr class="bg-gray-50 dark:bg-gray-700">
+                        <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-gray-100">Zero Rated Sales</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ number_format($zeroRatedSales, 2) }}</td>
+                    </tr>
+
+                    <tr class="bg-gray-50 dark:bg-gray-700">
+                        <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-gray-100">VAT (12%)</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
+                    </tr>
+
+                    <tr class="bg-gray-100 dark:bg-gray-600">
+                        <td colspan="3" class="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-gray-100">Total Sales Amount</td>
+                        <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
+                    </tr>
+
                     </tbody>
                 </table>
             </div>
@@ -323,6 +337,14 @@
                         class="px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none dark:bg-green-700 dark:hover:bg-green-800">
                         <i class="fa fa-check mr-1"></i> Approve
                     </button>
+
+                    <a href="{{ route('reports.salesOrder', $salesOrder->so_no) }}" target="_blank"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg 
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 transition flex items-center gap-2"
+                        title="Print Sales Order">
+                        <i class="fas fa-print text-sm"></i>
+                        Print
+                    </a>
                 </div>
             @endif
         @endhasrole

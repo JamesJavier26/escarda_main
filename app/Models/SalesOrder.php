@@ -86,5 +86,9 @@ class SalesOrder extends Model
 
         return 'SO-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
+    public function pricing_estimate()
+    {
+        return $this->belongsTo(PricingEstimate::class);
+    }
 
 }

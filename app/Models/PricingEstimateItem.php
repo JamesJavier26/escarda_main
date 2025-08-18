@@ -12,7 +12,7 @@ class PricingEstimateItem extends Model
         'pricing_estimate_id','item_id', 'item_name', 'item_description', 'pe_remarks', 'unit_id',
         'mould_id', 'discount_type', 'discount_amount', 'quantity', 'tax_status',
         'unit_price', 'price_factor', 'factor_rate', 'per_quantity',
-        'quot', 'notes', 'offer', 'is_offer','parent_item_id', 'sum_charge',
+        'quot', 'notes','internal_notes', 'offer', 'is_offer','parent_item_id', 'sum_charge',
         'ref_item_id', 'is_active',
     ];
 

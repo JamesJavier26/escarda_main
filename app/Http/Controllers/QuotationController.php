@@ -33,7 +33,7 @@ class QuotationController extends Controller
         $query = Quotation::with(['pricing_estimate.customer', 'salesOrder']);
 
         // If user is NOT super-admin or admin, limit quotations to only those created by the user
-        if (! $user->hasAnyRole(['super-admin', 'admin'])) {
+        if (! $user->hasAnyRole(['super-admin', 'admin','sales-secretary'])) {
             $query->where('created_by', $user->id);
         }
 
@@ -53,7 +53,12 @@ class QuotationController extends Controller
 
         // Filter by status
         if ($status = $request->input('status')) {
-            $query->where('quote_status', $status);
+            if ($status === 'to_send') {
+                $query->where('quote_status', 'approved')
+                    ->where('is_sent', false);
+            } else {
+                $query->where('quote_status', $status);
+            }
         }
 
         // Filter by date range
@@ -297,11 +302,10 @@ class QuotationController extends Controller
                 'pr_no' => $quotation->pricing_estimate->pr_no,
                 'attention' => $quotation->pricing_estimate->attention,
                 'terms' => $quotation->pricing_estimate->terms,
-                'delivery_date' => $quotation->pricing_estimate->delivery_date,
                 'po_no' => '', 
                 'sr_id' => auth()->id(),
                 'jo_no' => $joNo,
-                'tax_status' => $quotation->pricing_estimate->customer->tax_status,
+                'tax_status' => $quotation->pricing_estimate->vat,
                 'approval_status' => 'draft',
                 'so_status' => 'draft',
                 'quotation_id' => $quotation->id,
@@ -445,6 +449,25 @@ class QuotationController extends Controller
         $quotation->save();
 
         return redirect()->back()->with('success', 'Quotation sent status updated.');
+    }
+
+    public function updateRemarks(Request $request, PricingEstimate $priceEstimate)
+    {
+        $quote = $priceEstimate->latest_quote;
+
+        if (!$quote) {
+            // Create new quotation if none exists
+            $quote = $priceEstimate->quotations()->create([
+                'quote_remarks' => $request->quote_remarks,
+            ]);
+        } else {
+            // Update existing
+            $quote->update([
+                'quote_remarks' => $request->quote_remarks,
+            ]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
 }

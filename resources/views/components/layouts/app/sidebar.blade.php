@@ -15,17 +15,17 @@
                                 
                             <x-layouts.sidebar-two-level-link-parent title="Pricing Estimate" icon="fas-tags"
                                 :active="request()->routeIs('pricing-estimates*',)">
-                                @hasrole('super-admin|admin|sales-manager|operation-manager')
+                                @hasrole('super-admin|admin|sales-manager|operation-manager|sales-secretary')
                                 <x-layouts.sidebar-two-level-link href="{{ route('pricing-estimates.index')  }}" icon='fas-clock'
                                     :active="request()->routeIs('pricing-estimates.index')">All P.E</x-layouts.sidebar-two-level-link>
                                 @endhasrole
-                                @hasrole('super-admin|admin|sales-manager|sales-representative|operation-manager')
+                                @hasrole('super-admin|admin|sales-manager|sales-representative|operation-manager|sales-secretary')
                                 <x-layouts.sidebar-two-level-link href="{{ route('pricing-estimates.my')  }}" icon='fas-list'
                                     :active="request()->routeIs('pricing-estimates.edit','pricing_estimate.create','pricing-estimates.my', 'pricing-estimates.show')">My P.E</x-layouts.sidebar-two-level-link>
                                 @endhasrole
                             </x-layouts.sidebar-two-level-link-parent>
 
-                            @hasrole('super-admin|admin|sales-manager|operation-manager|sales-representative')
+                            @hasrole('super-admin|admin|sales-manager|operation-manager|sales-representative|sales-secretary')
                             <x-layouts.sidebar-link href="{{ route('quotations.index') }}" icon='fas-file-invoice'
                                 :active="request()->routeIs('quotations*')">Quotations</x-layouts.sidebar-link>
 

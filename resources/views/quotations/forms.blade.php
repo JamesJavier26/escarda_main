@@ -323,8 +323,16 @@
             <button type="button"
                     @click="openModal('approve')"
                     class="px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none dark:bg-green-700 dark:hover:bg-green-800">
-                <i class="fa fa-check mr-1"></i> Approve and Create Quotation
+                <i class="fa fa-check mr-1"></i> Approve Quotation
             </button>
+
+            <a href="{{ route('reports.quotations',$pe_no) }}" target="_blank"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-md shadow-sm text-sm font-medium
+                    text-white bg-blue-600 hover:bg-blue-700
+                    border border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <i class="fas fa-print"></i>
+                Print
+            </a>
 
             <!-- Modal -->
             <div 

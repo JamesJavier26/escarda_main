@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 gap-6 w-full">
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                 <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
-                <h2 class="text-xl font-semibold text-gray-100">Customer Details</h2>
+                <h2 class="text-xl font-semiboldtext-gray-900 dark:text-gray-100">Customer Details</h2>
                 <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">J.O NO: #{{$job_order->jo_no}}</span>
                 </div>
 
@@ -32,17 +32,17 @@
                 <div class="space-y-3">
                     <div>
                     <p class="text-sm font-medium text-gray-400">Name</p>
-                    <p class="text-gray-100">{{ $job_order->salesOrder->customer->name }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $job_order->salesOrder->customer->name }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">P.R No:</p>
-                    <p class="text-gray-100 font-mono">#{{ $job_order->salesOrder->pr_no }}</p>
+                    <p class="text-gray-900 dark:text-gray-100 font-mono">#{{ $job_order->salesOrder->pr_no }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">Telephone</p>
-                    <p class="text-gray-100">{{ $job_order->salesOrder->customer->telno }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $job_order->salesOrder->customer->telno }}</p>
                     </div>
                 </div>
 
@@ -50,12 +50,12 @@
                 <div class="space-y-3">
                     <div>
                     <p class="text-sm font-medium text-gray-400">Email</p>
-                    <p class="text-gray-100">{{ $job_order->salesOrder->customer->email }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $job_order->salesOrder->customer->email }}</p>
                     </div>
                     
                     <div>
                     <p class="text-sm font-medium text-gray-400">Address</p>
-                    <p class="text-gray-100">{{ $job_order->salesOrder->customer->address }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ $job_order->salesOrder->customer->address }}</p>
                     </div>
                 </div>
                 </div>

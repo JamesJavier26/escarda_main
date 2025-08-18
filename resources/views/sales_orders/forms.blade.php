@@ -32,7 +32,7 @@
                 'unit_price' => $pricingItem?->final_unit_price ?? $item->unit_price,
                 'final_unit_price' => $pricingItem?->final_unit_price ?? $item->unit_price,
                 'unit_id' => $item->unit_id,
-                'unit_name' => $item->unit->name ?? '',
+                'unit_name' => $item->unit->short_name ?? '',
                 'local_uid' => $index, // numeric index safe for nextLocalId
             ];
         })->toArray();
@@ -113,7 +113,7 @@
             <div class="grid grid-cols-1 gap-6 w-full" x-init="init()" x-on:item-added.window="receiveItems($event.detail)"id="itemsTable">
                 <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                     <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
-                        <h2 class="text-xl font-semibold text-gray-100">Customer Details</h2>
+                        <h2 class="text-xl font-semiboldtext-gray-900 dark:text-gray-100">Customer Details</h2>
                         @if($so_no)
                         <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">
                             S.O NO: #{{ $so_no ?? ($sales_order->so_no ?? '--') }}
@@ -125,12 +125,12 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Name</p>
-                                <p class="text-gray-100" x-text="chosen?.name ?? '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="chosen?.name ?? '--'">--</p>
                             </div>
 
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Telephone</p>
-                                <p class="text-gray-100" x-text="chosen?.telno ?? '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="chosen?.telno ?? '--'">--</p>
                             </div>
                             <div x-data="{ editing: {{ $editing ? 'true' : 'false' }} }">
                                 <label for="tax_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Status</label>
@@ -140,9 +140,8 @@
                                     class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     :class="editing ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''">
                                     <option value="">-</option>
-                                    <option value="Tax Exempt">Tax Exempt</option>
+                                    <option value="Zero Rated">Zero Rated</option>
                                     <option value="VAT Inclusive">VAT Inclusive</option>
-                                    <option value="VAT Exclusive">VAT Exclusive</option>
                                 </select>
                             </div>
                         </div>
@@ -150,12 +149,12 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Email</p>
-                                <p class="text-gray-100" x-text="chosen?.email ?? '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="chosen?.email ?? '--'">--</p>
                             </div>
 
                             <div>
                                 <p class="text-sm font-medium text-gray-400">Address</p>
-                                <p class="text-gray-100" x-text="chosen?.address ?? '--'">--</p>
+                                <p class="text-gray-900 dark:text-gray-100"" x-text="chosen?.address ?? '--'">--</p>
                             </div>
 
                             <div x-data="{ editing: {{ $editing ? 'true' : 'false' }} }">
@@ -238,142 +237,6 @@
             </div>
         </div>
 
-
-        <!-- Remarks & Attachments -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Remarks</h2>
-                <textarea name="remarks" rows="4"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                >{{ old('remarks', $sales_order->remarks) }}</textarea>
-
-            </div>
-
-            <div x-data="{
-                    files: [],
-                    pickFiles(e) {
-                        const newOnes = Array.from(e.target.files).map(f => ({ file: f, label: '' }));
-                        this.files = [...this.files, ...newOnes];
-                        this.syncFilesToInput();
-                    },
-                    removeFile(i) {
-                        this.files.splice(i, 1);
-                        this.syncFilesToInput();
-                    },
-                    syncFilesToInput() {
-                        const dt = new DataTransfer();
-                        this.files.forEach(f => dt.items.add(f.file));
-                        this.$refs.fileInput.files = dt.files;
-                    }
-                }"
-
-                class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
-
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Attachments</h2>
-
-                <input type="file" name="so_attachment[]" multiple x-ref="fileInput" class="hidden" @change="pickFiles">
-
-                <button type="button" @click="$refs.fileInput.click()"
-                    class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
-                    <i class="fas fa-paperclip mr-1"></i> Select files
-                </button>
-
-                {{-- existing attachments (edit) --}}
-                @if($editing && $sales_order->attachments->count())
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-                        @foreach($sales_order->attachments as $file)
-                            {{-- each file gets its own Alpine scope --}}
-                            <div x-data="{ keep: true }"
-                                x-show="keep"
-                                class="relative border border-gray-300 dark:border-gray-600 p-3 rounded-md">
-
-                                <!-- hidden field tells Laravel which attachments to keep -->
-                                <input type="hidden"
-                                    name="keep_attachments[]"
-                                    :value="keep ? '{{ $file->id }}' : ''"
-                                    x-show="keep">
-
-                                <!-- remove button -->
-                                <button type="button"
-                                        @click="keep = false"
-                                        class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full
-                                            w-6 h-6 flex items-center justify-center hover:bg-red-700"
-                                        title="Remove this file">
-                                    <i class="fas fa-times text-xs"></i>
-                                </button>
-
-                                {{-- preview --}}
-                                @if(\Illuminate\Support\Str::startsWith($file->metadata['mime_type'] ?? '', 'image/'))
-                                    <img src="{{ Storage::url($file->metadata['path']) }}" class="w-full h-40 object-contain rounded">
-                                @elseif(($file->metadata['mime_type'] ?? '') === 'application/pdf')
-                                    <iframe src="{{ Storage::url($file->metadata['path']) }}" class="w-full h-40 rounded"></iframe>
-                                @else
-                                    <div class="flex items-center justify-center h-40 bg-gray-100 dark:bg-gray-700 rounded">
-                                        <i class="fas fa-file-alt text-4xl text-gray-400"></i>
-                                    </div>
-                                @endif
-
-                                <p class="mt-2 text-xs truncate">
-                                    {{ $file->metadata['original_name'] ?? basename($file->metadata['path']) }}
-                                </p>
-
-                                <!-- editable label -->
-                                <input type="text"
-                                    class="mt-2 w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600
-                                            rounded dark:bg-gray-700 dark:text-gray-100"
-                                    name="existing_file_labels[{{ $file->id }}]"
-                                    value="{{ $file->label }}"
-                                    placeholder="Enter label/description">
-                            </div>
-                        @endforeach
-
-                    </div>
-                @endif
-
-                {{-- new uploads --}}
-                <template x-if="files.length">
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <template x-for="(entry, idx) in files" :key="idx">
-                            <div class="relative border border-gray-300 dark:border-gray-600 p-3 rounded-md">
-                                <button type="button" @click="removeFile(idx)"
-                                    class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700">
-                                    <i class="fas fa-times text-xs"></i>
-                                </button>
-
-                                <template x-if="entry.file.type.startsWith('image/')">
-                                    <img :src="URL.createObjectURL(entry.file)" class="w-full h-40 object-contain rounded">
-                                </template>
-                                <template x-if="entry.file.type==='application/pdf'">
-                                    <iframe :src="URL.createObjectURL(entry.file)" class="w-full h-40 rounded"></iframe>
-                                </template>
-                                <template x-if="!entry.file.type.startsWith('image/') && entry.file.type!=='application/pdf'">
-                                    <div class="flex items-center justify-center h-40 bg-gray-100 dark:bg-gray-700 rounded">
-                                        <i class="fas fa-file-alt text-4xl text-gray-400"></i>
-                                    </div>
-                                </template>
-
-                                <p class="mt-2 text-xs truncate" x-text="entry.file.name"></p>
-
-                                <input type="text"
-                                    class="mt-2 w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-gray-100"
-                                    x-model="entry.label"
-                                    name="file_labels[]"
-                                    placeholder="Enter label/description">
-                            </div>
-                        </template>
-                    </div>
-                </template>
-            </div>
-
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Remarks</h2>
-                <textarea name="delivery_details" rows="4"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                >{{ old('delivery_details', $sales_order->delivery_details) }}</textarea>
-
-            </div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -522,7 +385,7 @@
                         <!-- Subtotal, VAT, Total -->
                         <tfoot class="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <td colspan="4" class="px-4 py-2 text-right font-semibold text-sm text-gray-700 dark:text-gray-300">Subtotal:</td>
+                                <td colspan="4" class="px-4 py-2 text-right font-semibold text-sm text-gray-700 dark:text-gray-300">Total Vatable Sales:</td>
                                 <td class="px-4 py-2 text-right text-sm text-gray-800 dark:text-white" x-text="formatCurrency(subtotal())"></td>
                                 <td></td>
                             </tr>
@@ -532,7 +395,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="4" class="px-4 py-2 text-right font-bold text-sm text-gray-700 dark:text-gray-300">Total Amount:</td>
+                                <td colspan="4" class="px-4 py-2 text-right font-bold text-sm text-gray-700 dark:text-gray-300">Total Sales Amount:</td>
                                 <td class="px-4 py-2 text-right font-bold text-sm text-gray-900 dark:text-white" x-text="formatCurrency(total())"></td>
                                 <td></td>
                             </tr>
@@ -542,10 +405,136 @@
                 </div>
             </div>
         </div>
+            <!-- Remarks & Attachments -->                                  
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Remarks</h2>
+                <textarea name="remarks" rows="4"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                >{{ old('remarks', $sales_order->remarks) }}</textarea>
+
+            </div>
+
+            <div x-data="{
+                    files: [],
+                    pickFiles(e) {
+                        const newOnes = Array.from(e.target.files).map(f => ({ file: f, label: '' }));
+                        this.files = [...this.files, ...newOnes];
+                        this.syncFilesToInput();
+                    },
+                    removeFile(i) {
+                        this.files.splice(i, 1);
+                        this.syncFilesToInput();
+                    },
+                    syncFilesToInput() {
+                        const dt = new DataTransfer();
+                        this.files.forEach(f => dt.items.add(f.file));
+                        this.$refs.fileInput.files = dt.files;
+                    }
+                }"
+
+                class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Attachments</h2>
+
+                <input type="file" name="so_attachment[]" multiple x-ref="fileInput" class="hidden" @change="pickFiles">
+
+                <button type="button" @click="$refs.fileInput.click()"
+                    class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+                    <i class="fas fa-paperclip mr-1"></i> Select files
+                </button>
+
+                {{-- existing attachments (edit) --}}
+                @if($editing && $sales_order->attachments->count())
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+                        @foreach($sales_order->attachments as $file)
+                            {{-- each file gets its own Alpine scope --}}
+                            <div x-data="{ keep: true }"
+                                x-show="keep"
+                                class="relative border border-gray-300 dark:border-gray-600 p-3 rounded-md">
+
+                                <!-- hidden field tells Laravel which attachments to keep -->
+                                <input type="hidden"
+                                    name="keep_attachments[]"
+                                    :value="keep ? '{{ $file->id }}' : ''"
+                                    x-show="keep">
+
+                                <!-- remove button -->
+                                <button type="button"
+                                        @click="keep = false"
+                                        class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full
+                                            w-6 h-6 flex items-center justify-center hover:bg-red-700"
+                                        title="Remove this file">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+
+                                {{-- preview --}}
+                                @if(\Illuminate\Support\Str::startsWith($file->metadata['mime_type'] ?? '', 'image/'))
+                                    <img src="{{ Storage::url($file->metadata['path']) }}" class="w-full h-40 object-contain rounded">
+                                @elseif(($file->metadata['mime_type'] ?? '') === 'application/pdf')
+                                    <iframe src="{{ Storage::url($file->metadata['path']) }}" class="w-full h-40 rounded"></iframe>
+                                @else
+                                    <div class="flex items-center justify-center h-40 bg-gray-100 dark:bg-gray-700 rounded">
+                                        <i class="fas fa-file-alt text-4xl text-gray-400"></i>
+                                    </div>
+                                @endif
+
+                                <p class="mt-2 text-xs truncate">
+                                    {{ $file->metadata['original_name'] ?? basename($file->metadata['path']) }}
+                                </p>
+
+                                <!-- editable label -->
+                                <input type="text"
+                                    class="mt-2 w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600
+                                            rounded dark:bg-gray-700 dark:text-gray-100"
+                                    name="existing_file_labels[{{ $file->id }}]"
+                                    value="{{ $file->label }}"
+                                    placeholder="Enter label/description">
+                            </div>
+                        @endforeach
+
+                    </div>
+                @endif
+
+                {{-- new uploads --}}
+                <template x-if="files.length">
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <template x-for="(entry, idx) in files" :key="idx">
+                            <div class="relative border border-gray-300 dark:border-gray-600 p-3 rounded-md">
+                                <button type="button" @click="removeFile(idx)"
+                                    class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+
+                                <template x-if="entry.file.type.startsWith('image/')">
+                                    <img :src="URL.createObjectURL(entry.file)" class="w-full h-40 object-contain rounded">
+                                </template>
+                                <template x-if="entry.file.type==='application/pdf'">
+                                    <iframe :src="URL.createObjectURL(entry.file)" class="w-full h-40 rounded"></iframe>
+                                </template>
+                                <template x-if="!entry.file.type.startsWith('image/') && entry.file.type!=='application/pdf'">
+                                    <div class="flex items-center justify-center h-40 bg-gray-100 dark:bg-gray-700 rounded">
+                                        <i class="fas fa-file-alt text-4xl text-gray-400"></i>
+                                    </div>
+                                </template>
+
+                                <p class="mt-2 text-xs truncate" x-text="entry.file.name"></p>
+
+                                <input type="text"
+                                    class="mt-2 w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-gray-100"
+                                    x-model="entry.label"
+                                    name="file_labels[]"
+                                    placeholder="Enter label/description">
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
  
         @if($editing)
         @hasrole('super-admin|admin')
-        <div class="grid grid-cols-1 md:grid-cols-1">
+        <div class="grid grid-cols-1 mt-8">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4"
                 x-data="commentSection({{ Js::from($comments) }}, {{ $sales_order->id }})">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Comments</h2>
@@ -602,7 +591,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mt-5 gap-4">
             {{-- Left side: Back, Print, Save Draft --}}
             <div class="flex flex-wrap items-center gap-4">
-                <a href="{{ route('quotations.index') }}"
+                <a href="{{ route('sales-orders.index') }}"
                 class="px-4 py-2 rounded-md shadow-sm text-sm font-medium
                         text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700
                         border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600
@@ -620,7 +609,7 @@
                     </a>
                 @endif
 
-                @if($sales_order->so_status == 'pending')
+                @if($sales_order->so_status !== 'approved')
                     <button type="submit"
                             class="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white
                                 bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -921,7 +910,13 @@ document.addEventListener('alpine:init', () => {
         locked,
 
         init() {
-            if (this.chosen?.tax_status) {
+            // Always load SO's tax_status first
+            let soTaxStatus = @js(old('tax_status', $sales_order->tax_status ?? null));
+
+            if (soTaxStatus) {
+                this.$store.order.tax_status = soTaxStatus;
+            } else if (this.chosen?.tax_status) {
+                // Only fallback to customer's tax_status if SO has none
                 this.$store.order.tax_status = this.chosen.tax_status;
             }
         },
@@ -1123,24 +1118,37 @@ document.addEventListener('alpine:init', () => {
         },
 
         subtotal() {
-            return this.rows.reduce((sum, row) => {
+            const rawSubtotal = this.rows.reduce((sum, row) => {
                 const qty = Number(row.quantity) || 0;
                 const price = Number(row.unit_price) || 0;
                 return sum + (qty * price);
             }, 0);
+
+            const taxStatus = this.$store.order.tax_status;
+
+            if (taxStatus === 'VAT Inclusive') {
+                // ✅ Vatable sales (remove VAT portion)
+                return rawSubtotal / 1.12;
+            }
+
+            // Zero Rated or others → just return as is
+            return rawSubtotal;
         },
 
         vat() {
             const taxStatus = this.$store.order.tax_status;
 
-            if (taxStatus === 'Tax Exempt') {
+            if (taxStatus === 'Zero Rated') {
                 return 0;
             }
             if (taxStatus === 'VAT Inclusive') {
-                return this.subtotal() - (this.subtotal() / 1.12);
-            }
-            if (taxStatus === 'VAT Exclusive') {
-                return this.subtotal() * 0.12;
+                // ✅ VAT is the difference between gross and net
+                const gross = this.rows.reduce((sum, row) => {
+                    const qty = Number(row.quantity) || 0;
+                    const price = Number(row.unit_price) || 0;
+                    return sum + (qty * price);
+                }, 0);
+                return gross - (gross / 1.12);
             }
             return 0;
         },
@@ -1149,24 +1157,41 @@ document.addEventListener('alpine:init', () => {
             const taxStatus = this.$store.order.tax_status;
 
             if (taxStatus === 'VAT Inclusive') {
-                return this.subtotal();
+                // ✅ Total = gross (which is net + VAT)
+                return this.rows.reduce((sum, row) => {
+                    const qty = Number(row.quantity) || 0;
+                    const price = Number(row.unit_price) || 0;
+                    return sum + (qty * price);
+                }, 0);
             }
-            if (taxStatus === 'VAT Exclusive') {
-                return this.subtotal() + this.vat();
-            }
-            if (taxStatus === 'Tax Exempt') {
-                return this.subtotal();
+            if (taxStatus === 'Zero Rated') {
+                return this.subtotal(); 
             }
             return this.subtotal();
         }
     }));
 
     
-    Alpine.data('soApproval', ({ soID }) => ({
+        Alpine.data('soApproval', ({ soID }) => ({
         isSubmitting: false,
 
         async submitSOApproval() {
             if (!soID) return;
+
+            // ✅ Grab values directly from your form inputs
+            const poNo = document.querySelector('#po_no')?.value?.trim();
+            const deliveryDate = document.querySelector('[name="delivery_date"]')?.value?.trim();
+
+            // ✅ Validation: require both fields
+            if (!poNo || !deliveryDate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Required Fields',
+                    text: 'Please enter both P.O. Number and Delivery Date before submitting.',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return; // stop submission
+            }
 
             const confirmResult = await Swal.fire({
                 title: 'Submit for Approval?',
@@ -1205,8 +1230,8 @@ document.addEventListener('alpine:init', () => {
                     confirmButtonColor: '#2563eb'
                 });
 
-                // window.location.reload();
-                 window.location.href = data.redirect; 
+                // Redirect after success
+                window.location.href = data.redirect;
 
             } catch (err) {
                 console.error('❌ Submission error:', err);
@@ -1222,6 +1247,7 @@ document.addEventListener('alpine:init', () => {
             }
         }
     }));
+
  
     Alpine.data('saveDraftHandler', () => ({
         async confirmSave() {

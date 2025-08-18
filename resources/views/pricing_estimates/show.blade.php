@@ -83,6 +83,11 @@
                 </div>
 
                 <div>
+                    <p class="text-gray-500 dark:text-gray-400">Tax Status</p>
+                    <p class="font-medium text-gray-800 dark:text-gray-100">{{ $pricingEstimate->vat ?? '—' }}</p>
+                </div>
+
+                <div>
                     <p class="text-gray-500 dark:text-gray-400">Terms</p>
                     <p class="font-medium text-gray-800 dark:text-gray-100">{{ $pricingEstimate->terms ?? '—' }}</p>
                 </div>
@@ -138,42 +143,57 @@
                         @endforeach
 
                         @php
-                        // Calculate subtotal: sum of item unit_price * quantity
-                        $subtotal = $pricingEstimate->pe_items->sum(function ($item) {
-                            return $item->unit_price * $item->quantity;
+                        $taxStatus = $pricingEstimate->vat ?? '';
+
+                        // Sum of all items
+                        $totalSum = $pricingEstimate->pe_items->sum(function ($item) {
+                            return $item->final_unit_price * $item->quantity;
                         });
 
-                        $taxStatus = $pricingEstimate->customer->tax_status ?? 'Tax Exempt';
-
-                        if ($taxStatus === 'Tax Exempt') {
-                            $vat = 0;
-                        } elseif ($taxStatus === 'VAT Inclusive') {
-                            $vat = $subtotal - ($subtotal / 1.12);
-                        } elseif ($taxStatus === 'VAT Exclusive') {
-                            $vat = $subtotal * 0.12;
+                        // Calculate Total Vatable Sales
+                        if ($taxStatus === 'VAT Inclusive') {
+                            $totalVatableSales = $totalSum / 1.12; // Extract base price
                         } else {
-                            $vat = 0; // fallback if unexpected tax_status
+                            $totalVatableSales = $totalSum; // For other cases (Zero Rated or fallback)
                         }
 
-                        $grandTotal = ($taxStatus === 'VAT Exclusive') ? $subtotal + $vat : $subtotal;
+                        // Calculate VAT and Grand Total
+                        if ($taxStatus === 'Zero Rated') {
+                            $vat = 0;
+                            $grandTotal = $totalSum;
+                            $zeroRatedSales = $totalSum;
+                            $totalVatableSales = 0; // No vatable sales for Zero Rated
+                        } elseif ($taxStatus === 'VAT Inclusive') {
+                            $vat = $totalSum - $totalVatableSales;
+                            $grandTotal = $totalSum;
+                            $zeroRatedSales = 0;
+                        } else {
+                            $vat = 0;
+                            $grandTotal = $totalSum;
+                            $zeroRatedSales = 0;
+                        }
                     @endphp
 
-                    {{-- Totals --}}
                     <tr class="bg-gray-50 dark:bg-gray-700">
-                        <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Subtotal</td>
-                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($subtotal, 2) }}</td>
+                        <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Total Vatable Sales</td>
+                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($totalVatableSales, 2) }}</td>
+                    </tr>
+
+                    <tr class="bg-gray-50 dark:bg-gray-700">
+                        <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Zero Rated Sales</td>
+                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($zeroRatedSales, 2) }}</td>
                     </tr>
 
                     @if ($vat > 0)
                     <tr class="bg-gray-50 dark:bg-gray-700">
-                        <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">{{ $taxStatus }} 12%</td>
+                        <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">VAT 12%</td>
                         <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
                     </tr>
                     @endif
 
                     <tr class="bg-gray-100 dark:bg-gray-600">
-                        <td colspan="4" class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">Total</td>
-                        <td class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
+                        <td colspan="4" class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">Total Sales Amount</td>
+                        <td class="px-6 py-4 text-right font-bold text-sm text-gray-900 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
                     </tr>
 
                     </tbody>

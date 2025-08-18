@@ -78,7 +78,7 @@ class PricingEstimateController extends Controller
     {
         $user = auth()->user();
         // dd($user->id);
-
+        
         // Validate perPage input with fallback
         $perPage = in_array($request->input('perPage'), [10, 25, 50, 100]) 
             ? (int) $request->input('perPage') 
@@ -86,7 +86,18 @@ class PricingEstimateController extends Controller
 
         $query = PricingEstimate::with(['customer', 'salesRep.employee'])
             ->withCount(['pe_items', 'quotations'])
-            ->where('sr_id', $user->id);
+            ->where(function($q) use ($user) {
+                $q->where(function($q1) use ($user) {
+                        // All assigned to sales rep, but exclude drafts
+                        $q1->where('sr_id', $user->id)
+                        ->where('pe_status', '!=', 'draft');
+                    })
+                ->orWhere(function($q2) use ($user) {
+                        // Only drafts created by the current user
+                        $q2->where('created_by', $user->id)
+                        ->where('pe_status', 'draft');
+                    });
+            });
 
         // Search
         if ($search = $request->input('search')) {
@@ -159,31 +170,46 @@ class PricingEstimateController extends Controller
     // }
     public function store(PricingEstimateRequest $request)
     {
-        
-        $data  = $request->validated();
-        
+        // Validate request data
+        $data = $request->validated();
+
+        // Attach the authenticated user's ID
+        $data['created_by'] = auth()->id();
+
+        // Create the pricing estimate
         $estimate = PricingEstimate::create($data);
-        foreach ($request->input('new_items', []) as $data) {
-            if (!empty($data['_delete'])) continue;
-            \Log::debug('Creating item for estimate ID: ' . $estimate->id, $data);
+
+        // Loop through items
+        foreach ($request->input('new_items', []) as $itemData) {
+            if (!empty($itemData['_delete'])) continue;
+
+            \Log::debug('Creating item for estimate ID: ' . $estimate->id, $itemData);
+
             PricingEstimateItem::create([
                 'pricing_estimate_id' => $estimate->id,
-                'item_id' => $data['item_id'],
-                'item_name' => $data['name'],
-                'item_description' => $data['description'],
-                'pe_remarks' => $data['pe_remarks'],
-                'unit_id' => $data['unit_id'] ?? null,
-                'notes' => $data['notes'],
-                'quantity' => $data['quantity'],
-                'unit_price' => $data['unit_price'],
+                'item_id' => $itemData['item_id'],
+                'item_name' => $itemData['name'],
+                'item_description' => $itemData['description'],
+                'pe_remarks' => $itemData['pe_remarks'],
+                'unit_id' => $itemData['unit_id'] ?? null,
+                'notes' => $itemData['notes'],
+                'internal_notes' => $itemData['internal_notes'] ?? null,
+                'quantity' => $itemData['quantity'],
+                'unit_price' => $itemData['unit_price'],
             ]);
         }
+
+        // Handle file uploads
         $this->saveNewUploads($estimate, $request);
+
+        // Log the user who created this estimate
+        \Log::info('Pricing Estimate ID ' . $estimate->id . ' created by user ID ' . auth()->id());
 
         return redirect()
             ->route('pricing-estimates.create')
             ->with('success', 'Pricing Estimate saved successfully.');
     }
+
 
     /**
      * Display the specified resource.
@@ -225,6 +251,13 @@ class PricingEstimateController extends Controller
     {
         $data  = $request->validated();
         $pricingEstimate->update($data);
+
+        // Handle removed offers (from Alpine)
+        $removedOffers = $request->input('removed_offers', '');
+        if ($removedOffers) {
+            $ids = explode(',', $removedOffers);
+            PricingEstimateItem::whereIn('id', $ids)->delete();
+        }
         // Handle existing items
         foreach ($request->input('items', []) as $id => $data) {
             if (!empty($data['_delete'])) {
@@ -242,6 +275,7 @@ class PricingEstimateController extends Controller
                     'pe_remarks'          => $data['pe_remarks'] ?? '',
                     'unit_id'             => $data['unit_id'] ?? null,
                     'notes'               => $data['notes'] ?? '',
+                    'internal_notes'      => $data['internal_notes'] ?? '',
                     'quantity'            => $data['quantity'],
                     'unit_price'          => $data['unit_price'],
                 ]
@@ -260,6 +294,7 @@ class PricingEstimateController extends Controller
                 'pe_remarks'          => $data['pe_remarks'] ?? '',
                 'unit_id'             => $data['unit_id'] ?? null,
                 'notes'               => $data['notes'] ?? '',
+                'internal_notes'      => $data['internal_notes'] ?? '',
                 'quantity'            => $data['quantity'],
                 'unit_price'          => $data['unit_price'],
             ]);
@@ -326,8 +361,24 @@ class PricingEstimateController extends Controller
     public function destroy(PricingEstimate $pricingEstimate)
     {
         $pricingEstimate->delete();
-        return back()->with('success', 'Price Estimate deleted.');
+
+        return redirect()
+            ->route('pricing-estimates.index')
+            ->with('success', 'Pricing estimate deleted successfully.');
     }
+
+      public function destroyItem(PricingEstimateItem $item)
+    {
+         $item->delete();
+
+        return response()->json([
+            'success' => true,
+            'id' => $item->id,
+            'message' => 'Offer item deleted successfully.'
+        ]);
+    }
+    
+
     public function generateQuote(PDF $pdf, Request $request)   // ← Laravel will inject it
     {
         $pe_no = $request->input('pe_no');
@@ -346,6 +397,7 @@ class PricingEstimateController extends Controller
 
         return $pdf->stream('PE.pdf');
     }
+
     public function generateSales(PDF $pdf, Request $request)   // ← Laravel will inject it
     {
         $so_no = $request->input('so_no');
@@ -430,6 +482,7 @@ class PricingEstimateController extends Controller
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric', // This is the FINAL price after override/discount
             'notes' => 'nullable|string',
+            'internal_notes' => 'nullable|string',
             'discount_type' => 'nullable|string|in:percentage,fixed',
             'discount_amount' => 'nullable|numeric|min:0',
         ]);
@@ -441,6 +494,7 @@ class PricingEstimateController extends Controller
             'quantity' => $validated['quantity'],
             'unit_price' => $validated['unit_price'], // Final price stored here
             'notes' => $validated['notes'],
+            'internal_notes' => $validated['internal_notes'],
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_amount' => $validated['discount_amount'] ?? null,
         ]);
@@ -469,12 +523,7 @@ class PricingEstimateController extends Controller
 
         return response()->json(['success' => true]);
     }
-    public function destroyItem(PricingEstimateItem $item)
-    {
-        $item->delete();
-
-        return response()->json(['success' => true]);
-    }
+  
     public function submitForApproval(Request $request, PricingEstimate $pricing_estimate)
     {
         if ($pricing_estimate->pe_status !== 'draft') {
@@ -647,29 +696,35 @@ class PricingEstimateController extends Controller
 
     public function addOffer(Request $request)
     {
-        // dd($request->all());
         try {
             $validated = $request->validate([
                 'pricing_estimate_id' => 'required|exists:pricing_estimates,id',
+                'item_id' => 'nullable|exists:items,id', // allow linking to catalog items
                 'item_name' => 'required|string|max:255',
                 'item_description' => 'nullable|string',
                 'unit_id' => 'required|exists:units,id',
                 'quantity' => 'required|numeric|min:1',
                 'unit_price' => 'required|numeric|min:0',
+                'final_unit_price' => 'required|numeric|min:0',
+                'discount_type' => 'nullable|string|in:percentage,fixed',
+                'discount_amount' => 'nullable|numeric|min:0',
                 'is_offer' => 'required|boolean',
                 'parent_item_id' => 'nullable|exists:pricing_estimate_items,id',
                 'pe_remarks' => 'nullable|string',
                 'notes' => 'nullable|string',
+                'internal_notes' => 'nullable|string',
             ]);
 
             $item = PricingEstimateItem::create($validated);
-            
+
+            // Zero out parent pricing if this is an offer
             if ($item->is_offer && $item->parent_item_id) {
                 $parent = PricingEstimateItem::find($item->parent_item_id);
                 if ($parent) {
                     $parent->update([
                         'quantity' => 0,
                         'unit_price' => 0,
+                        'final_unit_price' => 0,
                         'discount_amount' => 0,
                         'price_factor' => null,
                         'sum_charge' => null,
@@ -677,24 +732,24 @@ class PricingEstimateController extends Controller
                     ]);
                 }
             }
-            // return response()->json($item);
+
             return response()->json([
                 'id' => $item->id,
                 'item_id' => $item->item_id,
                 'item_name' => $item->item_name,
-                'item_description' => $item->item_desc,
+                'description' => $item->item_description, // matches Alpine template
                 'unit_id' => $item->unit_id,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
-                'final_unit_price' => $item->final_unit_price ?? 0,
-                'discount_amount' => 0,
-                'discount_type' => 'percentage',
+                'final_unit_price' => $item->final_unit_price,
+                'discount_amount' => $item->discount_amount ?? 0,
+                'discount_type' => $item->discount_type ?? 'percentage',
                 'is_offer' => $item->is_offer,
                 'parent_item_id' => $item->parent_item_id,
                 'pe_remarks' => $item->pe_remarks,
                 'notes' => $item->notes,
-            ]);
-
+                'internal_notes' => $item->internal_notes,
+            ], 201);
 
         } catch (ValidationException $e) {
             return response()->json([

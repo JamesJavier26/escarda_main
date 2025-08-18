@@ -30,6 +30,7 @@ return new class extends Migration
             $table->unsignedInteger('per_quantity')->default(0)->nullable();
             $table->tinyInteger('quot')->default(false)->nullable();
             $table->longText('notes')->nullable();
+            $table->longText('internal_notes')->nullable();
             $table->longText('offer')->nullable();
             $table->tinyInteger('is_offer')->default(0)->nullable();
             // $table->foreign('parent_item_id')->references('id')->on('pricing_estimate_items')->onDelete('cascade');
