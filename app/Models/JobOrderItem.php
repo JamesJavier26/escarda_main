@@ -20,6 +20,9 @@ class JobOrderItem extends Model
         'quantity',
         'unit_id',
         'unit_price',
+        'new_mould_no',
+        'new_mould_name',
+        'note',
         'is_linear',
         'total_length'
     ];

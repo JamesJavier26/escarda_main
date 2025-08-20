@@ -188,6 +188,7 @@ class JobOrderController extends Controller
             'items.*.hardness'        => ['nullable', 'string'],
             'items.*.thickness'       => ['nullable', 'string'],
             'items.*.thickness_unit'  => ['nullable', 'string'],
+            'items.*.note'            => ['nullable', 'string', 'max:255'],
 
             // ✅ Fix: allow both old and new mould fields
             'items.*.mould_id'        => ['nullable', 'exists:moulds,id'],
@@ -223,6 +224,7 @@ class JobOrderController extends Controller
                     // ✅ Now these fields will persist
                     'new_mould_no'    => $itemData['new_mould_no'] ?? null,
                     'new_mould_name'  => $itemData['new_mould_name'] ?? null,
+                    'note'            => $itemData['note'] ?? null,
                 ]);
         }
 

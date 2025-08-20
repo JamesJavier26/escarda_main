@@ -150,38 +150,35 @@
 
                                             @php
                                                 $serverMouldType = old("items.$index.mould_type")
-                                                    ?? ($jo_item->new_mould_no || $jo_item->new_mould_name ? 'new' : 'old');
+                                                    ?? ($jo_item->new_mould_no || $jo_item->new_mould_name
+                                                        ? 'new'
+                                                        : ($jo_item->note ? 'trade' : 'old'));
                                             @endphp
 
                                             <div x-data='{ mouldType: @json($serverMouldType) }' class="space-y-3">
                                                 <label class="block text-xs text-gray-600 dark:text-gray-400">Mould</label>
 
-                                                <!-- Toggle Old / New -->
+                                                <!-- Toggle Old / New / Trade -->
                                                 <div class="flex items-center space-x-4">
                                                     <label class="flex items-center space-x-1">
-                                                        <input
-                                                            type="radio"
-                                                            name="items[{{ $index }}][mould_type]"
-                                                            value="old"
-                                                            x-model="mouldType">
+                                                        <input type="radio" name="items[{{ $index }}][mould_type]" value="old" x-model="mouldType">
                                                         <span class="text-sm text-gray-700 dark:text-gray-300">Old</span>
                                                     </label>
 
                                                     <label class="flex items-center space-x-1">
-                                                        <input
-                                                            type="radio"
-                                                            name="items[{{ $index }}][mould_type]"
-                                                            value="new"
-                                                            x-model="mouldType">
+                                                        <input type="radio" name="items[{{ $index }}][mould_type]" value="new" x-model="mouldType">
                                                         <span class="text-sm text-gray-700 dark:text-gray-300">New</span>
+                                                    </label>
+
+                                                    <label class="flex items-center space-x-1">
+                                                        <input type="radio" name="items[{{ $index }}][mould_type]" value="trade" x-model="mouldType">
+                                                        <span class="text-sm text-gray-700 dark:text-gray-300">Trade</span>
                                                     </label>
                                                 </div>
 
                                                 <!-- Old: Dropdown -->
                                                 <div x-show="mouldType === 'old'" x-cloak>
-                                                    <select
-                                                        name="items[{{ $index }}][mould_id]"
-                                                        {{ $isApproved ? 'disabled' : '' }}
+                                                    <select name="items[{{ $index }}][mould_id]" {{ $isApproved ? 'disabled' : '' }}
                                                         class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
                                                         <option value="">-- Select Mould --</option>
                                                         @foreach ($moulds as $mould)
@@ -191,7 +188,6 @@
                                                         @endforeach
                                                     </select>
 
-                                                    {{-- Hidden fallback if disabled --}}
                                                     @if ($isApproved)
                                                         <input type="hidden" name="items[{{ $index }}][mould_id]" value="{{ $jo_item->mould_id }}">
                                                     @endif
@@ -203,9 +199,7 @@
                                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                             Mould No. <span class="text-red-500">*</span>
                                                         </label>
-                                                        <input
-                                                            type="text"
-                                                            name="items[{{ $index }}][new_mould_no]"
+                                                        <input type="text" name="items[{{ $index }}][new_mould_no]"
                                                             value="{{ old("items.$index.new_mould_no", $jo_item->new_mould_no) }}"
                                                             placeholder="Enter mould number"
                                                             :disabled="mouldType !== 'new' {{ $isApproved ? '|| true' : '' }}"
@@ -216,19 +210,26 @@
                                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                             Name <span class="text-red-500">*</span>
                                                         </label>
-                                                        <input
-                                                            type="text"
-                                                            name="items[{{ $index }}][new_mould_name]"
+                                                        <input type="text" name="items[{{ $index }}][new_mould_name]"
                                                             value="{{ old("items.$index.new_mould_name", $jo_item->new_mould_name) }}"
                                                             placeholder="Enter mould name"
                                                             :disabled="mouldType !== 'new' {{ $isApproved ? '|| true' : '' }}"
                                                             class="w-full px-3 py-1 rounded-lg border">
                                                     </div>
                                                 </div>
+
+                                                <!-- Trade: Input -->
+                                                <div x-show="mouldType === 'trade'" x-cloak>
+                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        Note <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <input type="text" name="items[{{ $index }}][note]"
+                                                        value="{{ old("items.$index.note", $jo_item->note) }}"
+                                                        placeholder="Enter trade note"
+                                                        :disabled="mouldType !== 'trade' {{ $isApproved ? '|| true' : '' }}"
+                                                        class="w-full px-3 py-1 rounded-lg border">
+                                                </div>
                                             </div>
-
-
-
                                     <td class="px-4 py-3 text-right">{{ $jo_item->quantity }}</td>
                                     <td class="px-4 py-3" x-data="{ is_linear: {{ $jo_item->is_linear ? 'true' : 'false' }} }">
                                         <div class="space-y-2 text-sm">
