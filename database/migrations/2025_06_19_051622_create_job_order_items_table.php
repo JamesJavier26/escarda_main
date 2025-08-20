@@ -19,6 +19,8 @@ return new class extends Migration
             $table->longText('item_name')->nullable();
             $table->longText('item_description')->nullable();
             $table->foreignId('mould_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('new_mould_no')->nullable()->after('mould_id');
+            $table->string('new_mould_name')->nullable()->after('new_mould_no');
             $table->foreignId('material_id')->nullable()->constrained()->nullOnDelete();
             $table->string('hardness')->nullable();
             $table->string('thickness')->nullable();

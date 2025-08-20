@@ -113,6 +113,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/job-orders/{job_order}/activate', [JobOrderController::class, 'activate'])->name('job-orders.activate');
         // Route::get('/job-orders/search', [JobOrderController::class, 'search'])->name('job-orders.search');
         Route::patch('/job-orders/{job_order}/mark-delivered', [JobOrderController::class, 'markAsDelivered'])->name('job-orders.mark-delivered');
+        Route::patch('/job-orders/{job_order}/approve', [JobOrderController::class, 'approve'])->name('job-orders.approve');
+        Route::patch('/job-orders/{job_order}/cancel', [JobOrderController::class, 'cancel'])->name('job-orders.cancel');
+
         Route::get('/api/job-orders/search', [JobOrderController::class, 'search']);
         Route::get('/api/job-orders/{jobOrder}/items', [JobOrderController::class, 'getItems']);
 
@@ -139,6 +142,9 @@ Route::middleware(['auth'])->group(function () {
             ->name('production-detail-entries.destroy');
 
         Route::resource('temporary_quotations', TemporaryQuotationController::class);
+        Route::get('/temporary-quotations/{id}/pdf', [TemporaryQuotationController::class, 'generateTemporaryQuote'])
+            ->name('temporary_quotations.pdf');
+
 
         // MASTER DATA
         Route::resource('customers', CustomerController::class)->except(['show']);

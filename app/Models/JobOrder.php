@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class JobOrder extends Model
 {
     protected $fillable = [
-        'jo_no', 'sales_order_id', 'user_id','duedate','remarks', 'instructions', 'delivery_details','jo_status' ,'approval_status', 'approval_date',
+        'jo_no', 'sales_order_id', 'user_id','duedate','remarks', 'instructions', 'delivery_details','jo_status' ,'approval_status', 'approval_date', 'is_delivered',
     ];
     protected $casts = [
         'duedate' => 'datetime',
         'approval_date' => 'datetime',
+        'is_delivered' => 'boolean',
     ];
     public function salesOrder()
     {

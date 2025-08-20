@@ -55,6 +55,14 @@
                             {{ $quotation->created_at->format('Y-m-d') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end">
+
+                            <a href="#"
+                                onclick="openQuotePopup('{{ route('temporary_quotations.pdf', $quotation->id) }}'); return false;"
+                                class="flex items-center justify-center w-8 h-8 text-white bg-gray-600 hover:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition mr-2"
+                                title="Print Temporary Quotation">
+                                <i class="fas fa-print text-sm"></i>
+                            </a>
+
                             <a href="{{ route('temporary_quotations.show', $quotation->id) }}"
                                 class="flex items-center justify-center w-8 h-8 text-white bg-green-600 hover:bg-green-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition mr-2"
                                 title="View Temporary Quotation">
@@ -78,3 +86,23 @@
         </table>
     </div>
 </x-layouts.app>
+<script>
+    function openQuotePopup(url) {
+        const width = 1000;
+        const height = 800;
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
+
+        const popup = window.open(
+            url,
+            '_blank',
+            `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,
+             width=${width},height=${height},top=${top},left=${left}`
+        );
+
+        // Optional: Try focusing popup
+        if (popup) {
+            popup.focus();
+        }
+    }
+</script>

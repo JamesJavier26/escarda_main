@@ -21,7 +21,8 @@ return new class extends Migration
             $table->longText('instructions')->nullable();
             $table->longText('delivery_details')->nullable();
             $table->string('jo_status')->default('draft'); 
-            $table->string('approval_status')->nullable(); //Yes / Cancel
+            $table->string('approval_status')->nullable();
+            $table->boolean('is_delivered')->default(false)->after('approval_status');
             $table->timestamp('approval_date')->nullable();
             $table->timestamps();
         });

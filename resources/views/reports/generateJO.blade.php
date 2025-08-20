@@ -230,7 +230,7 @@
             <tr>
                 <td class="text-left" style="vertical-align:top; padding: 2px 0;">
                     <strong>APPROVED DATE:</strong> 
-                    @if ($jobOrder->jo_status === 'delivered')
+                    @if ($jobOrder->jo_status === 'approved')
                         {{ optional($jobOrder->approval_date)->format('F d, Y') }}
                     @else
                         —

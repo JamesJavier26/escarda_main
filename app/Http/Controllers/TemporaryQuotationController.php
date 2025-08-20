@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\Currency;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\Setting;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Http\Request;
 
 class TemporaryQuotationController extends Controller
@@ -184,5 +186,26 @@ class TemporaryQuotationController extends Controller
         $temporaryQuotation->delete();
         return redirect()->route('temporary_quotations.index')
             ->with('success', 'Temporary Quotation deleted successfully.');
+    }
+
+    public function generateTemporaryQuote(PDF $pdf, $id)
+    {
+        $temporaryQuotation = TemporaryQuotation::with([
+            'customer',
+            'salesRep',
+            'items.unit',
+            'currency'
+        ])->findOrFail($id);
+
+        $data = [
+            'temporaryQuotation' => $temporaryQuotation,
+            'date'               => now()->format('F d, Y'),
+            'setting'            => Setting::all(),
+        ];
+
+        $pdf->loadView('reports.generateTemporaryQuote', $data)
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('TemporaryQuotation.pdf');
     }
 }
