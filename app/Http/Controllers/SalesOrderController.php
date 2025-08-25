@@ -251,39 +251,42 @@ class SalesOrderController extends Controller
 
 
     public function update(SalesOrderRequest $request, SalesOrder $salesOrder)
-{
-    try {
-        DB::beginTransaction();
+    {
+        try {
+            DB::beginTransaction();
 
-        $data = $request->validated();
+            $data = $request->validated();
 
-        $salesOrder->update([
-        'pr_no'         => $data['pr_no'] ?? $salesOrder->pr_no,
-        'po_no'         => $data['po_no'] ?? $salesOrder->po_no,
-        'attention'     => $data['attention'] ?? $salesOrder->attention,
-        'customer_id'   => $data['customer_id'] ?? $salesOrder->customer_id,
-        'delivery_date' => $data['delivery_date'] ?? $salesOrder->delivery_date,
-        'sr_id'         => $data['sr_id'] ?? $salesOrder->sr_id,
-        'remarks'       => $data['remarks'] ?? $salesOrder->remarks,
-        'currency_id'   => $data['currency_id'] ?? $salesOrder->currency_id,
-        'tax_status'    => $data['tax_status'] ?? $salesOrder->tax_status,
-        'so_status'     => 'draft',
-        ]);
+            $salesOrder->update([
+                'pr_no'         => $data['pr_no'] ?? $salesOrder->pr_no,
+                'po_no'         => $data['po_no'] ?? $salesOrder->po_no,
+                'attention'     => $data['attention'] ?? $salesOrder->attention,
+                'customer_id'   => $data['customer_id'] ?? $salesOrder->customer_id,
+                'delivery_date' => $data['delivery_date'] ?? $salesOrder->delivery_date,
+                'sr_id'         => $data['sr_id'] ?? $salesOrder->sr_id,
+                'remarks'       => $data['remarks'] ?? $salesOrder->remarks,
+                'currency_id'   => $data['currency_id'] ?? $salesOrder->currency_id,
+                'tax_status'    => $data['tax_status'] ?? $salesOrder->tax_status,
+                'so_status'     => 'draft',
+            ]);
 
-        $jobOrder = $salesOrder->jobOrder;
+            $jobOrder = $salesOrder->jobOrder;
 
-        // Track updated IDs
-        $updatedIds = [];
+            // === UPDATE EXISTING ITEMS ===
+            foreach ($request->input('items', []) as $id => $itemData) {
+                $jobOrderItem = JobOrderItem::find($id);
 
-        // === UPDATE EXISTING ITEMS ===
-        foreach ($request->input('items', []) as $id => $itemData) {
-            if (!empty($itemData['_delete'])) {
-                JobOrderItem::where('id', $id)->delete();
-                continue;
-            }
+                if (!$jobOrderItem) {
+                    continue; // skip if item not found
+                }
 
-            $jobOrderItem = JobOrderItem::find($id);
-            if ($jobOrderItem) {
+                // If flagged for delete
+                if (!empty($itemData['_delete'])) {
+                    $jobOrderItem->delete();
+                    continue;
+                }
+
+                // Otherwise update
                 $jobOrderItem->update([
                     'job_order_id'     => $jobOrder->id,
                     'sales_order_id'   => $salesOrder->id,
@@ -294,60 +297,54 @@ class SalesOrderController extends Controller
                     'quantity'         => $itemData['quantity'],
                     'unit_price'       => $itemData['unit_price'],
                 ]);
-                $updatedIds[] = $id;
             }
-        }
 
-        // === DELETE ITEMS NOT IN UPDATED LIST ===
-        JobOrderItem::where('job_order_id', $jobOrder->id)
-            ->whereNotIn('id', $updatedIds)
-            ->delete();
+            // === INSERT NEW ITEMS ===
+            foreach ($request->input('new_items', []) as $itemData) {
+                if (!empty($itemData['_delete'])) continue;
 
-        // === INSERT NEW ITEMS ===
-        foreach ($request->input('new_items', []) as $itemData) {
-            if (!empty($itemData['_delete'])) continue;
-
-            JobOrderItem::create([
-                'job_order_id'     => $jobOrder->id,
-                'sales_order_id'   => $salesOrder->id,
-                'item_id'          => $itemData['item_id'],
-                'item_name'        => $itemData['name'],
-                'item_description' => $itemData['description'],
-                'unit_id'          => $itemData['unit_id'],
-                'quantity'         => $itemData['quantity'],
-                'unit_price'       => $itemData['unit_price'],
-            ]);
-        }
-
-        DB::commit();
-
-        // === ATTACHMENT HANDLING ===
-        $keepIds = collect($request->input('keep_attachments', []));
-        $salesOrder->attachments()
-            ->whereNotIn('id', $keepIds)
-            ->each(function ($attachment) {
-                Storage::disk($attachment->metadata['disk'] ?? 'public')
-                    ->delete($attachment->metadata['path'] ?? '');
-                $attachment->delete();
-            });
-
-        foreach ($request->input('existing_file_labels', []) as $id => $label) {
-            $attachment = $salesOrder->attachments()->find($id);
-            if ($attachment) {
-                $attachment->update(['label' => $label]);
+                JobOrderItem::create([
+                    'job_order_id'     => $jobOrder->id,
+                    'sales_order_id'   => $salesOrder->id,
+                    'item_id'          => $itemData['item_id'],
+                    'item_name'        => $itemData['name'],
+                    'item_description' => $itemData['description'],
+                    'unit_id'          => $itemData['unit_id'],
+                    'quantity'         => $itemData['quantity'],
+                    'unit_price'       => $itemData['unit_price'],
+                ]);
             }
+
+            DB::commit();
+
+            // === ATTACHMENT HANDLING ===
+            $keepIds = collect($request->input('keep_attachments', []));
+            $salesOrder->attachments()
+                ->whereNotIn('id', $keepIds)
+                ->each(function ($attachment) {
+                    Storage::disk($attachment->metadata['disk'] ?? 'public')
+                        ->delete($attachment->metadata['path'] ?? '');
+                    $attachment->delete();
+                });
+
+            foreach ($request->input('existing_file_labels', []) as $id => $label) {
+                $attachment = $salesOrder->attachments()->find($id);
+                if ($attachment) {
+                    $attachment->update(['label' => $label]);
+                }
+            }
+
+            $this->saveNewUploads($salesOrder, $request);
+
+            return redirect()
+                ->route('sales-orders.edit', $salesOrder)
+                ->with('success', 'Sales Order updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to update Sales Order: ' . $e->getMessage());
         }
-
-        $this->saveNewUploads($salesOrder, $request);
-
-        return redirect()
-            ->route('sales-orders.edit', $salesOrder)
-            ->with('success', 'Sales Order updated successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Failed to update Sales Order: ' . $e->getMessage());
     }
-}
+
 
 
 
