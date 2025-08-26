@@ -5,8 +5,8 @@
     <title>Quotation #{{ $price_estimates->quote_number }}</title>
     <style>
         @page {
+            size: A4;
             margin: 80px 15px 80px 15px;
-            
         }
 
 
@@ -246,23 +246,23 @@
                                 @if ($pe_item->discount_amount > 0)
                                     <div style="text-align:center;">
                                         <span style="text-decoration: line-through; color: gray;">
-                                            ₱{{ number_format($pe_item->unit_price, 2) }} / {{ $pe_item->unit->short_name }}
+                                            {{ $price_estimates->currency->symbol }}{{ number_format($pe_item->unit_price, 2) }} / {{ $pe_item->unit->short_name }}
                                         </span><br>
                                         <span style="font-weight: bold; color: black;">
-                                            ₱{{ number_format($discountedUnitPrice, 2) }} / {{ $pe_item->unit->short_name }}
+                                            {{ $price_estimates->currency->symbol }}{{ number_format($discountedUnitPrice, 2) }} / {{ $pe_item->unit->short_name }}
                                         </span><br>
                                         <span style="font-size: 10px; color: green;">
                                             (
                                             @if ($pe_item->discount_type === 'percentage')
                                                 {{ $pe_item->discount_amount }}% off
                                             @else
-                                                ₱{{ number_format($pe_item->discount_amount, 2) }} off
+                                                {{ $price_estimates->currency->symbol }}{{ number_format($pe_item->discount_amount, 2) }} off
                                             @endif
                                             )
                                         </span>
                                     </div>
                                 @else
-                                    ₱{{ number_format($pe_item->unit_price, 2) }} / {{ $pe_item->unit->short_name }}
+                                    {{ $price_estimates->currency->symbol }}{{ number_format($pe_item->unit_price, 2) }} / {{ $pe_item->unit->short_name }}
                                 @endif
                             </td>
 
@@ -271,14 +271,14 @@
                                 @if ($pe_item->discount_amount > 0)
                                     <div style="text-align:right;">
                                         <span style="text-decoration: line-through; color: gray;">
-                                            ₱{{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
+                                            {{ $price_estimates->currency->symbol }}{{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
                                         </span><br>
                                         <span style="font-weight: bold; color: black;">
-                                            ₱{{ number_format($discountedUnitPrice * $pe_item->quantity, 2) }}
+                                            {{ $price_estimates->currency->symbol }}{{ number_format($discountedUnitPrice * $pe_item->quantity, 2) }}
                                         </span>
                                     </div>
                                 @else
-                                    ₱{{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
+                                   {{ $price_estimates->currency->symbol }} {{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
                                 @endif
                             </td>
                         @endif
@@ -317,23 +317,23 @@
                                     @if ($offer->discount_amount > 0)
                                         <div style="text-align:center;">
                                             <span style="text-decoration: line-through; color: gray;">
-                                                ₱{{ number_format($offer->unit_price, 2) }} / {{ $offer->unit->short_name }}
+                                                {{ $price_estimates->currency->symbol }} {{ number_format($offer->unit_price, 2) }} / {{ $offer->unit->short_name }}
                                             </span><br>
                                             <span style="font-weight: bold; color: black;">
-                                                ₱{{ number_format($offerDiscountedPrice, 2) }} / {{ $offer->unit->short_name }}
+                                                {{ $price_estimates->currency->symbol }} {{ number_format($offerDiscountedPrice, 2) }} / {{ $offer->unit->short_name }}
                                             </span><br>
                                             <span style="font-size: 10px; color: green;">
                                                 (
                                                 @if ($offer->discount_type === 'percentage')
                                                     {{ $offer->discount_amount }}% off
                                                 @else
-                                                    ₱{{ number_format($offer->discount_amount, 2) }} off
+                                                   {{ $price_estimates->currency->symbol }} {{ number_format($offer->discount_amount, 2) }} off
                                                 @endif
                                                 )
                                             </span>
                                         </div>
                                     @else
-                                        ₱{{ number_format($offer->unit_price, 2) }} / {{ $offer->unit->short_name }}
+                                        {{ $price_estimates->currency->symbol }}{{ number_format($offer->unit_price, 2) }} / {{ $offer->unit->short_name }}
                                     @endif
                                 </td>
 
@@ -342,14 +342,14 @@
                                     @if ($offer->discount_amount > 0)
                                         <div style="text-align:right;">
                                             <span style="text-decoration: line-through; color: gray;">
-                                                ₱{{ number_format($offer->unit_price * $offer->quantity, 2) }}
+                                                {{ $price_estimates->currency->symbol }} {{ number_format($offer->unit_price * $offer->quantity, 2) }}
                                             </span><br>
                                             <span style="font-weight: bold; color: black;">
-                                                ₱{{ number_format($offerDiscountedPrice * $offer->quantity, 2) }}
+                                                {{ $price_estimates->currency->symbol }} {{ number_format($offerDiscountedPrice * $offer->quantity, 2) }}
                                             </span>
                                         </div>
                                     @else
-                                        ₱{{ number_format($offer->unit_price * $offer->quantity, 2) }}
+                                        {{ $price_estimates->currency->symbol }} {{ number_format($offer->unit_price * $offer->quantity, 2) }}
                                     @endif
                                 </td>
                             </tr>
@@ -381,16 +381,16 @@
                 @if ($taxStatus === 'VAT Inclusive')
                     <tr>
                         <td class="text-right" style="padding: 2px 0;"><strong>Total Vatable Sales:</strong></td>
-                        <td class="text-right" style="padding: 2px 0;">₱{{ number_format($subtotalExVat, 2) }}</td>
+                        <td class="text-right" style="padding: 2px 0;">{{ $price_estimates->currency->symbol }} {{ number_format($subtotalExVat, 2) }}</td>
                     </tr>
                     <tr>
                         <td class="text-right" style="padding: 2px 0;"><strong>VAT (12%):</strong></td>
-                        <td class="text-right" style="padding: 2px 0;">₱{{ number_format($vatAmount, 2) }}</td>
+                        <td class="text-right" style="padding: 2px 0;">{{ $price_estimates->currency->symbol }} {{ number_format($vatAmount, 2) }}</td>
                     </tr>
                     <tr>
                         <td class="text-right" style="padding: 2px 0;"><strong><u>Total Sales Amount:</u></strong></td>
                         <td class="text-right border-bottom" style="padding: 2px 0;">
-                            ₱{{ number_format($subtotal, 2) }}
+                           {{ $price_estimates->currency->symbol }} {{ number_format($subtotal, 2) }}
                         </td>
                     </tr>
                 @else
@@ -398,13 +398,13 @@
                     <tr>
                         <td class="text-right" style="padding: 2px 0;"><strong>Zero Rated Amount:</strong></td>
                         <td class="text-right" style="padding: 2px 0;">
-                            ₱{{ number_format($subtotal, 2) }}
+                            {{ $price_estimates->currency->symbol }} {{ number_format($subtotal, 2) }}
                         </td>
                     </tr>
                     <tr>
                         <td class="text-right" style="padding: 2px 0;"><strong>Total Sales Amount:</strong></td>
                         <td class="text-right border-bottom" style="padding: 2px 0;">
-                            ₱{{ number_format($subtotal, 2) }}
+                           {{ $price_estimates->currency->symbol }} {{ number_format($subtotal, 2) }}
                         </td>
                     </tr>
                 @endif

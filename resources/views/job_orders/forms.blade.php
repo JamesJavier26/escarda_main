@@ -249,7 +249,7 @@
                                             <!-- Total Length -->
                                             <div x-show="is_linear" x-transition>
                                                 <label class="block text-xs text-gray-600 dark:text-gray-400">Total Length</label>
-                                                <input type="number" 
+                                                <input type="text" 
                                                     name="items[{{ $index }}][total_length]" 
                                                     value="{{ $jo_item->total_length }}"
                                                     {{ $isApproved ? 'disabled' : '' }}
@@ -278,25 +278,13 @@
                 <!-- Due Date -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
-
-                    @if(!empty($job_order->duedate))
-                    <input
-                        type="date"
-                        name="duedate"
-                        value="{{ \Carbon\Carbon::parse($job_order->duedate)->format('Y-m-d') }}"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                        {{ $job_order->jo_status === 'approved' ? 'disabled' : '' }}
-                    >
-                    @else
-                    {{-- Show N/A when there is no due date --}}
-                    <input
-                        type="text"
-                        value="N/A"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-100 cursor-not-allowed"
-                        disabled
-                    >
-                    @endif
+                        <input
+                            type="date"
+                            name="duedate"
+                            value="{{ \Carbon\Carbon::parse($job_order->duedate)->format('Y-m-d') }}"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100">
                 </div>
+
 
                 <!-- Remarks -->
                 <div>

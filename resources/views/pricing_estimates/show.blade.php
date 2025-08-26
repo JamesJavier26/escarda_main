@@ -137,8 +137,8 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-600 dark:text-gray-300">{{ $item->quantity }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-600 dark:text-gray-300">{{ number_format($item->final_unit_price, 2) }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-900 dark:text-gray-100">{{ number_format($item->quantity * $item->final_unit_price, 2) }}</td>
+                                <td class="px-6 py-4 text-right text-sm text-gray-600 dark:text-gray-300">{{ $pricingEstimate->currency?->symbol ?? '' }} {{ number_format($item->final_unit_price, 2) }}</td>
+                                <td class="px-6 py-4 text-right text-sm text-gray-900 dark:text-gray-100">{{ $pricingEstimate->currency?->symbol ?? '' }} {{ number_format($item->quantity * $item->final_unit_price, 2) }}</td>
                             </tr>
                         @endforeach
 
@@ -176,24 +176,24 @@
 
                     <tr class="bg-gray-50 dark:bg-gray-700">
                         <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Total Vatable Sales</td>
-                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($totalVatableSales, 2) }}</td>
+                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ $pricingEstimate->currency?->symbol ?? '' }} {{ number_format($totalVatableSales, 2) }}</td>
                     </tr>
 
                     <tr class="bg-gray-50 dark:bg-gray-700">
                         <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">Zero Rated Sales</td>
-                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($zeroRatedSales, 2) }}</td>
+                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ $pricingEstimate->currency?->symbol ?? '' }} {{ number_format($zeroRatedSales, 2) }}</td>
                     </tr>
 
                     @if ($vat > 0)
                     <tr class="bg-gray-50 dark:bg-gray-700">
                         <td colspan="4" class="px-6 py-4 text-right font-semibold text-sm text-gray-700 dark:text-gray-200">VAT 12%</td>
-                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
+                        <td class="px-6 py-4 text-right font-medium text-sm text-gray-900 dark:text-gray-100">{{ $pricingEstimate->currency?->symbol ?? '' }} {{ number_format($vat, 2) }}</td>
                     </tr>
                     @endif
 
                     <tr class="bg-gray-100 dark:bg-gray-600">
                         <td colspan="4" class="px-6 py-4 text-right font-bold text-sm text-gray-800 dark:text-gray-100">Total Sales Amount</td>
-                        <td class="px-6 py-4 text-right font-bold text-sm text-gray-900 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
+                        <td class="px-6 py-4 text-right font-bold text-sm text-gray-900 dark:text-gray-100">{{ $pricingEstimate->currency?->symbol ?? '' }} {{ number_format($grandTotal, 2) }}</td>
                     </tr>
 
                     </tbody>

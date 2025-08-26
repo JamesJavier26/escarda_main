@@ -29,6 +29,7 @@ class PricingEstimateController extends Controller
      */
     public function index(Request $request)
     {
+        
         // Validate perPage input with fallback
         $perPage = in_array($request->input('perPage'), [10, 25, 50, 100]) 
             ? (int) $request->input('perPage') 
@@ -641,6 +642,20 @@ class PricingEstimateController extends Controller
         }
 
         return redirect()->route('quotations.index')->with('error', 'Unable to generate quotation.');
+    }
+
+    public function saveDeliveryDate(Request $request, $id)
+    {
+        $pricing_estimate = PricingEstimate::findOrFail($id);
+
+        $pricing_estimate->update([
+            'delivery_date' => $request->input('delivery_date'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Delivery date updated successfully.',
+        ]);
     }
 
     public function reject($pricing_estimate_id, Request $request)

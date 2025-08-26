@@ -196,7 +196,7 @@ class JobOrderController extends Controller
             'items.*.new_mould_name'  => ['nullable', 'string', 'max:255'],
 
             'items.*.is_linear'    => ['nullable', 'boolean'],
-            'items.*.total_length' => ['nullable', 'numeric', 'required_if:items.*.is_linear,true'],
+            'items.*.total_length' => ['nullable', 'string', 'required_if:items.*.is_linear,true'],
         ]);
 
         $jobOrder->update([

@@ -68,13 +68,6 @@
                     <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->pr_no ?? '--' }}</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-400">Delivery Date</p>
-                    <p class="text-gray-900 dark:text-gray-100">
-                        {{-- {{ \Carbon\Carbon::parse($pricingEstimate->delivery_date)->format('F j, Y') }} --}}
-                        {{ $pricingEstimate->delivery_date }}
-                    </p>
-                </div>
-                <div>
                     <p class="text-sm font-medium text-gray-400">Terms</p>
                     <p class="text-gray-900 dark:text-gray-100">{{ $pricingEstimate->terms ?? '--' }}</p>
                 </div>
@@ -112,6 +105,22 @@
                 <div>
                     <p class="text-sm font-medium text-gray-400">Remarks</p>
                     <p class="text-gray-900 dark:text-gray-100" whitespace-pre-line">{{ $pricingEstimate->pe_remarks ?? '--' }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input 
+                        type="text" 
+                        name="delivery_date" 
+                        value="{{ $pricingEstimate->delivery_date }}" 
+                        class="border rounded p-2"
+                    >
+                    <button 
+                        type="button" 
+                        x-data 
+                        @click="saveDeliveryDate({{ $pricingEstimate->id }})"
+                        class="bg-blue-500 text-white px-3 py-1 rounded"
+                    >
+                        Save
+                    </button>
                 </div>
             </div>
         </div>
@@ -193,7 +202,8 @@
                                     <div class="flex flex-col">
                                         <!-- Final (Discounted) Price -->
                                         <span class="text-base font-semibold text-gray-900 dark:text-white">
-                                            ₱<span x-text="formatCurrency(item.final_unit_price)"></span>
+                                            {{ $pricingEstimate->currency?->symbol ?? '' }}
+                                            <span x-text="formatCurrency(item.final_unit_price)"></span>
                                         </span>
 
                                         <!-- Show discount if discounted -->
@@ -201,7 +211,7 @@
                                             <div class="flex flex-col text-xs text-green-500 dark:text-green-400">
                                                 <!-- Original Price with Strikethrough -->
                                                 <span class="line-through text-gray-500 dark:text-gray-400">
-                                                    ₱<span x-text="formatCurrency(item.unit_price)"></span>
+                                                    {{ $pricingEstimate->currency?->symbol ?? '' }}<span x-text="formatCurrency(item.unit_price)"></span>
                                                 </span>
 
                                                 <!-- Discount Label -->
@@ -209,7 +219,7 @@
                                                     (<span 
                                                         x-text="item.discount_type === 'percentage' 
                                                             ? `${Math.round(((item.unit_price - item.final_unit_price) / item.unit_price) * 100)}% off` 
-                                                            : `₱${formatCurrency(item.unit_price - item.final_unit_price)} off`">
+                                                            : `{{ $pricingEstimate->currency?->symbol ?? '' }}${formatCurrency(item.unit_price - item.final_unit_price)} off`">
                                                     </span>)
                                                 </span>
                                             </div>
@@ -617,11 +627,11 @@
                             <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md border border-blue-100 dark:border-blue-900">
                                 <p class="text-sm text-gray-600 dark:text-gray-300 flex justify-between">
                                     <span>Original Price:</span>
-                                    <span class="font-medium">₱<span x-text="formatNumber(getOriginalPrice())"></span></span>
+                                    <span class="font-medium">{{ $pricingEstimate->currency?->symbol ?? '' }}<span x-text="formatNumber(getOriginalPrice())"></span></span>
                                 </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 flex justify-between">
                                     <span>Final Price:</span>
-                                    <span class="font-medium text-blue-600 dark:text-blue-400">₱<span x-text="formatNumber(getFinalPrice())"></span></span>
+                                    <span class="font-medium text-blue-600 dark:text-blue-400">{{ $pricingEstimate->currency?->symbol ?? '' }}<span x-text="formatNumber(getFinalPrice())"></span></span>
                                 </p>
                             </div>
                         </div>
@@ -1480,5 +1490,74 @@ document.addEventListener('alpine:init', () => {
     }));
 
 });
+function saveDeliveryDate(id) {
+    const input = document.querySelector('[name="delivery_date"]');
+    if (!input || !input.value.trim()) {
+        Swal.fire({
+            toast: true,
+            icon: 'warning',
+            title: 'Please enter a delivery date.',
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+        });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+    formData.append('delivery_date', input.value.trim());
+
+    fetch(`/pricing-estimates/${id}/save-delivery-date`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+    })
+    .then(res => res.json())
+    .then(data => { 
+        if (data.success) {
+            Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: 'Delivery Date updated successfully!',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+            });
+        } else {
+            Swal.fire({
+                toast: true,
+                icon: 'error',
+                title: data.message || 'Failed to save.',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+            });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire({
+            toast: true,
+            icon: 'error',
+            title: 'Something went wrong.',
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: { popup: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white' }
+        });
+    });
+}
+
 </script>
 </x-layouts.app>

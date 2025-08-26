@@ -208,6 +208,8 @@ Route::middleware(['auth'])->group(function () {
         //pending P.E's
         Route::get('/pricing-estimates/my/estimates', [PricingEstimateController::class, 'my_estimates'])->name('pricing-estimates.my');
         Route::get('/pricing-estimates/{pe_id}/price-entry', [PricingEstimateController::class, 'priceEntry'])->name('pricing-estimates.price-entry');
+        Route::post('/pricing-estimates/{id}/save-delivery-date', [PricingEstimateController::class, 'saveDeliveryDate'])
+            ->name('pricing-estimates.save-delivery-date');
         Route::post('/pricing-estimate-add-offer', [PricingEstimateController::class, 'addOffer']);
         Route::delete('/pricing-estimates/{estimate}', [PricingEstimateController::class, 'destroy'])
             ->name('pricing-estimates.destroy');

@@ -119,10 +119,10 @@
                     
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded mb-4">
                         <p class="text-sm text-gray-600 dark:text-gray-300">
-                            Original Price: ₱<span x-text="formatNumber(currentItem ? currentItem.unit_price : 0)" class="font-medium"></span>
+                            Original Price: {{ $pricing_estimate->currency->symbol }}<span x-text="formatNumber(currentItem ? currentItem.unit_price : 0)" class="font-medium"></span>
                         </p>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                            Discounted Price: ₱<span x-text="formatNumber(calculateDiscountedPrice())" class="font-medium"></span>
+                            Discounted Price: {{ $pricing_estimate->currency->symbol }}<span x-text="formatNumber(calculateDiscountedPrice())" class="font-medium"></span>
                         </p>
                     </div>
                 </div>
@@ -216,21 +216,21 @@
                                             <div class="flex flex-col items-center">
                                                 <!-- Final / Discounted Price -->
                                                 <span class="text-base font-semibold text-gray-900 dark:text-white">
-                                                    ₱{{ number_format($pe_item->final_unit_price ?? $pe_item->unit_price, 2) }}
+                                                    {{ $pricing_estimate->currency->symbol }}{{ number_format($pe_item->final_unit_price ?? $pe_item->unit_price, 2) }}
                                                 </span>
 
                                                 @if ($pe_item->discount_amount > 0)
                                                     <div class="flex flex-col text-xs text-green-600 dark:text-green-400">
                                                         <!-- Original Price with Strikethrough -->
                                                         <span class="line-through text-gray-500 dark:text-gray-400">
-                                                            ₱{{ number_format($pe_item->unit_price, 2) }}
+                                                            {{ $pricing_estimate->currency->symbol }}{{ number_format($pe_item->unit_price, 2) }}
                                                         </span>
 
                                                         <!-- Discount Label -->
                                                         <span>
                                                             ({{ $pe_item->discount_type === 'percentage'
                                                                 ? $pe_item->discount_amount . '% off'
-                                                                : '₱' . number_format($pe_item->discount_amount, 2) . ' off'
+                                                                : ($pricingEstimate->currency->symbol ?? '') . number_format($pe_item->discount_amount, 2) . ' off'
                                                             }})
                                                         </span>
                                                     </div>
@@ -273,21 +273,21 @@
                                             <td class="px-4 py-2 text-sm text-center">
                                                 <!-- Discounted Price -->
                                                 <span class="text-base font-semibold text-gray-900 dark:text-white">
-                                                    ₱{{ number_format($offer->final_unit_price ?? $offer->unit_price, 2) }}
+                                                    {{ $pricing_estimate->currency->symbol }}{{ number_format($offer->final_unit_price ?? $offer->unit_price, 2) }}
                                                 </span>
 
                                                 @if ($offer->discount_amount > 0)
                                                     <div class="flex flex-col text-xs text-green-600 dark:text-green-400">
                                                         <!-- Original Price with Strikethrough -->
                                                         <span class="line-through text-gray-500 dark:text-gray-400">
-                                                            ₱{{ number_format($offer->unit_price, 2) }}
+                                                            {{ $pricing_estimate->currency->symbol }} {{ number_format($offer->unit_price, 2) }}
                                                         </span>
 
                                                         <!-- Discount Label -->
                                                         <span>
                                                             ({{ $offer->discount_type === 'percentage'
                                                                 ? $offer->discount_amount . '% off'
-                                                                : '₱' . number_format($offer->discount_amount, 2) . ' off'
+                                                                : ($pricingEstimate->currency->symbol ?? ''). number_format($offer->discount_amount, 2) . ' off'
                                                             }})
                                                         </span>
                                                     </div>

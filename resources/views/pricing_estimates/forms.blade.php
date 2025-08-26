@@ -179,14 +179,17 @@
                             <div>
                                 <label for="terms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms</label>
                                 <select name="terms"
-                                        :value="chosen?.terms_of_payment || ''"
+                                    @if(empty($pricing_estimate->terms))
+                                        x-bind:value="chosen?.terms_of_payment || ''"
                                         @change="if (chosen) chosen.terms_of_payment = $event.target.value"
-                                        class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    @endif
+                                    class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
                                     <option value="">-</option>
-                                    <option value="COD">COD</option>
-                                    <option value="30 days">30 days</option>
-                                    <option value="60 days">60 days</option>
-                                    <option value="90 days">90 days</option>
+                                    <option value="COD" @selected(old('terms', $pricing_estimate->terms) === 'COD')>COD</option>
+                                    <option value="30 days" @selected(old('terms', $pricing_estimate->terms) === '30 days')>30 days</option>
+                                    <option value="60 days" @selected(old('terms', $pricing_estimate->terms) === '60 days')>60 days</option>
+                                    <option value="90 days" @selected(old('terms', $pricing_estimate->terms) === '90 days')>90 days</option>
                                 </select>
                             </div>
                         </div>
@@ -230,14 +233,7 @@
                     </select>
                 </div>
 
-                <div class="space-y-4" >
-                    <x-forms.input 
-                        label="Delivery Date" 
-                        name="delivery_date" 
-                        type="text" 
-                        :value="old('delivery_date', $pricing_estimate->delivery_date)" 
-                    />   
-
+                <div class="space-y-4" > 
                     <label for="currency_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                     <select name="currency_id" 
                         class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">

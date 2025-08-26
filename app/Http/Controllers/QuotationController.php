@@ -30,11 +30,16 @@ class QuotationController extends Controller
             ? (int) $request->input('perPage')
             : 10;
 
-        $query = Quotation::with(['pricing_estimate.customer', 'salesOrder']);
+        $query = Quotation::with(['pricing_estimate.customer', 'pricing_estimate.salesRep.employee', 'salesOrder']);
 
-        // If user is NOT super-admin or admin, limit quotations to only those created by the user
-        if (! $user->hasAnyRole(['super-admin', 'admin','sales-secretary'])) {
-            $query->where('created_by', $user->id);
+        // If user is NOT super-admin, admin, or sales-secretary, limit quotations to:
+        // - quotations created by the user OR
+        // - quotations where pricing_estimate->salesRep_id = user id
+        if (! $user->hasAnyRole(['super-admin', 'admin', 'sales-secretary'])) {
+            $query->where(function($q) use ($user) {
+                $q->where('created_by', $user->id)
+                ->orWhereHas('pricing_estimate', fn($pe) => $pe->where('sr_id', $user->id));
+            });
         }
 
         // Search logic
@@ -42,7 +47,7 @@ class QuotationController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('quote_no', 'like', "%$search%")
                 ->orWhereHas('pricing_estimate', fn ($q) =>
-                        $q->where('pe_no', 'like', "%$search%")
+                    $q->where('pe_no', 'like', "%$search%")
                         ->orWhere('attention', 'like', "%$search%")
                         ->orWhereHas('customer', fn ($c) =>
                             $c->where('name', 'like', "%$search%")
@@ -83,6 +88,7 @@ class QuotationController extends Controller
             'rejectQuotation'    => Quotation::where('quote_status', 'rejected')->count(),
         ]);
     }
+
 
 
     public function quote_items($pe_id)
@@ -309,7 +315,7 @@ class QuotationController extends Controller
                 'approval_status' => 'draft',
                 'so_status' => 'draft',
                 'quotation_id' => $quotation->id,
-                'currency_id' => $quotation->currency_id,
+                'currency_id' => $quotation->pricing_estimate->currency_id,
                 'is_notified' => false,
             ]);
 

@@ -5,10 +5,9 @@
     <title>Sales Order #{{ $salesOrder->so_no }}</title>
     <style>
         @page {
+            size: A4;
             margin: 80px 15px 80px 15px;
-            
         }
-
 
         header {
             position: fixed;
@@ -144,8 +143,8 @@
                         <td class="text-center">{{ $item->item->number ?? '—' }}</td>
                         <td class="text-center">{{ $item->quantity }} {{ $item->unit->short_name }}</td>
                         <td class="wrap-text text-center">{{ $item->item_description ?? '—' }}</td>
-                        <td class="text-center">₱{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-center">₱{{ number_format($lineTotal, 2) }}</td>
+                        <td class="text-center">{{$salesOrder->currency->symbol}}{{ number_format($item->unit_price, 2) }}</td>
+                        <td class="text-center">{{$salesOrder->currency->symbol}}{{ number_format($lineTotal, 2) }}</td>
                     </tr>
                 @endforeach
                 @php
@@ -186,7 +185,7 @@
                     <td class="text-center font-semibold">Total Vatable Sales</td>
                     <td class="text-center">
                         @if($totalVatableSales > 0)
-                            ₱{{ number_format($totalVatableSales, 2) }}
+                        {{$salesOrder->currency->symbol}}{{ number_format($totalVatableSales, 2) }}
                         @endif
                     </td>
                 </tr>
@@ -196,7 +195,7 @@
                     <td class="text-center font-semibold">Zero Rated Sales</td>
                     <td class="text-center">
                         @if($zeroRatedSales > 0)
-                            ₱{{ number_format($zeroRatedSales, 2) }}
+                            {{$salesOrder->currency->symbol}}{{ number_format($zeroRatedSales, 2) }}
                         @endif
                     </td>
                 </tr>
@@ -205,14 +204,14 @@
                 <tr>
                     <td></td><td></td><td></td>
                     <td class="text-center font-semibold">{{ $taxStatus }} 12%</td>
-                    <td class="text-center">₱{{ number_format($vatAmount, 2) }}</td>
+                    <td class="text-center">{{$salesOrder->currency->symbol}}{{ number_format($vatAmount, 2) }}</td>
                 </tr>
                 @endif
 
                 <tr>
                     <td></td><td></td><td></td>
                     <td class="text-center font-bold">Total Sales Amount</td>
-                    <td class="text-center font-bold">₱{{ number_format($grandTotal, 2) }}</td>
+                    <td class="text-center font-bold">{{$salesOrder->currency->symbol}}{{ number_format($grandTotal, 2) }}</td>
                 </tr>
 
             </tbody>

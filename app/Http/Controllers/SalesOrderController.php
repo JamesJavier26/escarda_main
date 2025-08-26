@@ -39,7 +39,8 @@ class SalesOrderController extends Controller
             'salesRep.employee',
             'quotation',
             'approver',
-            'jobOrder.jo_items'
+            'jobOrder.jo_items',
+            'currency',
         ]);
         
         // Role-based visibility
@@ -233,7 +234,7 @@ class SalesOrderController extends Controller
      */
     public function edit(SalesOrder $salesOrder)
     {
-        $salesOrder->load(['customer', 'salesRep.employee','pricing_estimate']);
+        $salesOrder->load(['customer', 'salesRep.employee','pricing_estimate','currency']);
 
         return view('sales_orders.edit', [
             'so_no'             => $salesOrder->so_no,

@@ -602,8 +602,8 @@
                 @if($editing)
                     <a href="{{ route('reports.salesOrder', $sales_order->so_no) }}" target="_blank"
                     class="px-4 py-2 rounded-md shadow-sm text-sm font-medium
-                            text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700
-                            border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600
+                            text-gray-700 dark:text-gray-200 bg-white dark:bg-blue-700
+                            border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-blue-600
                             focus:outline-none focus:ring-2 focus:ring-blue-500">
                         Print
                     </a>
@@ -828,6 +828,9 @@
 </script> --}}
 
 <script>
+
+window.currencySymbol = @js($sales_order->currency->symbol ?? '₱');
+
 function commentSection(initialComments, salesOrderId) {
     return {
         comments    : [...initialComments].sort((a,b)=>
@@ -1050,126 +1053,126 @@ document.addEventListener('alpine:init', () => {
             }
         }
     }));
+
     Alpine.data('itemsTable', (params) => ({
-        initialRows: params.initialRows || [],
-        rows: [],
-        nextLocalId: 0,
+    // Add this at the very top
+    currencySymbol: window.currencySymbol || '₱', // fallback if window.currencySymbol is not set
 
-        init() {
+    initialRows: params.initialRows || [],
+    rows: [],
+    nextLocalId: 0,
 
-            if (this.initialRows.length > 0) {
-                this.rows = this.initialRows.map((row, i) => {
-                    return {
-                        ...row,
-                        local_uid: typeof row.local_uid === 'number' ? row.local_uid : i
-                    };
-                });
-
-                this.nextLocalId = Math.max(...this.rows.map(r => r.local_uid ?? 0)) + 1;
-            }
-        },
-
-        receiveItems(items) {
-            const newItems = Array.isArray(items) ? items : [items];
-            newItems.forEach(item => {
-                const exists = this.rows.some(row =>
-                    (row.item_id && row.item_id === item.item_id) ||
-                    (row.pricing_item_id && row.pricing_item_id === item.pricing_item_id)
-                );
-                if (!exists) {
-                    this.rows.push({
-                        ...item,
-                        local_uid: this.nextLocalId++
-                    });
-                }
+    init() {
+        if (this.initialRows.length > 0) {
+            this.rows = this.initialRows.map((row, i) => {
+                return {
+                    ...row,
+                    local_uid: typeof row.local_uid === 'number' ? row.local_uid : i
+                };
             });
-        },
 
-        deleteItem(row, index) {
-            if (row.pricing_item_id) {
-                this.rows[index]._delete = true;
-            } else {
-                this.rows.splice(index, 1);
+            this.nextLocalId = Math.max(...this.rows.map(r => r.local_uid ?? 0)) + 1;
+        }
+    },
+
+    receiveItems(items) {
+        const newItems = Array.isArray(items) ? items : [items];
+        newItems.forEach(item => {
+            const exists = this.rows.some(row =>
+                (row.item_id && row.item_id === item.item_id) ||
+                (row.pricing_item_id && row.pricing_item_id === item.pricing_item_id)
+            );
+            if (!exists) {
+                this.rows.push({
+                    ...item,
+                    local_uid: this.nextLocalId++
+                });
             }
-        },
+        });
+    },
 
-        hiddenFields(row) {
-            const prefix = row.pricing_item_id ? `items[${row.pricing_item_id}]` : `new_items[${row.local_uid}]`;
-            return [
-                [`${prefix}[item_id]`, row.item_id],
-                [`${prefix}[name]`, row.name],
-                [`${prefix}[description]`, row.description],
-                [`${prefix}[quantity]`, row.quantity],
-                [`${prefix}[unit_price]`, row.unit_price],
-                [`${prefix}[unit_id]`, row.unit_id],
-                [`${prefix}[_delete]`, row._delete ? 1 : 0]
-            ];
-        },
+    deleteItem(row, index) {
+        if (row.pricing_item_id) {
+            this.rows[index]._delete = true;
+        } else {
+            this.rows.splice(index, 1);
+        }
+    },
 
-        formatCurrency(value) {
-            return new Intl.NumberFormat('en-PH', {
-                style: 'currency',
-                currency: 'PHP'
-            }).format(value || 0);
-        },
+    hiddenFields(row) {
+        const prefix = row.pricing_item_id ? `items[${row.pricing_item_id}]` : `new_items[${row.local_uid}]`;
+        return [
+            [`${prefix}[item_id]`, row.item_id],
+            [`${prefix}[name]`, row.name],
+            [`${prefix}[description]`, row.description],
+            [`${prefix}[quantity]`, row.quantity],
+            [`${prefix}[unit_price]`, row.unit_price],
+            [`${prefix}[unit_id]`, row.unit_id],
+            [`${prefix}[_delete]`, row._delete ? 1 : 0]
+        ];
+    },
 
-        calculateSubtotal(row) {
-            return (row.quantity || 1) * (row.unit_price || 0);
-        },
+    formatCurrency(value) {
+        return `${this.currencySymbol}${Number(value || 0).toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    },
 
-        subtotal() {
-            const rawSubtotal = this.rows.reduce((sum, row) => {
+    calculateSubtotal(row) {
+        return (row.quantity || 1) * (row.unit_price || 0);
+    },
+
+    subtotal() {
+        const rawSubtotal = this.rows.reduce((sum, row) => {
+            const qty = Number(row.quantity) || 0;
+            const price = Number(row.unit_price) || 0;
+            return sum + (qty * price);
+        }, 0);
+
+        const taxStatus = this.$store.order.tax_status;
+
+        if (taxStatus === 'VAT Inclusive') {
+            return rawSubtotal / 1.12;
+        }
+
+        return rawSubtotal;
+    },
+
+    vat() {
+        const taxStatus = this.$store.order.tax_status;
+
+        if (taxStatus === 'Zero Rated') {
+            return 0;
+        }
+        if (taxStatus === 'VAT Inclusive') {
+            const gross = this.rows.reduce((sum, row) => {
                 const qty = Number(row.quantity) || 0;
                 const price = Number(row.unit_price) || 0;
                 return sum + (qty * price);
             }, 0);
-
-            const taxStatus = this.$store.order.tax_status;
-
-            if (taxStatus === 'VAT Inclusive') {
-                // ✅ Vatable sales (remove VAT portion)
-                return rawSubtotal / 1.12;
-            }
-
-            // Zero Rated or others → just return as is
-            return rawSubtotal;
-        },
-
-        vat() {
-            const taxStatus = this.$store.order.tax_status;
-
-            if (taxStatus === 'Zero Rated') {
-                return 0;
-            }
-            if (taxStatus === 'VAT Inclusive') {
-                // ✅ VAT is the difference between gross and net
-                const gross = this.rows.reduce((sum, row) => {
-                    const qty = Number(row.quantity) || 0;
-                    const price = Number(row.unit_price) || 0;
-                    return sum + (qty * price);
-                }, 0);
-                return gross - (gross / 1.12);
-            }
-            return 0;
-        },
-
-        total() {
-            const taxStatus = this.$store.order.tax_status;
-
-            if (taxStatus === 'VAT Inclusive') {
-                // ✅ Total = gross (which is net + VAT)
-                return this.rows.reduce((sum, row) => {
-                    const qty = Number(row.quantity) || 0;
-                    const price = Number(row.unit_price) || 0;
-                    return sum + (qty * price);
-                }, 0);
-            }
-            if (taxStatus === 'Zero Rated') {
-                return this.subtotal(); 
-            }
-            return this.subtotal();
+            return gross - (gross / 1.12);
         }
-    }));
+        return 0;
+    },
+
+    total() {
+        const taxStatus = this.$store.order.tax_status;
+
+        if (taxStatus === 'VAT Inclusive') {
+            return this.rows.reduce((sum, row) => {
+                const qty = Number(row.quantity) || 0;
+                const price = Number(row.unit_price) || 0;
+                return sum + (qty * price);
+            }, 0);
+        }
+        if (taxStatus === 'Zero Rated') {
+            return this.subtotal(); 
+        }
+        return this.subtotal();
+    }
+}));
+
 
     
         Alpine.data('soApproval', ({ soID }) => ({

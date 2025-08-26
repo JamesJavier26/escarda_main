@@ -5,10 +5,9 @@
     <title>Job Order #{{ $jobOrder->jo_no }}</title>
     <style>
         @page {
+            size: A4;
             margin: 80px 15px 80px 15px;
-            
         }
-
 
         header {
             position: fixed;
@@ -147,7 +146,14 @@
                                 <strong>Rubber Material:</strong> {{ $joItem->material->name ?? '—' }},
                                 <strong>Hardness:</strong>  {{ $joItem->hardness ?? '—' }},
                                 <strong>Thickness:</strong>  {{ $joItem->thickness ?? '—' }}{{ $joItem->thickness_unit ? ' ' . $joItem->thickness_unit : '' }},
-                                <strong>Mould:</strong>  {{ $joItem->mould->name ?? '—' }}
+                                @if(!empty($joItem->note))
+                                    <strong>Trade:</strong> {{ $joItem->note }}
+                                @else
+                                    <strong>Mould:</strong> {{ $joItem->new_mould_name ?: ($joItem->mould->name ?? '—') }}
+                                @endif
+                                    @if($joItem->is_linear)
+                                    , <strong>MOP:</strong> Linear: {{ $joItem->total_length ?? '—' }}
+                                @endif
                             </div>
                         </td>
 
@@ -167,53 +173,17 @@
             </tbody>
         </table>
 
-        {{-- <table class="no-border" style="width: 100%;">
-            <tr>
-                <td class="text-left" style="padding: 2px 0;">
-                    <strong>RUBBER MATERIAL:</strong>
-                    @foreach($jobOrder->jo_items as $index => $item)
-                        #{{ $index + 1 }} ({{ $item->material->name ?? '—' }})@if (!$loop->last), @endif
-                    @endforeach
-                </td>
-            </tr>
-
-            <tr>
-                <td class="text-left" style="padding: 2px 0;">
-                    <strong>HARDNESS:</strong>
-                    @foreach($jobOrder->jo_items as $index => $item)
-                        #{{ $index + 1 }} ({{ $item->hardness ?? '—' }})@if (!$loop->last), @endif
-                    @endforeach
-                </td>
-            </tr>
-
-            <tr>
-                <td class="text-left" style="padding: 2px 0;">
-                    <strong>THICKNESS:</strong>
-                    @foreach($jobOrder->jo_items as $index => $item)
-                        #{{ $index + 1 }} ({{ $item->thickness ?? '—' }})@if (!$loop->last), @endif
-                    @endforeach
-                </td>
-            </tr>
-
-            <tr>
-                <td class="text-left" style="padding: 2px 0;">
-                    <strong>MOULD:</strong>
-                    @foreach($jobOrder->jo_items as $index => $item)
-                        #{{ $index + 1 }} ({{ $item->mould->name ?? '—' }})@if (!$loop->last), @endif
-                    @endforeach
-                </td>
-            </tr>
-        </table> --}}
-
 
         {{-- <p class="row-border-bottom"></p> --}}
         <table class="no-border" style="width: 100%; padding-right: 30px;">
             <tr class="row-border-bottom">
-                <td class="text-left" style="width: 50%; padding: 2px 0; height: 200px; vertical-align: top;">
+                <td class="text-left" style="padding: 2px 0; height: 100px; vertical-align: top;">
                     <strong>REMARKS:</strong><br>
                     {!! nl2br(e($jobOrder->remarks ?? '—')) !!}
                 </td>
-                <td class="text-left" style="width: 50%; padding: 2px 0; height: 200px; vertical-align: middle;">
+            </tr>
+            <tr class="row-border-bottom">
+                <td class="text-left" style="padding: 2px 0; height: 100px; vertical-align: top;">
                     <strong>INSTRUCTIONS:</strong><br>
                     {!! nl2br(e($jobOrder->instructions ?? '—')) !!}
                 </td>
@@ -238,8 +208,6 @@
                 </td>
             </tr>
         </table>
-
-
     </main>
 </body>
 </html>

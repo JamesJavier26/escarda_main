@@ -5,8 +5,8 @@
     <title>Pricing Estimate</title>
     <style>
         @page {
-            margin: 15px 15px 80px 15px;
-            
+            size: A4;
+            margin: 80px 15px 80px 15px;
         }
 
         body       { font-family: DejaVu Sans, sans-serif; margin: 0; padding: 20px; font-size: 7.5pt; }

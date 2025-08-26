@@ -164,8 +164,8 @@
                             </td>
 
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $item->quantity }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ number_format($item->unit_price, 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ number_format($item->quantity * $item->unit_price, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{$salesOrder->currency->symbol}} {{ number_format($item->unit_price, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{$salesOrder->currency->symbol}} {{ number_format($item->quantity * $item->unit_price, 2) }}</td>
                         </tr>
                         @endforeach
                         @php
@@ -194,22 +194,22 @@
 
                     <tr class="bg-gray-50 dark:bg-gray-700">
                         <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-gray-100">Total Vatable Sales</td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ number_format($vatableSales, 2) }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{$salesOrder->currency->symbol}} {{ number_format($vatableSales, 2) }}</td>
                     </tr>
 
                     <tr class="bg-gray-50 dark:bg-gray-700">
                         <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-gray-100">Zero Rated Sales</td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ number_format($zeroRatedSales, 2) }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{$salesOrder->currency->symbol}} {{ number_format($zeroRatedSales, 2) }}</td>
                     </tr>
 
                     <tr class="bg-gray-50 dark:bg-gray-700">
                         <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-gray-100">VAT (12%)</td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ number_format($vat, 2) }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{$salesOrder->currency->symbol}} {{ number_format($vat, 2) }}</td>
                     </tr>
 
                     <tr class="bg-gray-100 dark:bg-gray-600">
                         <td colspan="3" class="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-gray-100">Total Sales Amount</td>
-                        <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-gray-100">{{ number_format($grandTotal, 2) }}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-gray-100">{{$salesOrder->currency->symbol}} {{ number_format($grandTotal, 2) }}</td>
                     </tr>
 
                     </tbody>
@@ -348,9 +348,16 @@
                 </div>
             @endif
         @endhasrole
-
-
-
+                <div class="flex justify-center mt-6">
+                    @if($status === 'approved')
+                        <a href="{{ route('reports.salesOrder', $salesOrder->so_no) }}" target="_blank"
+                        class="inline-flex items-center gap-3 px-6 py-3 rounded-lg shadow-md text-base font-semibold text-white
+                                bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <i class="fas fa-print text-lg"></i>
+                            <span>Print</span>
+                        </a>
+                    @endif
+                </div>
     </div>
 
     @push('scripts')
