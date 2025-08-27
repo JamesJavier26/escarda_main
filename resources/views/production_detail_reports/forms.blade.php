@@ -140,58 +140,43 @@
                                 x-text="selectedJoItemObj ? (selectedJoItemObj.item_name ?? selectedJoItemObj.name ?? '--') : '--'">
                                 </p>
                             </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4" 
-                            x-data="{ 
-                                productionType: '{{ old('production_type', $report->production_type ?? '') }}', 
-                                isLinear: {{ old('is_linear', $report->jobOrderItem?->is_linear ?? false) ? 'true' : 'false' }} 
-                            }">
-
-                            <!-- Production Type Label -->
-                            <div class="col-span-3">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div class="col-span-3 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Production Type
                                 </label>
                             </div>
 
-                            <!-- Production Type Radios -->
                             <template x-for="type in ['old','new','trade']" :key="type">
-                                <div>
-                                    <label class="inline-flex items-center">
-                                        <input type="radio"
-                                            name="production_type"
-                                            :value="type"
-                                            x-model="productionType">
-                                        <span class="ml-2" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></span>
-                                    </label>
-                                </div>
+                                <label class="inline-flex items-center mr-4">
+                                    <input type="radio"
+                                        name="production_type"
+                                        :value="type"
+                                        x-model="productionType">
+                                    <span class="ml-2" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></span>
+                                </label>
                             </template>
 
-                        <!-- Linear / Not Linear Label -->
+                            <!-- Linear / Non-linear Radios -->
                             <div class="col-span-3 mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Linear
-                                </label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Linear</label>
                             </div>
 
-                            <!-- Linear Radios -->
-                            <div>
-                                <label class="inline-flex items-center">
-                                    <input type="radio"
-                                        name="is_linear"
-                                        value="1"
-                                        x-model="isLinear">
-                                    <span class="ml-2">Yes</span>
-                                </label>
-                            </div>
-                            <div>
-                                <label class="inline-flex items-center">
-                                    <input type="radio"
-                                        name="is_linear"
-                                        value="0"
-                                        x-model="isLinear">
-                                    <span class="ml-2">No</span>
-                                </label>
-                            </div>
+                            <label class="inline-flex items-center mr-4">
+                                <input type="radio"
+                                    name="is_linear"
+                                    :value="true"
+                                    x-model="isLinear">
+                                <span class="ml-2">Yes</span>
+                            </label>
+
+                            <label class="inline-flex items-center">
+                                <input type="radio"
+                                    name="is_linear"
+                                    :value="false"
+                                    x-model="isLinear">
+                                <span class="ml-2">No</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1012,15 +997,17 @@ function jobOrderSelect(isEditMode) {
             fetch(`/job-orders/items/${id}/details`)
                 .then(res => res.json())
                 .then(data => {
-                    this.isLinear = data.is_linear ?? false;
-                    this.productionType = data.production_type ?? '';
+                    // Set Alpine reactive properties
+                    this.isLinear = !!data.is_linear;         // boolean for Linear / Non-linear radios
+                    this.productionType = data.production_type ?? ''; // 'old', 'new', 'trade', or ''
 
-                    // Update hidden inputs
-                    const isLinearInput = document.querySelector('input[name="is_linear"]');
-                    if (isLinearInput) isLinearInput.value = this.isLinear ? '1' : '0';
-
-                    const productionTypeInput = document.querySelector('input[name="production_type"]');
-                    if (productionTypeInput) productionTypeInput.value = this.productionType;
+                    // Optional: log for debugging
+                    this.$nextTick(() => {
+                        console.log('Radio buttons updated:', {
+                            isLinear: this.isLinear,
+                            productionType: this.productionType
+                        });
+                    });
                 })
                 .catch(err => {
                     this.isLinear = false;

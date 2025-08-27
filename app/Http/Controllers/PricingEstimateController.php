@@ -435,21 +435,6 @@ class PricingEstimateController extends Controller
 
         return $pdf->stream('PE.pdf');
     }
-    public function generatePDR(PDF $pdf, Request $request)   
-    {
-        $jo_no = $request->input('jo_no');
-        $report = ProductionDetailReport::where('jo_no',$jo_no)->first();
-        $data = [
-            'date'         => now()->format('F d, Y'),
-            'setting'      => Setting::all(),
-            'report'        => $report
-        ];
-
-        $pdf->loadView('reports.generatePDR', $data)
-            ->setPaper('a4', 'portrait');
-
-        return $pdf->stream('PE.pdf');
-    }
 
     private function saveNewUploads(PricingEstimate $estimate, Request $request): void
     {

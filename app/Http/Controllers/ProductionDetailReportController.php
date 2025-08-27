@@ -13,6 +13,8 @@ use App\Models\ProductionDetailEntry;
 use App\Models\ProductionDetailReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\PDF;
+use App\Models\Setting;
 
 class ProductionDetailReportController extends Controller
 {
@@ -273,5 +275,16 @@ class ProductionDetailReportController extends Controller
         return response()->json([
             'message' => 'Report marked as completed',
         ]);
+    }
+    public function materials()
+    {
+        return $this->hasManyThrough(
+            Material::class,
+            JobOrderItem::class,
+            'job_order_id', // Foreign key on JobOrderItem table
+            'id',           // Foreign key on Material table
+            'job_order_id', // Local key on ProductionDetailReport
+            'material_id'   // Local key on JobOrderItem
+        );
     }
 }

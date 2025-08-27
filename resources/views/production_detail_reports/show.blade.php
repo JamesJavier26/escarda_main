@@ -457,4 +457,16 @@
         </div>
     @endif
 </div>
+
+<div class="container mx-auto px-4 pb-8">
+    <div class="flex justify-start">
+        <a href="{{ route('reports.pdr', ['id' => $report->id]) }}" target="_blank"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-md shadow-sm text-sm font-medium
+                  text-white bg-green-600 hover:bg-green-700
+                  border border-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">
+            <i class="fas fa-file-pdf"></i>
+            Print
+        </a>
+    </div>
+</div>
 </x-layouts.app>

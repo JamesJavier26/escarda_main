@@ -137,20 +137,26 @@ class ReportController extends Controller
 
         return $pdf->stream('JO-' . $jo_no . '.pdf');
     }
-    public function generatePDR(PDF $pdf, Request $request)   
+    public function generatePDR(PDF $pdf, Request $request, $id)   
     {
-        $jo_no = $request->input('jo_no');
-        $report = ProductionDetailReport::where('jo_no',$jo_no)->first();
+        $report = ProductionDetailReport::with([
+            'entries',
+            'jobOrder.salesOrder.customer',
+            'jobOrder.jo_items.item',
+            'user',
+            'material'
+        ])->findOrFail($id);
+
         $data = [
-            'date'         => now()->format('F d, Y'),
-            'setting'      => Setting::all(),
-            'report'        => $report
+            'date'    => now()->format('F d, Y'),
+            'setting' => Setting::all(),
+            'report'  => $report,
         ];
 
         $pdf->loadView('reports.generatePDR', $data)
             ->setPaper('a4', 'portrait');
 
-        return $pdf->stream('PE.pdf');
+        return $pdf->stream('Production_Detail_Report_' . $report->id . '.pdf');
     }
 
     public function exportInvoice(SalesOrder $order)

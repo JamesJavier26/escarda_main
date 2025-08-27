@@ -191,7 +191,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('generate-sales/{so_no}', [ReportController::class, 'generateSales'])->name('reports.salesOrder');
         Route::get('generate-invoice/{so_no}', [ReportController::class, 'generateInvoice'])->name('reports.invoice');
         Route::get('generate-job-order/{jo_no}', [ReportController::class, 'generateJO'])->name('reports.jobOrder');
-        Route::get('generate-production-detail-report', [ReportController::class, 'generatePDR'])->name('reports.pdr');
+        Route::get('generate-production-detail-report/{id}',[ReportController::class, 'generatePDR'])->name('reports.pdr');
         Route::get('/sales-order/{order}/export-sales-invoice', [ReportController::class, 'exportInvoice'])->name('reports.export-sales-invoice');
         Route::get('/sales-order/{order}/export-billing-invoice', [ReportController::class, 'exportBillingInvoice'])->name('reports.export-billing-invoice');
         Route::get('/sales-order/{order}/export-charge-invoice', [ReportController::class, 'exportChargeInvoice'])->name('reports.export-charge-invoice');
