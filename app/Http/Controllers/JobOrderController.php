@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\JobOrder;
+use App\Models\JobOrderItem;
 use App\Models\Material;
 use App\Models\Mould;
 use App\Models\ProductionDetailReport;
@@ -392,5 +393,25 @@ class JobOrderController extends Controller
                     'is_linear' => (bool) ($joItem->is_linear ?? false),
                 ];
             });
+    }
+
+    public function itemDetails($id)
+    {
+        try {
+            $joItem = JobOrderItem::findOrFail($id);
+
+            $productionType = null;
+            if ($joItem->mould_id) $productionType = 'old';
+            elseif ($joItem->new_mould_no) $productionType = 'new';
+            elseif ($joItem->note) $productionType = 'trade';
+
+            return response()->json([
+                'is_linear' => (bool) $joItem->is_linear,
+                'production_type' => $productionType,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('JO item details error: '.$e->getMessage(), ['id' => $id]);
+            return response()->json(['error' => 'Failed to fetch JO item details'], 500);
+        }
     }
 }

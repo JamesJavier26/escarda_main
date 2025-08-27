@@ -29,8 +29,5 @@
         'moulds' => $moulds,
         'employees' => $employees,
         'report' => $productionDetailReports,
-
-
-
     ])
 </x-layouts.app>

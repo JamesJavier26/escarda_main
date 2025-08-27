@@ -85,15 +85,8 @@
                 <p class="font-medium">{{ $report->date_production->format('Y-m-d') }}</p>
             </div>
             <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Type</p>
-                <p class="font-medium">
-                    @if($report->is_old_checked) Old @endif
-                    @if($report->is_new_checked) New @endif
-                </p>
-            </div>
-            <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                <p class="font-medium">{{ $report->is_ready_to_use ? 'Ready to use' : 'In progress' }}</p>
+                <p class="font-medium">{{ $report->pdr_status}}</p>
             </div>
         </div>
     </div>
@@ -107,26 +100,33 @@
                 <div class="flex items-center space-x-2">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Ply:</p>
                     <span class="font-medium px-2 py-1 rounded text-sm 
-                        {{ $report->ply ? 'bg-green-100 text-white-800 dark:bg-green-900 dark:text-white-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                        {{ $report->ply ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
                         {{ $report->ply ? 'Yes' : 'No' }}
                     </span>
                 </div>
                 
-                @if($report->ply)
+                @if($report->ply && $report->ply_types)
                     <div class="space-y-2">
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Ply Types</p>
                         <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
                             <ul class="space-y-2">
-                                @foreach($report->ply_types as $type)
-                                    <li class="flex items-start">
-                                        <span class="flex items-center h-5">
-                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </span>
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ ucfirst($type) }}</span>
-                                    </li>
+                                @php
+                                    $plyTypes = array_map('trim', explode(',', $report->ply_types));
+                                @endphp
+
+                                @foreach($plyTypes as $type)
+                                    @if(strtolower($type) !== 'others')
+                                        <li class="flex items-start">
+                                            <span class="flex items-center h-5">
+                                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </span>
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ ucfirst($type) }}</span>
+                                        </li>
+                                    @endif
                                 @endforeach
+
                                 @if($report->ply_type_others)
                                     <li class="flex items-start">
                                         <span class="flex items-center h-5">
@@ -134,7 +134,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                             </svg>
                                         </span>
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">Other: {{ $report->ply_type_others }}</span>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Others: {{ $report->ply_type_others }}</span>
                                     </li>
                                 @endif
                             </ul>
@@ -148,29 +148,33 @@
                 <div class="flex items-center space-x-2">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Metal Insert:</p>
                     <span class="font-medium px-2 py-1 rounded text-sm 
-                        {{ $report->metal_insert ? 'bg-green-100 text-white-800 dark:bg-green-900 dark:text-white-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                        {{ $report->metal_insert ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
                         {{ $report->metal_insert ? 'Yes' : 'No' }}
                     </span>
                 </div>
                 
-                @if($report->metal_insert)
+                @if($report->metal_insert && $report->metal_insert_types)
                     <div class="space-y-2">
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Metal Insert Types</p>
                         <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
                             <ul class="space-y-2">
-                                @foreach($report->metal_insert_types as $type)
+                                @php
+                                    $metalTypes = array_map('trim', explode(',', $report->metal_insert_types));
+                                @endphp
+
+                                @foreach($metalTypes as $type)
                                     <li class="flex items-start">
                                         <span class="flex items-center h-5">
                                             <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                             </svg>
                                         </span>
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ ucfirst(str_replace('_', ' ', $type)) }}</span>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ ucwords(str_replace('_', ' ', $type)) }}</span>
                                     </li>
                                 @endforeach
                             </ul>
                         </div>
-                        
+
                         @if($report->metal_insert_details)
                             <div class="mt-3">
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Details</p>
@@ -188,157 +192,98 @@
     <!-- Salang Information -->
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
         <h2 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Salang Information</h2>
-        
+
         @php
-            $totalSalangQty = 0;
-            $totalSalangWeight = 0;
-            $totalSalangWeightWithOverflow = 0;
-            $totalSalangWeightWithoutOverflow = 0;
+            $salangs = $report->entries->groupBy('salang_number');
         @endphp
 
-        @for($i = 1; $i <= 3; $i++)
-            @php
-                $salangData = $report->{'salang_'.$i};
-                $salang = is_array($salangData) ? $salangData : json_decode($salangData ?? '{}', true);
-                
-                if($salang && is_array($salang)) {
-                    $totalSalangQty += $salang['quantity_made'] ?? 0;
-                    $totalSalangWeight += $salang['finished_product_weight'] ?? 0;
-                    $totalSalangWeightWithOverflow += $salang['finished_product_weight_with_overflow'] ?? 0;
-                    $totalSalangWeightWithoutOverflow += $salang['finished_product_weight_without_overflow'] ?? 0;
-                }
-            @endphp
+        @forelse($salangs as $salangNumber => $entries)
+            <div class="mb-6 border-b pb-4 last:border-b-0 last:pb-0 last:mb-0">
+                <h3 class="font-medium mb-3 text-gray-700 dark:text-gray-300">
+                    Salang {{ $salangNumber }}
+                </h3>
 
-            @if(!empty($salang) && is_array($salang))
-                <div class="mb-6 border-b pb-4 last:border-b-0 last:pb-0 last:mb-0">
-                    <h3 class="font-medium mb-3 text-gray-700 dark:text-gray-300">Salang {{ $i }}</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @foreach($entries as $entry)
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    @if($salangNumber == 1)
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Weight of raw materials</p>
-                            <p class="font-medium">{{ $salang['raw_material_weight'] ?? 'N/A' }} g</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Beginning Weight</p>
+                            <p class="font-medium">{{ $entry->beginning_weight ?? 'N/A' }} g</p>
                         </div>
+                    @endif
                         <div>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Temperature</p>
-                            <p class="font-medium">{{ $salang['temperature'] ?? 'N/A' }} °C</p>
+                            <p class="font-medium">{{ $entry->temperature ?? 'N/A' }} °C</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Press</p>
-                            <p class="font-medium">{{ $salang['press'] ?? 'N/A' }}</p>
-                        </div>
-                        {{-- <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Pressman</p>
-                            <p class="font-medium">{{ $salang['pressman'] ?? 'N/A' }}</p>
-                        </div> --}}
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Weight per salang</p>
-                            <p class="font-medium">{{ $salang['weight_per_salang'] ?? 'N/A' }} g</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Time per Salang</p>
+                            <p class="font-medium">{{ $entry->time_per_salang ?? 'N/A' }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Finished product weight with overflow</p>
-                            <p class="font-medium">{{ $salang['finished_with_overflow'] ?? 'N/A' }} g</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Weight per Salang</p>
+                            <p class="font-medium">{{ $entry->weight_per_salang ?? 'N/A' }} g</p>
+                        </div>
+                    @if($salangNumber == 3)
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Finished Product Weight</p>
+                            <p class="font-medium">{{ $entry->finished_product_weight ?? 'N/A' }} g</p>
+                        </div>
+                    @endif
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Finished Product With Overflow</p>
+                            <p class="font-medium">{{ $entry->finished_weight_with_overflow ?? 'N/A' }} g</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Finished product weight without overflow</p>
-                            <p class="font-medium">{{ $salang['finished_without_overflow'] ?? 'N/A' }} g</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Finished Product Without Overflow</p>
+                            <p class="font-medium">{{ $entry->finished_weight_without_overflow ?? 'N/A' }} g</p>
                         </div>
-                        {{-- <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Quantity Made</p>
-                            <p class="font-medium">{{ $salang['quantity_made'] ?? 'N/A' }} pcs</p>
-                        </div> --}}
+                        <div class="md:col-span-3">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Checklist</p>
+                            <p class="font-medium">
+                                Size: {{ $entry->correct_size ? '✔' : '✖' }},
+                                Color: {{ $entry->correct_color ? '✔' : '✖' }},
+                                Hardness: {{ $entry->correct_hardness ? '✔' : '✖' }}
+                            </p>
+                        </div>
                         <div class="md:col-span-3">
                             <p class="text-sm text-gray-500 dark:text-gray-400">Remarks</p>
-                            <p class="font-medium">{{ $salang['remarks'] ?? 'N/A' }}</p>
-                        </div>
-                        <div class="md:col-span-3">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Quality Checklist</p>
-                            <div class="flex flex-wrap gap-4 mt-2">
-                                <!-- Correct Size -->
-                                <div class="flex items-center">
-                                    <span class="mr-2 w-4 h-4 inline-flex items-center justify-center rounded border 
-                                        {{ isset($salang['checklist']['correct_size']) && strtolower($salang['checklist']['correct_size']) === 'yes' 
-                                            ? 'bg-green-500 border-green-600 dark:bg-green-600 dark:border-green-700' 
-                                            : 'border-gray-300 dark:border-gray-500' }}">
-                                        @if(isset($salang['checklist']['correct_size']) && strtolower($salang['checklist']['correct_size']) === 'yes')
-                                            <svg class="w-3 h-3 text-white dark:text-gray-100" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                        @endif
-                                    </span>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Correct Size</span>
-                                </div>
-
-                                <!-- Correct Color -->
-                                <div class="flex items-center">
-                                    <span class="mr-2 w-4 h-4 inline-flex items-center justify-center rounded border 
-                                        {{ isset($salang['checklist']['correct_color']) && strtolower($salang['checklist']['correct_color']) === 'yes' 
-                                            ? 'bg-green-500 border-green-600 dark:bg-green-600 dark:border-green-700' 
-                                            : 'border-gray-300 dark:border-gray-500' }}">
-                                        @if(isset($salang['checklist']['correct_color']) && strtolower($salang['checklist']['correct_color']) === 'yes')
-                                            <svg class="w-3 h-3 text-white dark:text-gray-100" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                        @endif
-                                    </span>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Correct Color</span>
-                                </div>
-
-                                <!-- Correct Hardness -->
-                                <div class="flex items-center">
-                                    <span class="mr-2 w-4 h-4 inline-flex items-center justify-center rounded border 
-                                        {{ isset($salang['checklist']['correct_hardness']) && strtolower($salang['checklist']['correct_hardness']) === 'yes' 
-                                            ? 'bg-green-500 border-green-600 dark:bg-green-600 dark:border-green-700' 
-                                            : 'border-gray-300 dark:border-gray-500' }}">
-                                        @if(isset($salang['checklist']['correct_hardness']) && strtolower($salang['checklist']['correct_hardness']) === 'yes')
-                                            <svg class="w-3 h-3 text-white dark:text-gray-100" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                        @endif
-                                    </span>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Correct Hardness</span>
-                                </div>
-                            </div>
+                            <p class="font-medium">{{ $entry->remarks ?? 'N/A' }}</p>
                         </div>
                     </div>
-                </div>
-            @endif
-        @endfor
-
-        @if($totalSalangQty > 0)
-            <div class="mt-6 pt-4 border-t">
-                <h3 class="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Salang Totals</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Quantity</p>
-                        <p class="font-medium">{{ $totalSalangQty }} pcs</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Weight</p>
-                        <p class="font-medium">{{ $totalSalangWeight }} g</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total With Overflow</p>
-                        <p class="font-medium">{{ $totalSalangWeightWithOverflow }} g</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Without Overflow</p>
-                        <p class="font-medium">{{ $totalSalangWeightWithoutOverflow }} g</p>
-                    </div>
-                </div>
+                @endforeach
             </div>
-        @endif
+        @empty
+            <p class="text-gray-500 dark:text-gray-400">No salang data found</p>
+        @endforelse
     </div>
+
+
 
     <!-- Production Entries -->
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
         <h2 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Production Entries</h2>
-        
+                
         @php
-            $totalDays = $report->entries->groupBy('production_date')->count();
-            $totalQtyMade = $report->entries->sum('quantity_made');
-            $totalReject = $report->entries->sum('reject_quantity');
-            $totalFinishedWeight = $report->entries->sum('finished_product_weight');
-            $overflow = $totalFinishedWeight - $totalSalangWeight;
-            $efficiency = $totalSalangWeight > 0 ? round(($totalFinishedWeight / $totalSalangWeight) * 100, 2) : 0;
+        $totalDays = $report->entries->groupBy('production_date')->count();
+
+        $totalQtyMade = $report->entries->reduce(function($carry, $entry) {
+            return $carry + (is_numeric($entry->quantity_made) ? (float)$entry->quantity_made : 0);
+        }, 0);
+
+        $totalReject = $report->entries->reduce(function($carry, $entry) {
+            return $carry + (is_numeric($entry->reject_quantity) ? (float)$entry->reject_quantity : 0);
+        }, 0);
+
+        $totalFinishedWeight = $report->entries->reduce(function($carry, $entry) {
+            return $carry + (is_numeric($entry->finished_product_weight) ? (float)$entry->finished_product_weight : 0);
+        }, 0);
+
+        $totalSalangWeight = $report->entries->reduce(function($carry, $entry) {
+            return $carry + (is_numeric($entry->weight_per_salang) ? (float)$entry->weight_per_salang : 0);
+        }, 0);
+
+        $overflow = $totalFinishedWeight - $totalSalangWeight;
+        $efficiency = $totalSalangWeight > 0 ? round(($totalFinishedWeight / $totalSalangWeight) * 100, 2) : 0;
         @endphp
 
         <div class="overflow-x-auto">
@@ -346,20 +291,18 @@
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Temp (°C)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Begin Wt (g)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">End Wt (g)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Qty Made (pcs)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reject (pcs)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Finished Wt (g)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Temp</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Begin Wt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">End Wt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Qty Made</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reject</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Finished Wt</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($report->entries as $entry)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ $entry->production_date }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ $entry->production_time }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ $entry->temperature }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ $entry->beginning_weight }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ $entry->ending_weight }}</td>
@@ -377,17 +320,12 @@
                     <tfoot class="bg-gray-50 dark:bg-gray-700 font-medium">
                         <tr>
                             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">Totals</td>
-                            <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $totalDays }} days</td>
                             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300"></td>
                             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300"></td>
                             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300"></td>
                             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $totalQtyMade }} pcs</td>
                             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $totalReject }} pcs</td>
-                            <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $totalFinishedWeight }} g</td>
-                        </tr>
-                        <tr>
-                            <td colspan="7" class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">Overflow (Entries - Salang)</td>
-                            <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $overflow }} g</td>
+                            <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $report->entries->first()->finished_product_weight }} g</td>
                         </tr>
                     </tfoot>
                 @endif
@@ -398,59 +336,118 @@
     <!-- Production Summary -->
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
         <h2 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Production Summary</h2>
-        
-        @php
-            // Calculate production metrics
-            $uniqueDays = $report->entries->groupBy('production_date')->count();
-            $totalHours = $report->entries->sum(function($entry) {
-                return $entry->production_time ? (float)str_replace(':', '.', $entry->production_time) : 0;
-            });
-            $totalRejects = $report->entries->sum('reject_quantity');
-            $totalQuantityMade = $report->entries->sum('quantity_made');
-            
-            // Calculate overflow
-            $totalRawMaterialWeight = $report->entries->sum('raw_material_weight_salang');
-            $totalWeightPerSalang = 0;
-            for ($i = 1; $i <= 3; $i++) {
-                $salang = $report->{'salang_'.$i} ?? []; // Get the array directly
-                if (!empty($salang) && isset($salang['weight_per_salang'])) {
-                    $totalWeightPerSalang += (float)$salang['weight_per_salang'];
-                }
-            }
-            $overflow = $totalRawMaterialWeight + $totalWeightPerSalang;
-        @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    @php
+        $entries = $report->entries;
+
+        // --- Initialize totals ---
+        $totalRejects = 0;
+        $totalRawMaterialWeight = 0;
+        $totalMaterialsUsed = 0; // Actual materials used (beginning - ending)
+        $totalSalangWeight = 0;
+        $totalSalangWeightWithOverflow = 0;
+        $totalSalangWeightWithoutOverflow = 0;
+        $totalFinishedProductWeight = 0;
+
+        // --- Iterate over salang numbers 1, 2, 3 ---
+        for ($salangNumber = 1; $salangNumber <= 3; $salangNumber++) {
+            $salangEntry = $entries->firstWhere('salang_number', $salangNumber);
+
+            if ($salangEntry) {
+                // Rejects
+                $totalRejects += is_numeric($salangEntry->reject_quantity) ? (float)$salangEntry->reject_quantity : 0;
+
+                // Raw material weight
+                $totalRawMaterialWeight += isset($salangEntry->raw_material_weight_salang) 
+                    ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->raw_material_weight_salang) 
+                    : 0;
+
+                // Actual materials used = beginning - ending (only from Salang 1)
+                if ($salangNumber === 1) {
+                    $beginning = isset($salangEntry->beginning_weight) 
+                        ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->beginning_weight) 
+                        : 0;
+                    $ending = isset($salangEntry->ending_weight) 
+                        ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->ending_weight) 
+                        : 0;
+                    $totalMaterialsUsed = $beginning - $ending;
+                }
+
+                // Weight per salang
+                $totalSalangWeight += isset($salangEntry->weight_per_salang) 
+                    ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->weight_per_salang) 
+                    : 0;
+
+                // Finished weights
+                $totalSalangWeightWithOverflow += isset($salangEntry->finished_weight_with_overflow) 
+                    ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->finished_weight_with_overflow) 
+                    : 0;
+
+                $totalSalangWeightWithoutOverflow += isset($salangEntry->finished_weight_without_overflow) 
+                    ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->finished_weight_without_overflow) 
+                    : 0;
+
+                $totalFinishedProductWeight += isset($salangEntry->finished_product_weight) 
+                    ? (float) preg_replace('/[^0-9.]/', '', $salangEntry->finished_product_weight) 
+                    : 0;
+            }
+        }
+
+        // Overflow = finished product - total salang weight
+        $salangOverflow = $totalFinishedProductWeight - $totalSalangWeight;
+
+        // Unique production days
+        $uniqueDays = $entries->groupBy('production_date')->count();
+    @endphp
+
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Fabrication Days</p>
                 <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $uniqueDays }}</p>
             </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <p class="text-sm text-gray-500 dark:text-gray-400">Total Hours</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ number_format($totalHours, 2) }}</p>
-            </div>
-            
+
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Total Rejects</p>
                 <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $totalRejects }}</p>
             </div>
-            
+
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <p class="text-sm text-gray-500 dark:text-gray-400">Total Quantity</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $totalQuantityMade }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Quantity Made</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $report->entries->sum(fn($entry) => is_numeric($entry->quantity_made) ? (float)$entry->quantity_made : 0) }} pcs</p>
             </div>
-            
-            {{-- <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <p class="text-sm text-gray-500 dark:text-gray-400">Total Overflow</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ number_format($overflow, 2) }} g</p>
-            </div> --}}
+
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Total Material Used</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ number_format($overflow, 2) }} g</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $totalMaterialsUsed }} g</p>
+            </div>
+
+            {{-- Salang Totals --}}
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Salang Quantity</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                    {{ $report->entries->sum(fn($entry) => is_numeric($entry->quantity_made) ? (float)$entry->quantity_made : 0) }} pcs
+                </p>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Salang Weight</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $totalSalangWeight }} g</p>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total With Overflow</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $totalSalangWeightWithOverflow }} g</p>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Without Overflow</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $totalSalangWeightWithoutOverflow }} g</p>
             </div>
         </div>
     </div>
+
 
     <!-- Remarks -->
     @if($report->remarks)

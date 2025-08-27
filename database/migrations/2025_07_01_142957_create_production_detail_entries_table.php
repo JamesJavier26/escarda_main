@@ -17,20 +17,25 @@ return new class extends Migration
             $table->foreignId('pressman_id')->constrained('users')->onDelete('cascade'); 
             $table->string('press')->nullable();
             $table->date('production_date');
+            $table->unsignedTinyInteger('salang_number');
+            
 
             // $table->time('production_time')->nullable(); 
-            $table->unsignedTinyInteger('production_hour')->default(0);
-            $table->unsignedTinyInteger('production_minute')->default(0);
-            $table->unsignedTinyInteger('production_second')->default(0);
-            $table->decimal('temperature', 6, 2)->nullable();
-
-            $table->decimal('beginning_weight', 8, 2)->default(0);
-            $table->decimal('ending_weight', 8, 2)->default(0);
-            $table->decimal('raw_material_weight_salang', 8, 2)->default(0);
-            $table->decimal('finished_product_weight', 8, 2)->default(0);
-            $table->integer('quantity_made')->default(0);
-            $table->integer('reject_quantity')->default(0);
-            $table->decimal('balance', 8, 2)->default(0);
+            $table->string('time_per_salang')->nullable();
+            $table->string('weight_per_salang')->nullable();
+            $table->string('finished_weight_with_overflow')->nullable();
+            $table->string('finished_weight_without_overflow')->nullable();
+            $table->string('temperature')->nullable();
+            $table->boolean('correct_size')->default(false);
+            $table->boolean('correct_color')->default(false);
+            $table->boolean('correct_hardness')->default(false);
+            $table->string('beginning_weight')->default('0')->change();
+            $table->string('ending_weight')->default('0')->change();
+            $table->string('raw_material_weight_salang')->default('0')->change();
+            $table->string('finished_product_weight')->default('0')->change();
+            $table->string('quantity_made')->default('0')->change();
+            $table->string('reject_quantity')->default('0')->change();
+            $table->string('balance')->default('0')->change();
 
             $table->text('remarks')->nullable();
             $table->timestamps();

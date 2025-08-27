@@ -115,31 +115,33 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/job-orders/{job_order}/mark-delivered', [JobOrderController::class, 'markAsDelivered'])->name('job-orders.mark-delivered');
         Route::patch('/job-orders/{job_order}/approve', [JobOrderController::class, 'approve'])->name('job-orders.approve');
         Route::patch('/job-orders/{job_order}/cancel', [JobOrderController::class, 'cancel'])->name('job-orders.cancel');
+        Route::get('/job-orders/items/{id}/details', [JobOrderController::class, 'itemDetails'])
+                ->name('job-orders.items.details');
 
         Route::get('/api/job-orders/search', [JobOrderController::class, 'search']);
         Route::get('/api/job-orders/{jobOrder}/items', [JobOrderController::class, 'getItems']);
 
+       // Main resource routes
         Route::resource('production-detail-reports', ProductionDetailReportController::class);
-        Route::patch('/production-detail-reports/{report}/submit', [ProductionDetailReportController::class, 'submit'])->name('production-detail-reports.submit');
 
-        // Route::resource('production-detail-reports.entries', ProductionDetailEntryController::class)
-        //     ->shallow()
-        //     ->except(['create', 'edit', 'show']);
-        // Use these explicit routes:
+        // Custom submit (PATCH on report)
+        Route::patch('production-detail-reports/{report}/submit', [ProductionDetailReportController::class, 'submit'])
+            ->name('production-detail-reports.submit');
+
+        // Nested routes for entries
         Route::get('production-detail-reports/{production_detail_report}/entries', [ProductionDetailEntryController::class, 'index'])
             ->name('production-detail-reports.entries.index');
 
         Route::post('production-detail-reports/{production_detail_report}/entries', [ProductionDetailEntryController::class, 'store'])
             ->name('production-detail-reports.entries.store');
 
-        // Route::get('production-detail-entries/{entry}', [ProductionDetailEntryController::class, 'show'])
-        //     ->name('production-detail-entries.show');
-
+        // Entry updates & deletes (separate resource-like endpoints)
         Route::put('production-detail-entries/{production_detail_entry}', [ProductionDetailEntryController::class, 'update'])
             ->name('production-detail-entries.update');
 
         Route::delete('production-detail-entries/{production_detail_entry}', [ProductionDetailEntryController::class, 'destroy'])
             ->name('production-detail-entries.destroy');
+
 
         Route::resource('temporary_quotations', TemporaryQuotationController::class);
         Route::get('/temporary-quotations/{id}/pdf', [TemporaryQuotationController::class, 'generateTemporaryQuote'])

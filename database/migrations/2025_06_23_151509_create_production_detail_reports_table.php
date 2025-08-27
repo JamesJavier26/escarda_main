@@ -18,18 +18,16 @@ return new class extends Migration
             $table->foreignId('jo_item_id')->nullable()->constrained('job_order_items')->nullOnDelete();
             $table->foreignId('pressman_id')->constrained('users')->onDelete('cascade'); 
             $table->string('press')->nullable();
-            $table->string('temperature')->nullable();
             $table->timestamp('date_production');
-            $table->boolean('is_old_checked')->default(false);
-            $table->boolean('is_new_checked')->default(false);
-            $table->boolean('is_ready_to_use')->default(false);
+            $table->string('production_type')->nullable();
+            $table->boolean('is_linear')->default(false)->after('production_type');
 
             $table->boolean('ply')->default(false);
-            $table->json('ply_types')->nullable();
+            $table->string('ply_types')->nullable();
             $table->string('ply_type_others')->nullable();
 
             $table->boolean('metal_insert')->default(false);
-            $table->json('metal_insert_types')->nullable();
+            $table->string('metal_insert_types')->nullable();
             $table->string('metal_insert_details')->nullable();
 
             $table->json('salang_1')->nullable();

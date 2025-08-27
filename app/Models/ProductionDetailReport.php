@@ -12,11 +12,9 @@ class ProductionDetailReport extends Model
         'jo_item_id',
         'pressman_id',
         'press',
-        'temperature',
         'date_production',
-        'is_old_checked',
-        'is_new_checked',
-        'is_ready_to_use',
+        'production_type',
+        'is_linear',
         'ply',
         'ply_types',
         'ply_type_others',
@@ -32,14 +30,8 @@ class ProductionDetailReport extends Model
 
     protected $casts = [
         'date_production' => 'datetime',
-        'is_old_checked' => 'boolean',
-        'is_new_checked' => 'boolean',
-        'is_ready_to_use' => 'boolean',
         'ply' => 'boolean',
         'metal_insert' => 'boolean',
-        'ply_types' => 'array',
-        // 'ply_type_others' => 'array',
-        'metal_insert_types' => 'array',
         'salang_1' => 'array',
         'salang_2' => 'array',
         'salang_3' => 'array',
@@ -70,6 +62,6 @@ class ProductionDetailReport extends Model
 
     public function entries()
     {
-        return $this->hasMany(ProductionDetailEntry::class);
+        return $this->hasMany(ProductionDetailEntry::class, 'production_detail_report_id');
     }
 }
