@@ -3,9 +3,6 @@
 @endphp
 
 <div x-data="">
-
-
-
     <form
         {{-- {{ $attributes->merge(['class' => 'space-y-6']) }} --}}
         class="space-y-6"
@@ -501,3 +498,13 @@
     @endif
 
 </div>
+<script>
+function itemsTable() {
+    return {
+        items: [],
+        receiveItems(newItems) {
+            this.items = newItems;
+        }
+    }
+}
+</script>
