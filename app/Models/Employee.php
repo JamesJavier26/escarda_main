@@ -134,13 +134,14 @@ class Employee extends Model
     {
         $address = [
             $this->street,
-            $this->barangay->name ?? null,
-            $this->city->name ?? null,
-            $this->province->name ?? null,
-            $this->region->name ?? null,
-            $this->zipcode
+            $this->barangay_id,
+            $this->city_id,
+            $this->province_id,
+            $this->region_id,
+            $this->zipcode,
         ];
 
         return implode(', ', array_filter($address));
     }
+
 }

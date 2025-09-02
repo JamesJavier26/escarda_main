@@ -30,8 +30,11 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->text(column: 'address')->nullable();
             //$table->string('street')->nullable();
-            $table->address();  
-            $table->string('zipcode')->nullable();
+            $table->string('barangay_id', 255)->nullable()->change();
+            $table->string('city_id', 255)->nullable()->change();
+            $table->string('province_id', 255)->nullable()->change();
+            $table->string('region_id', 255)->nullable()->change();
+            $table->string('zipcode', 255)->nullable()->change();
             $table->date('birth_date')->nullable();
             $table->date('hire_date');
             $table->date('termination_date')->nullable();

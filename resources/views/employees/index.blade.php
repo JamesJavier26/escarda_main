@@ -113,7 +113,7 @@
                                 <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                     {{ $employee->prefix ? $employee->prefix . ' ' : '' }}
                                     {{ $employee->first_name }} {{ $employee->middle_name }} {{ $employee->last_name }} {{ $employee->suffix }}
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $employee->address }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $employee->full_address }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                                     {{ $employee->department->name ?? '—' }}

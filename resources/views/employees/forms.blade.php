@@ -169,102 +169,49 @@
             </div>
 
             {{-- Address Section --}}
-            <div class="mb-6">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Address Information</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"
-                    x-data="locationSelect()"
-                    x-init="init()">
-                    <!-- Province -->
-                    <div>
-                        <label for="province_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Province <span class="text-red-500">*</span>
-                        </label>
-                        <select id="province_id" name="province_id" x-model="provinceId" @change="fetchCities()"
-                                :disabled="isLoading"
-                                class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                                    border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                                    focus:ring-blue-500 focus:border-transparent">
-                            <option value="" disabled selected>Select Province</option>
-                            @foreach($provinces as $province)
-                                <option value="{{ $province->province_id }}" 
-                                    @selected(old('province_id', $employee->province_id) == $province->province_id)>
-                                    {{ $province->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('province_id') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <!-- City -->
-                    <div>
-                        <label for="city_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            City <span class="text-red-500">*</span>
-                        </label>
-                        <select id="city_id" name="city_id" x-model="cityId" @change="fetchBarangays()"
-                                :disabled="!provinceId || isLoading"
-                                class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                                    border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                                    focus:ring-blue-500 focus:border-transparent">
-                            <option value="" disabled selected>
-                                <span x-text="isLoading ? 'Loading...' : 'Select City'"></span>
-                            </option>
-                            <template x-for="city in cities" :key="city.city_id">
-                                <option :value="city.city_id" x-text="city.name"></option>
-                            </template>
-                        </select>
-                        @error('city_id') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <!-- Barangay -->
-                    <div>
-                        <label for="barangay_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Barangay
-                        </label>
-                        <select id="barangay_id" name="barangay_id" x-model="barangayId"
-                                :disabled="!cityId || isLoading"
-                                class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                                    border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                                    focus:ring-blue-500 focus:border-transparent">
-                            <option value="" disabled selected>
-                                <span x-text="isLoading ? 'Loading...' : 'Select Barangay'"></span>
-                            </option>
-                            <template x-for="barangay in barangays" :key="barangay.code">
-                                <option :value="barangay.code" x-text="barangay.name"></option>
-                            </template>
-                        </select>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <!-- Province -->
+                <div>
+                    <label for="province_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Province <span class="text-red-500">*</span>
+                    </label>
+                    <input id="province_id" name="province_id" type="text"
+                        value="{{ old('province_id', $employee->province_id) }}"
+                        placeholder="Enter province"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                            border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
+                            focus:ring-blue-500 focus:border-transparent">
+                    @error('province_id') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                {{-- Street and Zipcode --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {{-- Street --}}
-                    <div>
-                        <label for="street" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Street
-                        </label>
-                        <input id="street" name="street" type="text"
-                            value="{{ old('street', $employee->street) }}"
-                            placeholder="Street address"
-                            class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                                border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                                focus:ring-blue-500 focus:border-transparent">
-                    </div>
-
-                    {{-- Zipcode --}}
-                    <div>
-                        <label for="zipcode" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Zipcode
-                        </label>
-                        <input id="zipcode" name="zipcode" type="text"
-                            value="{{ old('zipcode', $employee->zipcode) }}"
-                            placeholder="Zip/postal code"
-                            class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                                border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                                focus:ring-blue-500 focus:border-transparent">
-                    </div>
+                <!-- City -->
+                <div>
+                    <label for="city_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        City <span class="text-red-500">*</span>
+                    </label>
+                    <input id="city_id" name="city_id" type="text"
+                        value="{{ old('city_id', $employee->city_id) }}"
+                        placeholder="Enter city"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                            border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
+                            focus:ring-blue-500 focus:border-transparent">
+                    @error('city_id') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
-            </div>
+
+                <!-- Barangay -->
+                <div>
+                    <label for="barangay_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Barangay
+                    </label>
+                    <input id="barangay_id" name="barangay_id" type="text"
+                        value="{{ old('barangay_id', $employee->barangay_id) }}"
+                        placeholder="Enter barangay"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                            border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
+                            focus:ring-blue-500 focus:border-transparent">
+                </div>
+</div>
+
 
             {{-- Dates Section --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

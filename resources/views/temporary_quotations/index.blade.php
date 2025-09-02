@@ -85,6 +85,10 @@
             </tbody>
         </table>
     </div>
+    <!-- Pagination -->
+<div class="mt-6 px-6">
+    {{ $temporaryQuotations->links() }}
+</div>
 </x-layouts.app>
 <script>
     function openQuotePopup(url) {
