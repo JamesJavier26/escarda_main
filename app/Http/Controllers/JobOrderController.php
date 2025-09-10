@@ -7,6 +7,7 @@ use App\Models\JobOrder;
 use App\Models\JobOrderItem;
 use App\Models\Material;
 use App\Models\Mould;
+use App\Models\Unit;
 use App\Models\ProductionDetailReport;
 use Illuminate\Http\Request;
 
@@ -92,6 +93,7 @@ class JobOrderController extends Controller
             'job_order' => new JobOrder(),
             'materials' => Material::all(),
             'moulds'    => Mould::all(),
+            'units'     => Unit::where('is_active', 1)->orderBy('name')->get(), // ✅ added
         ]);
     }
 
@@ -171,6 +173,7 @@ class JobOrderController extends Controller
             'job_order' => $jobOrder,
             'materials' => Material::all(),
             'moulds'    => Mould::all(),
+            'units'     => Unit::where('is_active', 1)->orderBy('name')->get(), // ✅ added
         ]);
     }
 

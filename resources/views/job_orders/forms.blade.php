@@ -139,8 +139,12 @@
                                                     <select name="items[{{ $index }}][thickness_unit]"
                                                             {{ $isApproved ? 'disabled' : '' }}
                                                             class="w-20 px-2 py-1 text-xs border rounded {{ $disabledClass }}">
-                                                        <option value="mm" {{ $jo_item->thickness_unit == 'mm' ? 'selected' : '' }}>mm</option>
-                                                        <option value="in" {{ $jo_item->thickness_unit == 'in' ? 'selected' : '' }}>in</option>
+                                                        @foreach ($units as $unit)
+                                                            <option value="{{ $unit->short_name }}"
+                                                                {{ $jo_item->thickness_unit == $unit->short_name ? 'selected' : '' }}>
+                                                                {{ $unit->short_name }} ({{ $unit->name }})
+                                                            </option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                             </div>
