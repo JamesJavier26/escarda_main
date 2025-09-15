@@ -18,7 +18,7 @@
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Price Entry</h1>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Price Estimate</h1>
         <p class="text-gray-600 dark:text-gray-400">Review and update pricing for items.</p>
         <div class="text-sm text-gray-300 mt-1">
             {{-- Sales Rep: <span class="font-medium text-white">{{ $pricingEstimate->salesRep->employee->full_name ?? 'N/A' }}</span> --}}

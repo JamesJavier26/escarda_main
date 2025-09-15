@@ -61,8 +61,8 @@
                                     :active="request()->routeIs('users*')">Users</x-layouts.sidebar-two-level-link>
                                 <x-layouts.sidebar-two-level-link href="{{ route('roles.index')  }}" icon='fas-user-shield'
                                     :active="request()->routeIs('roles*')">Roles</x-layouts.sidebar-two-level-link>
-                                <x-layouts.sidebar-two-level-link href="{{ route('permissions.index')  }}" icon='fas-user-lock'
-                                    :active="request()->routeIs('permissions*')">Permission</x-layouts.sidebar-two-level-link>
+                               {{-- <x-layouts.sidebar-two-level-link href="{{ route('permissions.index')  }}" icon='fas-user-lock'
+                                    :active="request()->routeIs('permissions*')">Permission</x-layouts.sidebar-two-level-link> --}}
                             </x-layouts.sidebar-two-level-link-parent>
                             <x-layouts.sidebar-two-level-link-parent title="Human Resource" icon="fas-id-card"
                                 :active="request()->routeIs('employees*', 'departments*', 'positions*')">
