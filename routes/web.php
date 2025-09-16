@@ -29,7 +29,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Models\PricingEstimate;
-use App\Models\ProductDetailReport;
+use App\Models\ProductionDetailReport;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
 
@@ -184,7 +184,8 @@ Route::middleware(['auth'])->group(function () {
                 ->get(['id','number','unit_id','name','description']);
         });
 
-
+        
+        Route::get('/production-detail-reports/{report}/item', [ProductionDetailReportController::class, 'fetchJoItem']);
         // Reports
         Route::get('/reports/pricing-estimates', [ReportController::class, 'generatePricingReport'])->name('reports.pricing-estimates');
         Route::get('/reports/quotations', [ReportController::class, 'generateQuoteReport'])->name('reports.quotations.report');

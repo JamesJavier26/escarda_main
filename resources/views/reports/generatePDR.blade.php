@@ -5,141 +5,137 @@
 <title>Production Detail Report</title>
 <style>
     @page { size: A4; margin: 80px 15px 80px 15px; }
-    body { font-family: DejaVu Sans, sans-serif; margin: 0; padding: 20px; font-size: 8pt; }
-    h1, h2, h3 { margin: 0; }
+    body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; margin: 0; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    td, th { border: 1px solid black; padding: 4px 6px; vertical-align: top; }
+    .no-border td { border: none; padding: 2px 4px; }
     .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .text-left { text-align: left; }
-    .mt-4 { margin-top: 1.5rem; }
-    .mt-2 { margin-top: 0.75rem; }
-    .mb-2 { margin-bottom: 0.75rem; }
-    .p-1 { padding: 4px 6px; }
-    .p-2 { padding: 6px 10px; }
-
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    td, th {
-        border: 1px solid black;
-        padding: 4px 6px;
-        vertical-align: middle;
-        box-sizing: border-box;
-    }
-
-    td > div, th > div {
-        display: block;
-        width: 100%;
-        overflow-wrap: break-word;
-        word-break: break-word;
-        white-space: normal;
-        font-size: 0.85em;
-    }
-
-    .no-border td, .no-border th { border: none; padding: 4px 6px; }
-    .border-bottom { border-bottom: 1px solid black !important; }
-    .row-border-bottom { border-bottom: 2px solid black; border-collapse: collapse; }
-
-    /* Fixed column widths for top table */
-    .w-3{width:3%;} .w-10{width:10%;} .w-15{width:15%;} .w-25{width:25%;} .w-40{width:40%;}
-
+    .page-break { page-break-before: always; }
+    header { position: fixed; top: -60px; left: 0; right: 0; text-align: center; }
+    footer { position: fixed; bottom: -50px; left: 0; right: 0; text-align: center; font-size: 9px; }
 </style>
 </head>
 <body>
 
-<!-- Top Info Table -->
-<table class="no-border" style="margin-bottom: 20px;">
-<tr>
-    <td colspan="6" class="text-center"><div><strong>PRODUCTION DETAIL REPORT</strong></div></td>
-</tr>
-<tr>
-    <td class="w-25"><div>Date</div></td>
-    <td class="w-3"><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ $report->entries->isNotEmpty() ? \Carbon\Carbon::parse($report->entries->first()->date_production)->format('F d, Y') : '' }}</div></td>
-    <td class="w-3"></td>
-    <td class="w-40"><div>Beginning Weight of Materials</div></td>
-</tr>
-<tr>
-    <td><div>J.O</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ $report->jo_no }}</div></td>
-    <td></td>
-    <td class="border-bottom"><div>{{ $report->entries->first()->beginning_weight ?? 0 }} g</div></td>
-</tr>
-<tr>
-    <td><div>Company Name</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ optional($report->jobOrder->salesOrder->customer)->name ?? 'N/A' }}</div></td>
-    <td></td>
-    <td><div>Ending Weight of Material</div></td>
-</tr>
-<tr>
-    <td><div>Item</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ optional($report->jobOrder->jo_items->first()->item)->name ?? 'N/A' }}</div></td>
-    <td></td>
-    <td class="border-bottom"><div>{{ $report->entries->last()->ending_weight ?? 0 }} g</div></td>
-</tr>
-<tr>
-    <td><div>Quantity</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ $report->entries->sum(fn($e) => (float)($e->quantity_made ?? 0)) }}</div></td>
-    <td></td>
-    <td><div>Raw Material / Salang</div></td>
-</tr>
-<tr>
-    <td><div>Material</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ optional($report->jobOrder->jo_items->first()->material)->name ?? 'N/A' }}</div></td>
-    <td></td>
-    <td class="border-bottom"><div>{{ $report->entries->sum(fn($e) => (float)($e->raw_material_weight_salang ?? 0)) }} g</div></td>
-</tr>
-<tr>
-    <td><div>Hardness</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ optional($report->jobOrder->jo_items->first())->hardness ?? 'N/A' }}</div></td>
-    <td></td>
-    <td><div>Remarks</div></td>
-</tr>
-<tr>
-    <td><div>Press</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ $report->press }}</div></td>
-    <td></td>
-    <td class="border-bottom"><div>{{ $report->remarks ?? 'N/A' }}</div></td>
-</tr>
-<tr>
-    <td><div>Pressman</div></td>
-    <td><div>:</div></td>
-    <td colspan="2" class="border-bottom"><div>{{ optional($report->user)->username ?? 'N/A' }}</div></td>
-    <td></td>
-    <td class="border-bottom"><div></div></td>
-</tr>
+<header>
+    <img src="{{ public_path('images/letterhead.png') }}" alt="Letterhead" style="width: 50%; height: auto;">
+</header>
 
+<footer>
+    <div style="position: relative;">
+        <img src="{{ public_path('images/smile.png') }}" alt="Logo" style="position: absolute; left: 0; top: -30px; height: 70px;">
+        <div style="margin-left: 80px;">
+            <p style="margin: 2px 0;"><strong>NOTE:</strong> <i>Approval of this report is system generated, no signature required.</i></p>
+            <p style="margin: 2px 0;"><strong>Website:</strong> <a href="http://www.escardastrading.com" target="_blank">http://www.escardastrading.com</a></p>
+        </div>
+    </div>
+</footer>
+
+<main>
+
+<!-- Report Header -->
+<table class="no-border">
+    <tr>
+        <td colspan="4" class="text-center"><strong>PRODUCTION DETAIL REPORT</strong></td>
+    </tr>
+    <tr>
+        <td><strong>J.O No.:</strong></td>
+        <td>{{ $report->jo_no }}</td>
+        <td><strong>Date:</strong></td>
+        <td>{{ $report->entries->isNotEmpty() ? \Carbon\Carbon::parse($report->entries->first()->production_date)->format('F d, Y') : '' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Company Name:</strong></td>
+        <td>{{ optional($report->jobOrder->salesOrder->customer)->name ?? 'N/A' }}</td>
+        <td><strong>Item:</strong></td>
+        <td>{{ optional($report->jobOrder->jo_items->first())->item_name ?? 'N/A' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Material:</strong></td>
+        <td>{{ optional($report->jobOrder->jo_items->first()->material)->name ?? 'N/A' }}</td>
+        <td><strong>Hardness:</strong></td>
+        <td>{{ optional($report->jobOrder->jo_items->first())->hardness ?? 'N/A' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Press:</strong></td>
+        <td>{{ $report->press ?? 'N/A' }}</td>
+        <td><strong>Pressman:</strong></td>
+        <td>{{ optional($report->user)->username ?? 'N/A' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Remarks:</strong></td>
+        <td colspan="3">{{ $report->remarks ?? '-' }}</td>
+    </tr>
 </table>
 
-<!-- Bottom Entries Table -->
-<table style="margin-top: 20px;">
-<tr>
-    <th class="text-center w-15"><div>Date</div></th>
-    <th class="text-center w-10"><div>Quantity</div></th>
-    <th class="text-center w-10"><div>Reject</div></th>
-    <th class="text-center w-15"><div>Temperature</div></th>
-    <th class="text-center w-10"><div>Time</div></th>
-    <th class="text-center w-10"><div>Salang #</div></th>
-    <th class="text-center w-30"><div>Remarks</div></th>
-</tr>
+@php $entriesPerPage = 3; @endphp
 
-@foreach($report->entries->sortBy('salang_number') as $entry)
-<tr>
-    <td class="text-center border-bottom"><div>{{ \Carbon\Carbon::parse($entry->date_production)->format('F d, Y') }}</div></td>
-    <td class="text-center border-bottom"><div>{{ $entry->quantity_made ?? 0 }}</div></td>
-    <td class="text-center border-bottom"><div>{{ $entry->reject_quantity ?? 0 }}</div></td>
-    <td class="text-center border-bottom"><div>{{ $entry->temperature ?? 'N/A' }} °C</div></td>
-    <td class="text-center border-bottom"><div>{{ $entry->time_per_salang ?? 'N/A' }}</div></td>
-    <td class="text-center border-bottom"><div>{{ $entry->salang_number }}</div></td>
-    <td class="text-center border-bottom"><div>{{ $entry->remarks ?? 'N/A' }}</div></td>
-</tr>
+@foreach($report->entries as $index => $entry)
+@php
+    $unitShort = optional($entry->unit)->short_name;
+@endphp
+<table>
+    <tr>
+        <td colspan="4" class="text-center"><strong>Entry #{{ $loop->iteration }}</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Date</strong></td>
+        <td>{{ \Carbon\Carbon::parse($entry->production_date)->format('F d, Y') }}</td>
+        <td><strong>Start Time</strong></td>
+        <td>{{ $entry->start_time ?? '-' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Temp Setting</strong></td>
+        <td>{{ $entry->temp_setting ?? '-' }}</td>
+        <td><strong>Process Duration</strong></td>
+        <td>{{ $entry->process_duration ?? '-' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Beginning Weight</strong></td>
+        <td>{{ $entry->beginning_weight_rawmat ?? 0 }} {{ $unitShort }}</td>
+        <td><strong>Ending Weight</strong></td>
+        <td>{{ $entry->ending_weight_rawmat ?? 0 }} {{ $unitShort }}</td>
+    </tr>
+    <tr>
+        <td><strong>Qty Produced</strong></td>
+        <td>{{ $entry->daily_output ?? 0 }} {{ $unitShort }}</td>
+        <td><strong>Rejects</strong></td>
+        <td>{{ $entry->reject_quantity ?? 0 }} {{ $unitShort }}</td>
+    </tr>
+    <tr>
+        <td><strong>Press No.</strong></td>
+        <td>{{ $entry->press_no ?? '-' }}</td>
+        <td><strong>Actual Finish Wt</strong></td>
+        <td>{{ $entry->actual_finish_product_weight ?? 0 }} {{ $unitShort }}</td>
+    </tr>
+    <tr>
+        <td><strong>Remaining Balance</strong></td>
+        <td>{{ $entry->remaining_balance ?? 0 }} {{ $unitShort }}</td>
+        <td><strong>Insert Details</strong></td>
+        <td>{{ $entry->insert_details ?? '-' }}</td>
+    </tr>
+    <tr>
+        <td><strong>Thickness</strong></td>
+        <td>{{ $entry->thickness ?? 0 }} {{ $unitShort }}</td>
+        <td><strong>Rawmat Size</strong></td>
+        <td>{{ $entry->rawmat_size_salang ?? 0 }} {{ $unitShort }}</td>
+    </tr>
+    <tr>
+        <td><strong>Rawmat Weight</strong></td>
+        <td>{{ $entry->rawmat_weight_salang ?? 0 }} {{ $unitShort }}</td>
+        <td><strong>Overflow Weight</strong></td>
+        <td>{{ $entry->overflow_weight_salang ?? 0 }} {{ $unitShort }}</td>
+    </tr>
+    <tr>
+        <td colspan="4"><strong>Remarks:</strong> {{ $entry->remarks ?? '-' }}</td>
+    </tr>
+</table>
+
+@if(($loop->iteration % $entriesPerPage) == 0 && !$loop->last)
+<div class="page-break"></div>
+@endif
 @endforeach
 
-</table>
-
+</main>
 </body>
 </html>

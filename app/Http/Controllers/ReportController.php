@@ -493,7 +493,7 @@ class ReportController extends Controller
     public function generatePDR(PDF $pdf, Request $request, $id)   
     {
         $report = ProductionDetailReport::with([
-            'entries',
+            'entries.unit', // ← load the unit relation
             'jobOrder.salesOrder.customer',
             'jobOrder.jo_items.item',
             'user',

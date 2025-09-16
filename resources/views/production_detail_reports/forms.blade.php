@@ -2,11 +2,6 @@
 
 @php
     $editing = isset($report) && $report->exists;
-    $salang1 = $editing ? $report->salang_1 ?? [] : [];
-    $salang2 = $editing ? $report->salang_2 ?? [] : [];
-    $salang3 = $editing ? $report->salang_3 ?? [] : [];
-    $salangs = [$salang1, $salang2, $salang3];
-
 @endphp
 <form method="POST" 
       action="{{ $editing ? route('production-detail-reports.update', $report->id) : route('production-detail-reports.store') }}"
@@ -31,7 +26,7 @@
       }">
     @csrf
     @if ($editing)
-        @method('PUT') {{-- ✅ must be inside form --}}
+        @method('PUT')
     @endif
 
     <div class="grid grid-cols-1 gap-6 w-full">
@@ -73,20 +68,40 @@
             {{-- JO Item Select --}}
             <div x-show="!isEditMode">
                 <div class="mt-6" x-show="joItems.length > 0">
-                    <label for="jo_item_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Select Item from Job Order <span class="text-red-500">*</span>
                     </label>
 
-                    <select name="jo_item_id" id="jo_item_id"
-                            x-model="selectedJoItem"
-                            @change="fetchItemDetails(selectedJoItem)"
-                            class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                                border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-2 py-4 text-center">Select</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Item Name
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Item Description
+                                </th>
+                            </tr>
+                        </thead>
 
-                        <template x-for="item in joItems" :key="item.id">
-                            <option :value="item.id" x-text="'#' + item.item_name + ' - ' + item.item_desc"></option>
-                        </template>
-                    </select>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <template x-for="item in joItems" :key="item.id">
+                                <tr class="text-sm text-gray-800 dark:text-gray-100">
+                                    <td class="px-2 py-4 text-center">
+                                        <input type="radio"
+                                            name="selected_item"
+                                            :value="item.id"
+                                            x-model="selectedJoItem"
+                                            @change="fetchItemDetails(item.id)"
+                                            class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                    </td>
+                                    <td class="px-4 py-2" x-text="item.item_name"></td>
+                                    <td class="px-4 py-2" x-text="item.item_description"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -330,225 +345,270 @@
         </div>
 
         @if ($editing)
-        <div x-data="productionEntries({ reportId: '{{ $report->id }}' })" x-init="fetchEntries()">
+            <div x-data="productionEntries({reportId: '{{ $report->id }}', initialPressmanName: '{{ $pressmanName }}'})">
+            <!-- Hidden JSON for units -->
+            <script type="application/json" id="units-json">
+                {!! $units->toJson() !!}
+            </script>
+
+            <!-- Header -->
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Production Entries</h3>
-                    <div class="flex justify-start items-center mb-4 space-x-2">
-                        <button type="button"
-                            @click="openModal(1)"
-                            :disabled="entries.some(e => e.salang_number === 1)"
-                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Add Salang 1
-                        </button>
-
-                        <button type="button"
-                            @click="openModal(2)"
-                            :disabled="!entries.some(e => e.salang_number === 1) || entries.some(e => e.salang_number === 2)"
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Add Salang 2
-                        </button>
-
-                        <button type="button"
-                            @click="openModal(3)"
-                            :disabled="!entries.some(e => e.salang_number === 2) || entries.some(e => e.salang_number === 3)"
-                            class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Add Salang 3
-                        </button>
-                    </div>
+                <button type="button"
+                        @click="openModal()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Create PDR
+                </button>
             </div>
 
-    <!-- Table -->
-    <div class="overflow-x-auto rounded shadow-md">
-    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-            <tr>
-                <x-table-column class="w-16 text-center">#</x-table-column>
-                <x-table-column class="text-left">Date</x-table-column>
-                <x-table-column class="text-right">Time</x-table-column>
-                <x-table-column class="text-right">Temp</x-table-column>
-                <x-table-column class="text-right">Begin Wt</x-table-column>
-                <x-table-column class="text-right">End Wt</x-table-column>
-                <x-table-column class="text-right">Qty</x-table-column>
-                <x-table-column class="text-right">Actions</x-table-column>
-            </tr>
-        </thead>
-        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <template x-for="(entry, idx) in entries.sort((a, b) => a.salang_number - b.salang_number)" :key="entry.id">
-                <tr>
-                    <td class="text-center px-4 py-3" x-text="idx + 1"></td>
-                    <td class="px-4 py-3 text-left" x-text="entry.production_date"></td>
-                    <td class="px-4 py-3 text-right" x-text="entry.time_per_salang"></td>
-                    <td class="px-4 py-3 text-right" x-text="entry.temperature"></td>
-                    <td class="px-4 py-3 text-right" x-text="entry.beginning_weight"></td>
-                    <td class="px-4 py-3 text-right" x-text="entry.ending_weight"></td>
-                    <td class="px-4 py-3 text-right" x-text="entry.quantity_made"></td>
-                    <td class="text-right px-4 py-3 space-x-2">
-                        <button type="button" @click="editEntry(entry)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                        <button type="button" @click="deleteEntry(entry.id)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            </template>
+            <!-- Table -->
+            <div class="overflow-x-auto rounded shadow-md">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        <tr>
+                            <x-table-column class="w-16 text-center">#</x-table-column>
+                            <x-table-column class="text-left">Date</x-table-column>
+                            <x-table-column class="text-right">Start Time</x-table-column>
+                            <x-table-column class="text-right">Temp</x-table-column>
+                            <x-table-column class="text-right">Begin Wt</x-table-column>
+                            <x-table-column class="text-right">End Wt</x-table-column>
+                            <x-table-column class="text-right">Daily Output</x-table-column>
+                            <x-table-column class="text-right">Rejects</x-table-column>
+                            <x-table-column class="text-right">Actions</x-table-column>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <template x-for="(entry, idx) in entries" :key="entry.id">
+                            <tr>
+                                <td class="text-center px-4 py-3" x-text="idx + 1"></td>
+                                <td class="px-4 py-3 text-left" x-text="entry.production_date"></td>
+                                <td class="px-4 py-3 text-right" x-text="entry.start_time"></td>
+                                <td class="px-4 py-3 text-right" x-text="entry.temp_setting"></td>
+                                <td class="px-4 py-3 text-right" x-text="entry.beginning_weight_rawmat"></td>
+                                <td class="px-4 py-3 text-right" x-text="entry.ending_weight_rawmat"></td>
+                                <td class="px-4 py-3 text-right" x-text="entry.daily_output"></td>
+                                <td class="px-4 py-3 text-right" x-text="entry.reject_quantity"></td>
+                                <td class="text-right px-4 py-3 space-x-2">
+                                    <button type="button" @click="editEntry(entry)" class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" @click="deleteEntry(entry.id)" class="text-red-500 hover:text-red-700">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
 
-            <tr x-show="entries.length === 0">
-                <td colspan="8" class="text-center px-4 py-6 text-gray-500 dark:text-gray-400">No entries added yet</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+                        <tr x-show="entries.length === 0">
+                            <td colspan="9" class="text-center px-4 py-6 text-gray-500 dark:text-gray-400">
+                                No entries added yet
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-<!-- Entry Modal -->
-<x-modal name="entry-modal" maxWidth="2xl" x-show="showModal" x-cloak>
-    <div class="p-6">
-        <h2 class="text-lg font-semibold mb-4 dark:text-gray-200" x-text="form.id ? 'Edit Entry' : 'Add Entry'"></h2>
-        <input type="hidden" x-model="form.salang_number">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Entry Modal -->
+            <!-- Entry Modal -->
+<x-modal name="entry-modal" maxWidth="6xl" x-show="showModal" x-cloak>
+    <div class="p-6 max-h-[80vh] overflow-y-auto">
+        <!-- Title -->
+        <h2 class="text-xl font-bold mb-6 text-center text-gray-800 dark:text-gray-200">
+            PRODUCT DETAIL REPORT
+        </h2>
 
-            <!-- Production Date -->
+        <!-- Form Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Row 1 -->
+            <div class="col-span-2">
+                <label class="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    PDR For
+                </label>
+            </div>
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Production Date</label>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Item Description:</label>
+                <input type="text" :value="selectedJoItemObj?.item_description" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">JO No.:</label>
+                <input type="text" :value="selected.jo_no" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+
+            <!-- Row 2 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Company Name:</label>
+                <input type="text" :value="selected.customer_name" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Date:</label>
                 <input type="date" x-model="form.production_date"
-                       class="w-full px-3 py-2 mt-1 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
 
-            <!-- Time per Salang -->
+            <!-- Row 3 -->
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Time per Salang</label>
-                <input type="text" x-model="form.time_per_salang"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Temp Setting:</label>
+                <input type="text" x-model="form.temp_setting"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Qty. to be Produced:</label>
+                <input type="number" x-model="form.qty_to_be_produced"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
 
-            <!-- Temperature -->
+            <!-- Row 4 -->
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Temperature</label>
-                <input type="text" x-model="form.temperature"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Starting Time:</label>
+                <input type="time" x-model="form.start_time"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Unit:</label>
+                <select x-ref="unitSelect"
+                        x-init="units = JSON.parse(document.getElementById('units-json').textContent)"
+                        x-model.number="form.unit_id"
+                        class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100">
+                    <option value="" disabled>-- Select Unit --</option>
+                    <template x-for="unit in units" :key="unit.id">
+                        <option :value="unit.id" x-text="unit.short_name + ' (' + unit.name + ')'"></option>
+                    </template>
+                </select>
+
+                <!-- Hidden input to actually post the selected unit_id -->
+                <input type="hidden" name="unit_id" :value="form.unit_id">
             </div>
 
-            <!-- Weight per Salang -->
+            <!-- Row 5 -->
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Weight per Salang</label>
-                <input type="text" x-model="form.weight_per_salang"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Process Duration:</label>
+                <input type="text" x-model="form.process_duration"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Finished Weight With Overflow</label>
-                <input type="text" x-model="form.finished_weight_with_overflow"
-                        class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Material:</label>
+                <input type="text" :value="selectedJoItemObj?.material" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+
+            <!-- Row 6 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Press No.:</label>
+                <input type="text" x-model="form.press_no"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Finished Weight Without Overflow</label>
-                <input type="text" x-model="form.finished_weight_without_overflow"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Hardness:</label>
+                <input type="text" :value="selectedJoItemObj?.hardness" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
             </div>
-                <div x-data="{ 
-                    form: { 
-                        is_linear: @json((bool) $report->is_linear),
-                        quantity_made: @json($report->quantity_made ?? '') // preload if editing
-                    } 
-                }">
-                    <div x-show="!form.is_linear">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Quantity Made</label>
-                        <input type="text" x-model="form.quantity_made"
-                            class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-                        <p class="text-sm text-red-500">
-                            <span x-text="form.is_linear ? 'Linear' : 'Not Linear'"></span>
-                        </p>
-                    </div>
+
+            <!-- Row 7 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pressman:</label>
+                <input type="text" :value="pressmanName" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Thickness:</label>
+                    <input 
+                        type="text" 
+                        :value="selectedJoItemObj?.thickness + (selectedJoItemObj?.thickness_unit ? ' ' + selectedJoItemObj.thickness_unit : '')" 
+                        readonly
+                        class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" 
+                    />
                 </div>
 
-            <!-- Beginning Weight (Salang 1 only) -->
+            <!-- Row 8 -->
             <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Beginning Weight</label>
-                <input type="text" x-model="form.beginning_weight"
-                       :disabled="form.salang_number !== 1"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mould Details:</label>
+                <input type="text" :value="selectedJoItemObj?.mould_details" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Insert Details:</label>
+                <input type="text" x-model="form.insert_details"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
 
-            <!-- Finished Weight Group (Salang 3 only) -->
-            <div x-show="form.salang_number === 3" class="space-y-3 md:col-span-2">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ending Weight</label>
-                <input type="text" x-model="form.ending_weight"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Raw Material Weight per Salang</label>
-                <input type="text" x-model="form.raw_material_weight_salang"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Finished Product Weight</label>
-                <input type="text" x-model="form.finished_product_weight"
-                       class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div 
-                        x-data="{ 
-                            form: { 
-                                is_linear: @json((bool) $report->is_linear),
-                                quantity_made: @json($report->quantity_made ?? '') 
-                            } 
-                        }"
-                    >
-                        <div x-show="form.is_linear">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Quantity Made
-                            </label>
-                            <input type="number" 
-                                x-model="form.quantity_made"
-                                class="w-full px-3 py-2 border rounded 
-                                    dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-                            <p class="text-sm text-red-500">
-                                <span x-text="form.is_linear ? 'Linear' : 'Not Linear'"></span>
-                            </p>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Reject Quantity</label>
-                        <input type="text" x-model="form.reject_quantity"
-                               class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Balance</label>
-                        <input type="text" x-model="form.balance"
-                               class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600" />
-                    </div>
-                </div>
+            <!-- Row 9 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Beginning Weight of Rawmat:</label>
+                <input type="text" x-model="form.beginning_weight_rawmat"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Ending Weight of Rawmat:</label>
+                <input type="text" x-model="form.ending_weight_rawmat"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
 
-            <!-- Remarks & Checklist -->
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarks</label>
-                <textarea rows="2" x-model="form.remarks"
-                          class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"></textarea>
-
-                <div class="mt-3 space-y-2">
-                    <div>
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" x-model="form.correct_size" class="form-checkbox" />
-                            <span class="ml-2">Correct Size</span>
-                        </label>
-                    </div>
-                    <div>
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" x-model="form.correct_color" class="form-checkbox" />
-                            <span class="ml-2">Correct Color</span>
-                        </label>
-                    </div>
-                    <div>
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" x-model="form.correct_hardness" class="form-checkbox" />
-                            <span class="ml-2">Correct Hardness</span>
-                        </label>
-                    </div>
-                </div>
+            <!-- Row 10 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Rawmat Size/Salang:</label>
+                <input type="text" x-model="form.rawmat_size_salang"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Rawmat Weight/Salang:</label>
+                <input type="text" x-model="form.rawmat_weight_salang"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
             </div>
 
+            <!-- Row 11 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Overflow Weight/Salang:</label>
+                <input type="text" x-model="form.overflow_weight_salang"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Actual Weight of Finish Product:</label>
+                <input type="text" x-model="form.actual_finish_product_weight"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+
+            <!-- Row 12 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Daily Output:</label>
+                <input type="number" x-model="form.daily_output"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Reject Qty:</label>
+                <input type="number" x-model="form.reject_quantity"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+
+            <!-- Row 13 -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Remaining Balance:</label>
+                <input type="number" :value="form.remaining_balance" readonly
+                    class="w-full px-3 py-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Day No.:</label>
+                <input type="number" x-model="form.day_no"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+        </div>
+
+        <!-- Remarks -->
+        <div class="mt-5">
+            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Remarks:</label>
+            <textarea rows="3" x-model="form.remarks"
+                    class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-100"></textarea>
         </div>
 
         <!-- Modal Buttons -->
         <div class="flex justify-end mt-6 space-x-3">
-            <button type="button" @click="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Cancel</button>
+            <button type="button" @click="closeModal()"
+                    class="px-5 py-2 bg-gray-200 dark:bg-gray-600 rounded">Cancel</button>
             <button type="button" @click="saveEntry()" :disabled="isSubmitting"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center space-x-2">
+                    class="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center space-x-2">
                 <template x-if="!isSubmitting"><span>Save</span></template>
                 <template x-if="isSubmitting"><span>Saving...</span></template>
             </button>
@@ -556,8 +616,9 @@
     </div>
 </x-modal>
 
-</div>
-@endif
+        </div>
+        @endif
+
 
 
 <div class="flex items-center justify-between mt-10 w-full">
@@ -586,214 +647,247 @@
     </div>
 
     {{-- RIGHT: Submit Report --}}
-    @if ($report->status !== 'completed' && $editing)
-        <div 
-            x-data="{
-                isSubmitting: false,
-                confirmSubmit() {
-                    Swal.fire({
-                        title: 'Submit Report?',
-                        text: 'This will mark the report as completed.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#16a34a',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'Yes, Submit'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.isSubmitting = true;
-                            fetch('{{ route('production-detail-reports.submit', $report->id) }}', {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                }
-                            })
-                            .then(response => {
-                                if (!response.ok) throw new Error('Submission failed');
-                                return response.json();
-                            })
-                            .then(data => {
-                                Swal.fire({
-                                    toast: true,
-                                    position: 'top-end',
-                                    icon: 'success',
-                                    title: 'Report submitted successfully!',
-                                    showConfirmButton: false,
-                                    timer: 2500,
-                                    timerProgressBar: true
-                                }).then(() => {
-                                    window.location.href = '{{ route('production-detail-reports.index') }}';
-                                });
-                            })
-                            .catch(error => {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: error.message || 'Something went wrong',
-                                    confirmButtonText: 'OK'
-                                });
-                            });
-                        }
-                    });
-                }
-            }"
-        >
+    @if ($report->status !== 'completed' && $editing && $report->entries->last()?->remaining_balance == 0)
+        <div class="flex space-x-2">
+            <!-- New Generate PDR Link -->
+                <a href="{{ route('reports.pdr', $report->id) }}" target="_blank"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm inline-flex items-center">
+                    <i class="fas fa-file-alt mr-1"></i> Generate PDR
+                </a>
+            <!-- Existing Submit Report Button -->
             <button type="button"
-                @click="confirmSubmit"
-                :disabled="isSubmitting"
+                onclick="confirmSubmit()"
                 class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm shadow-sm">
-                <span x-show="!isSubmitting">
-                    <i class="fas fa-check-circle mr-1"></i> Submit Report
-                </span>
-                <span x-show="isSubmitting">
-                    <i class="fas fa-spinner fa-spin mr-1"></i> Submitting...
-                </span>
+                <i class="fas fa-check-circle mr-1"></i> Submit Report
             </button>
         </div>
     @endif
+
 </div>
 
 </form>
-<script> 
-function productionEntries({ reportId }) {
+<script>
+function confirmSubmit() {
+    Swal.fire({
+        title: 'Submit Report?',
+        text: 'This will mark the report as completed.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Submit'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/production-detail-reports/{{ $report->id }}/submit', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Report submitted successfully!',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                }).then(() => {
+                    window.location.href = '/production-detail-reports';
+                });
+            })
+            .catch(err => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Something went wrong',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+    });
+} 
+
+function productionEntries({ reportId, initialPressmanName }) {
     return {
         reportId,
+        pressmanId: window.initialPressmanId || null,
+        pressmanName: initialPressmanName || '',
+        selected: {},
+        selectedJoItemObj: {},
         showModal: false,
         isSubmitting: false,
         entries: [],
+        units: [], // store units here
         form: {
             id: null,
-            salang_number: null,
+            production_detail_report_id: reportId,
+            pressman_id: window.initialPressmanId || null,
             production_date: '',
-            time_per_salang: '',
-            weight_per_salang: '',
-            finished_weight_with_overflow: '',
-            finished_weight_without_overflow: '',
-            temperature: '',
-            beginning_weight: '',
-            ending_weight: '',
-            raw_material_weight_salang: '',
-            quantity_made: '',
+            daily_output: '',
             reject_quantity: '',
-            balance: '',
-            finished_product_weight: '',
+            day_no: '',
+            press_no: '',
+            temp_setting: '',
+            start_time: '',
+            process_duration: '',
+            insert_details: '',
+            beginning_weight_rawmat: '',
+            ending_weight_rawmat: '',
+            rawmat_size_salang: '',
+            rawmat_weight_salang: '',
+            overflow_weight_salang: '',
+            actual_finish_product_weight: '',
             remarks: '',
-            correct_size: false,
-            correct_color: false,
-            correct_hardness: false
+            qty_to_be_produced: '',
+            remaining_balance: '',
+            thickness_unit: '', // selected unit
         },
 
         init() {
-            console.log('Report ID:', this.reportId);
+            this.fetchJoItem();
             this.fetchEntries();
         },
 
-        // Open modal
-        openModal(salangNumber = null) {
-            this.resetForm();
-            if (salangNumber) this.form.salang_number = salangNumber;
+        // fetch JO item
+        async fetchJoItem() {
+            try {
+                const response = await fetch(`/production-detail-reports/${this.reportId}/item`);
+                if (!response.ok) throw new Error('Failed to fetch JO item');
+                this.selectedJoItemObj = await response.json();
+                this.selected = {
+                    jo_no: this.selectedJoItemObj.jo_no || '',
+                    customer_name: this.selectedJoItemObj.customer_name || '',
+                    jo_item_obj: this.selectedJoItemObj
+                };
 
-            // Set defaults for Salang 3 fields
-            if (salangNumber === 3) {
-                this.form.ending_weight = '0';
-                this.form.raw_material_weight_salang = '0';
-                this.form.finished_product_weight = '0';
-                this.form.reject_quantity = '0';
-                this.form.balance = '0';
+                // if JO item has a unit defined, set form.unit_id
+                if (this.selectedJoItemObj.unit_id) {
+                    this.form.unit_id = this.selectedJoItemObj.unit_id;
+                }
+            } catch (err) {
+                console.error('fetchJoItem error:', err);
+            }
+        },
+
+        async fetchEntries() {
+            try {
+                const response = await fetch(`/production-detail-reports/${this.reportId}/entries`);
+                if (!response.ok) throw new Error('Failed to fetch entries');
+                this.entries = (await response.json()).sort((a, b) => a.day_no - b.day_no);
+
+                this.originalQtyToBeProduced = this.entries[0]?.qty_to_be_produced || null;
+
+                console.log('Original qty_to_be_produced:', this.originalQtyToBeProduced);
+                this.entries.forEach(entry => {
+                    console.log(`Day ${entry.day_no}: remaining_balance = ${entry.remaining_balance}`);
+                });
+            } catch (err) {
+                console.error('fetchEntries error:', err);
+            }
+        },
+
+        openModal(entry = null) {
+            this.resetForm();
+
+            if (entry) {
+                this.form = { ...this.form, ...entry };
+            } else {
+                this.form.qty_to_be_produced = this.originalQtyToBeProduced;
+                const lastEntryWithBalance = [...this.entries].reverse().find(e => e.remaining_balance != null);
+                this.form.remaining_balance = lastEntryWithBalance
+                    ? lastEntryWithBalance.remaining_balance
+                    : this.form.qty_to_be_produced;
             }
 
             this.showModal = true;
             this.$dispatch('open-modal', 'entry-modal');
         },
 
-        // Close modal
+        editEntry(entry) {
+            this.openModal(entry);
+        },
         closeModal() {
             this.showModal = false;
             this.$dispatch('close-modal', 'entry-modal');
         },
 
-        // Edit entry
-        editEntry(entry) {
-            this.resetForm();
-            this.form = { ...entry };
-
-            this.form.correct_size = !!entry.correct_size;
-            this.form.correct_color = !!entry.correct_color;
-            this.form.correct_hardness = !!entry.correct_hardness;
-
-            // Ensure Salang 3 defaults if empty
-            if (this.form.salang_number === 3) {
-                this.form.ending_weight ||= '0';
-                this.form.raw_material_weight_salang ||= '0';
-                this.form.finished_product_weight ||= '0';
-                this.form.quantity_made ||= '0';
-                this.form.reject_quantity ||= '0';
-                this.form.balance ||= '0';
-            }
-
-            this.showModal = true;
-            this.$dispatch('open-modal', 'entry-modal');
+        deleteEntry(entryId) {
+            if (!confirm('Are you sure you want to delete this entry?')) return;
+            fetch(`/production-detail-entries/${entryId}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+            })
+            .then(async response => {
+                if (response.ok) {
+                    await this.fetchEntries();
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Entry deleted', showConfirmButton: false, timer: 2500 });
+                }
+            })
+            .catch(err => {
+                console.error('deleteEntry error:', err);
+                Swal.fire({ icon: 'error', title: 'Unexpected Error', text: err.message });
+            });
         },
 
-        // Reset form
         resetForm() {
             this.form = {
                 id: null,
-                salang_number: null,
+                production_detail_report_id: this.reportId,
+                pressman_id: this.pressmanId,
                 production_date: '',
-                time_per_salang: '',
-                weight_per_salang: '',
-                finished_weight_with_overflow: '',
-                finished_weight_without_overflow: '',
-                temperature: '',
-                beginning_weight: this.entries.find(e => e.salang_number === 1)?.beginning_weight || '',
-                ending_weight: '',
-                raw_material_weight_salang: '',
-                quantity_made: '',
+                daily_output: '',
                 reject_quantity: '',
-                balance: '',
-                finished_product_weight: '',
+                day_no: '',
+                press_no: '',
+                temp_setting: '',
+                start_time: '',
+                process_duration: '',
+                insert_details: '',
+                beginning_weight_rawmat: '',
+                ending_weight_rawmat: '',
+                rawmat_size_salang: '',
+                rawmat_weight_salang: '',
+                overflow_weight_salang: '',
+                actual_finish_product_weight: '',
                 remarks: '',
-                correct_size: false,
-                correct_color: false,
-                correct_hardness: false
+                qty_to_be_produced: this.form.qty_to_be_produced || '',
+                remaining_balance: this.form.remaining_balance || '',
+                unit_id: this.form.unit_id || '',
             };
         },
 
-        // Fetch entries
-        async fetchEntries() {
-            try {
-                const response = await fetch(`/production-detail-reports/${this.reportId}/entries`);
-                this.entries = await response.json();
-            } catch (err) {
-                console.error('Fetch error:', err);
+        onDailyOutputChange() {
+            if (!this.form.daily_output) {
+                this.form.remaining_balance = this.entries.length > 0
+                    ? this.entries[this.entries.length - 1].remaining_balance
+                    : this.form.qty_to_be_produced;
+                return;
             }
+
+            const dailyOutput = Number(this.form.daily_output || 0);
+            const originalQty = this.entries.length > 0
+                ? Number(this.entries[0].qty_to_be_produced)
+                : Number(this.form.qty_to_be_produced || 0);
+
+            let previousOutput = 0;
+            if (this.form.id) {
+                for (const e of this.entries) {
+                    if (e.id === this.form.id) break;
+                    previousOutput += Number(e.daily_output || 0);
+                }
+            } else {
+                previousOutput = originalQty - (this.entries.length > 0 ? this.entries[this.entries.length - 1].remaining_balance : originalQty);
+            }
+
+            this.form.remaining_balance = Math.max(originalQty - (previousOutput + dailyOutput), 0);
         },
 
-        // Save or update entry
         async saveEntry() {
-        if (!this.form.salang_number) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Salang number missing',
-                text: 'Please specify Salang 1, 2, or 3'
-            });
-            return;
-        }
-
-        const duplicate = this.entries.find(e => e.salang_number === this.form.salang_number && e.id !== this.form.id);
-        if (!this.form.id && duplicate) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Duplicate Entry',
-                text: `Salang ${this.form.salang_number} already exists`
-            });
-            return;
-        }
-
         this.isSubmitting = true;
-
         try {
             const isEdit = !!this.form.id;
             const url = isEdit
@@ -801,27 +895,30 @@ function productionEntries({ reportId }) {
                 : `/production-detail-reports/${this.reportId}/entries`;
             const method = isEdit ? 'PUT' : 'POST';
 
-            // Ensure all numeric/text fields are strings
-            const sanitizeString = value => (value === null || value === undefined ? '' : String(value));
+            // Read unit_id from the hidden input to ensure it posts correctly
+            const unitIdInput = document.querySelector('input[name="unit_id"]');
+            const unit_id = unitIdInput ? Number(unitIdInput.value) : null;
 
             const payload = {
-                ...this.form,
-                beginning_weight: sanitizeString(this.form.beginning_weight || this.entries.find(e => e.salang_number === 1)?.beginning_weight),
-                ending_weight: sanitizeString(this.form.ending_weight || (this.form.salang_number === 3 ? '0' : '')),
-                raw_material_weight_salang: sanitizeString(this.form.raw_material_weight_salang || (this.form.salang_number === 3 ? '0' : '')),
-                finished_product_weight: sanitizeString(
-                    this.form.finished_product_weight !== '' ? this.form.finished_product_weight : (this.form.salang_number === 3 ? '0' : '')
-                ),
-                quantity_made: sanitizeString(this.form.quantity_made || '0'),
-                reject_quantity: sanitizeString(this.form.reject_quantity || (this.form.salang_number === 3 ? '0' : '')),
-                balance: sanitizeString(this.form.balance || (this.form.salang_number === 3 ? '0' : '')),
-                correct_size: !!this.form.correct_size,
-                correct_color: !!this.form.correct_color,
-                correct_hardness: !!this.form.correct_hardness,
-                remarks: sanitizeString(this.form.remarks)
+                production_date: this.form.production_date,
+                daily_output: this.form.daily_output,
+                reject_quantity: this.form.reject_quantity,
+                day_no: this.form.day_no,
+                press_no: this.form.press_no,
+                temp_setting: this.form.temp_setting,
+                start_time: this.form.start_time,
+                process_duration: this.form.process_duration,
+                insert_details: this.form.insert_details,
+                beginning_weight_rawmat: this.form.beginning_weight_rawmat,
+                ending_weight_rawmat: this.form.ending_weight_rawmat,
+                rawmat_size_salang: this.form.rawmat_size_salang,
+                rawmat_weight_salang: this.form.rawmat_weight_salang,
+                overflow_weight_salang: this.form.overflow_weight_salang,
+                actual_finish_product_weight: this.form.actual_finish_product_weight,
+                remarks: this.form.remarks,
+                qty_to_be_produced: this.originalQtyToBeProduced,
+                unit_id: unit_id, // use hidden input value
             };
-
-            console.log('Payload being sent:', payload);
 
             const response = await fetch(url, {
                 method,
@@ -832,80 +929,54 @@ function productionEntries({ reportId }) {
                 body: JSON.stringify(payload)
             });
 
-            const data = await response.json();
+            let data;
+            try { data = await response.clone().json(); } catch { data = { message: await response.clone().text() }; }
 
-            if (response.ok) {
-                this.closeModal();
-                await this.fetchEntries();
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: isEdit ? 'Entry updated' : 'Entry created',
-                    showConfirmButton: false,
-                    timer: 2500
-                });
-            } else if (response.status === 422 && data.errors) {
-                const errorMessages = Object.values(data.errors).flat().join('<br>');
-                Swal.fire({ icon: 'error', title: 'Validation Failed', html: errorMessages });
-            } else {
-                Swal.fire({ icon: 'error', title: 'Save Failed', html: data.message || 'Something went wrong.' });
+            if (!response.ok) {
+                if (response.status === 422 && data.errors) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Failed',
+                        html: Object.values(data.errors).flat().join('<br>')
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Save Failed', html: data.message || 'Something went wrong.' });
+                }
+                return;
             }
+
+            await this.fetchEntries();
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Entry saved successfully!',
+                showConfirmButton: false,
+                timer: 2500
+            });
+
+            this.closeModal();
         } catch (err) {
-            console.error(err);
+            console.error('saveEntry error:', err);
             Swal.fire({ icon: 'error', title: 'Unexpected Error', text: err.message });
         } finally {
             this.isSubmitting = false;
         }
-    },
-
-        // Delete entry
-        async deleteEntry(id) {
-            const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: 'This entry will be permanently deleted.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, delete it!'
-            });
-            if (!result.isConfirmed) return;
-
-            try {
-                const response = await fetch(`/production-detail-entries/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                });
-
-                if (response.ok) {
-                    await this.fetchEntries();
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Entry deleted', showConfirmButton: false, timer: 2500 });
-                }
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Unexpected Error', text: err.message });
-            }
-        },
-
-        // Check button availability
-        canAddSalang(number) {
-            if (number === 1) return !this.entries.some(e => e.salang_number === 1);
-            if (number === 2) return this.entries.some(e => e.salang_number === 1) && !this.entries.some(e => e.salang_number === 2);
-            if (number === 3) return this.entries.some(e => e.salang_number === 2) && !this.entries.some(e => e.salang_number === 3);
-            return false;
-        }
+    }
     };
 }
+
+
+
 
 function jobOrderSelect(isEditMode) {
     return {
         isEditMode: isEditMode,
 
-        // Search query and results
         query: isEditMode ? '' : @json(old('jo_no', $report->jo_no ?? '')),
         results: [],
         showResults: false,
 
-        // Selected Job Order
         selected: {
             id: @json(old('job_order_id', $report->job_order_id ?? null)),
             jo_no: @json(old('jo_no', $report->jo_no ?? '')),
@@ -918,42 +989,29 @@ function jobOrderSelect(isEditMode) {
             remarks: @json(old('remarks', $report->jobOrder?->remarks ?? '--'))
         },
 
-        // Job Order Items
         joItems: @json(old('joItems', $joItems ?? [])),
         selectedJoItem: @json(old('jo_item_id', $report->jo_item_id ?? null)),
 
-        // Flags
         ply: {{ old('ply', $report->ply ?? false) ? 'true' : 'false' }},
         metalInsert: {{ old('metal_insert', $report->metal_insert ?? false) ? 'true' : 'false' }},
 
-        // Selected JO item details
         isLinear: {{ old('is_linear', $report->jobOrderItem?->is_linear ?? false) ? 'true' : 'false' }},
         productionType: '{{ old('production_type', $report->production_type ?? '') }}',
 
-        // Computed property for the selected JO item object
         get selectedJoItemObj() {
-            // 👀 make sure we return a usable object
             return this.joItems.find(item => item.id == this.selectedJoItem) ?? null;
         },
 
-        // Init method with preloading of the selected JO item
         init() {
-            // If editing and no joItems preloaded, fetch them
             if (this.isEditMode && this.selected.id && (!this.joItems || this.joItems.length === 0)) {
-                fetch(`/api/job-orders/${this.selected.id}/items`)
-                    .then(res => res.json())
-                    .then(items => {
-                        this.joItems = items;
-                    });
+                this.fetchItems(this.selected.id);
             }
 
-            // If a JO item is already selected, fetch details
             if (this.selectedJoItem) {
                 this.fetchItemDetails(this.selectedJoItem);
             }
         },
 
-        // Search Job Orders
         searchJO() {
             if (this.isEditMode || this.query.length < 2) {
                 this.results = [];
@@ -969,7 +1027,6 @@ function jobOrderSelect(isEditMode) {
                 });
         },
 
-        // Pick a Job Order
         pickJO(jo) {
             if (this.isEditMode) return;
 
@@ -978,11 +1035,23 @@ function jobOrderSelect(isEditMode) {
             this.results = [];
             this.showResults = false;
 
-            fetch(`/api/job-orders/${jo.id}/items`)
+            this.fetchItems(jo.id);
+        },
+
+        fetchItems(jobOrderId) {
+            fetch(`/api/job-orders/${jobOrderId}/items`)
                 .then(res => res.json())
                 .then(items => {
-                    this.joItems = items;
-                    this.selectedJoItem = items.length ? items[0].id : null;
+                    // Map API response to include item_desc consistently
+                    this.joItems = items.map(i => ({
+                        id: i.id,
+                        item_name: i.item_name,
+                        item_description: i.item_desc, // <- use item_desc from API
+                        is_linear: !!i.is_linear
+                    }));
+
+                    // Select the first item by default
+                    this.selectedJoItem = this.joItems.length ? this.joItems[0].id : null;
 
                     if (this.selectedJoItem) {
                         this.fetchItemDetails(this.selectedJoItem);
@@ -990,24 +1059,14 @@ function jobOrderSelect(isEditMode) {
                 });
         },
 
-        // Fetch JO item-specific details
         fetchItemDetails(id) {
             if (!id) return;
 
             fetch(`/job-orders/items/${id}/details`)
                 .then(res => res.json())
                 .then(data => {
-                    // Set Alpine reactive properties
-                    this.isLinear = !!data.is_linear;         // boolean for Linear / Non-linear radios
-                    this.productionType = data.production_type ?? ''; // 'old', 'new', 'trade', or ''
-
-                    // Optional: log for debugging
-                    this.$nextTick(() => {
-                        console.log('Radio buttons updated:', {
-                            isLinear: this.isLinear,
-                            productionType: this.productionType
-                        });
-                    });
+                    this.isLinear = !!data.is_linear;
+                    this.productionType = data.production_type ?? '';
                 })
                 .catch(err => {
                     this.isLinear = false;
@@ -1017,6 +1076,5 @@ function jobOrderSelect(isEditMode) {
         }
     };
 }
-
 
 </script>

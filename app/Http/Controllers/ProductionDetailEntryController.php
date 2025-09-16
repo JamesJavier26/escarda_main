@@ -9,40 +9,40 @@ use Illuminate\Http\Request;
 class ProductionDetailEntryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of entries for a ProductionDetailReport
      */
     public function index(ProductionDetailReport $production_detail_report)
     {
-        return response()->json($production_detail_report->entries()->latest()->get());
+        return response()->json(
+            $production_detail_report->entries()->orderBy('day_no')->get()
+        );
     }
-    /**
-     * Show the form for creating a new resource.
-     */
-   public function store(Request $request, ProductionDetailReport $production_detail_report)
-    {
-        $data = json_decode($request->getContent(), true) ?? $request->all();
 
-        \Log::info('Store Payload:', $data);
+    /**
+     * Store a newly created entry
+     */
+    public function store(Request $request, ProductionDetailReport $production_detail_report)
+    {
+        $data = $request->all();
 
         $validator = validator($data, [
-            'salang_number' => 'required|integer|between:1,3',
             'production_date' => 'required|date',
-            'time_per_salang' => 'required|string',
-            'weight_per_salang' => 'nullable|string',
-            'finished_weight_with_overflow' => 'nullable|string',
-            'finished_weight_without_overflow' => 'nullable|string',
-            'temperature' => 'required|string',
-            'beginning_weight' => 'required_if:salang_number,1|string',
-            'raw_material_weight_salang' => 'required_if:salang_number,3|string',
-            'quantity_made' => 'nullable|string',
-            'reject_quantity' => 'required_if:salang_number,3|string',
-            'balance' => 'required_if:salang_number,3|string',
-            'finished_product_weight' => 'required_if:salang_number,3|string',
-            'ending_weight' => 'required_if:salang_number,3|string',
+            'daily_output' => 'required|integer|min:0',
+            'reject_quantity' => 'nullable|integer|min:0',
+            'day_no' => 'nullable|integer|min:1',
+            'press_no' => 'nullable|string|max:255',
+            'temp_setting' => 'nullable|string|max:255',
+            'start_time' => 'required',
+            'process_duration' => 'nullable|string|max:255',
+            'insert_details' => 'nullable|string|max:255',
+            'beginning_weight_rawmat' => 'nullable|string|max:255',
+            'ending_weight_rawmat' => 'nullable|string|max:255',
+            'rawmat_size_salang' => 'nullable|string|max:255',
+            'rawmat_weight_salang' => 'nullable|string|max:255',
+            'overflow_weight_salang' => 'nullable|string|max:255',
+            'actual_finish_product_weight' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
-            'correct_size' => 'boolean',
-            'correct_color' => 'boolean',
-            'correct_hardness' => 'boolean',
+            'unit_id' => 'nullable|exists:units,id', // <-- added validation for unit
         ]);
 
         if ($validator->fails()) {
@@ -54,44 +54,20 @@ class ProductionDetailEntryController extends Controller
 
         $validated = $validator->validated();
 
-        // Set defaults for Salang 3 fields
-        if ($validated['salang_number'] == 3) {
-            $validated['ending_weight'] = $validated['ending_weight'] ?? '0';
-            $validated['raw_material_weight_salang'] = $validated['raw_material_weight_salang'] ?? '0';
-            $validated['finished_product_weight'] = $validated['finished_product_weight'];
-            $validated['reject_quantity'] = $validated['reject_quantity'] ?? '0';
-            $validated['balance'] = $validated['balance'] ?? '0';
-        }
+        $firstEntry = $production_detail_report->entries()->orderBy('day_no')->first();
+        $originalQty = $firstEntry ? $firstEntry->qty_to_be_produced : ($request->input('qty_to_be_produced') ?? 0);
 
-        // Prevent duplicate Salang number
-        if ($production_detail_report->entries()->where('salang_number', $validated['salang_number'])->exists()) {
-            return response()->json([
-                'message' => "Salang {$validated['salang_number']} already exists for this report."
-            ], 422);
-        }
+        $lastEntry = $production_detail_report->entries()->latest('day_no')->first();
+        $startingBalance = $lastEntry ? $lastEntry->remaining_balance : $originalQty;
 
-        $entry = $production_detail_report->entries()->create([
-            'salang_number' => $validated['salang_number'],
-            'production_date' => $validated['production_date'],
-            'time_per_salang' => $validated['time_per_salang'],
-            'weight_per_salang' => $validated['weight_per_salang'] ?? null,
-            'finished_weight_with_overflow' => $validated['finished_weight_with_overflow'] ?? null,
-            'finished_weight_without_overflow' => $validated['finished_weight_without_overflow'] ?? null,
-            'temperature' => $validated['temperature'],
-            'beginning_weight' => $validated['beginning_weight'] ?? null,
-            'ending_weight' => $validated['ending_weight'] ?? null,
-            'raw_material_weight_salang' => $validated['raw_material_weight_salang'] ?? null,
-            'quantity_made' => $validated['quantity_made'] ?? null,
-            'reject_quantity' => $validated['reject_quantity'] ?? null,
-            'balance' => $validated['balance'] ?? null,
-            'remarks' => $validated['remarks'] ?? null,
-            'correct_size' => $validated['correct_size'] ?? false,
-            'correct_color' => $validated['correct_color'] ?? false,
-            'correct_hardness' => $validated['correct_hardness'] ?? false,
-            'finished_product_weight' => $validated['finished_product_weight'] ?? null,
+        $remainingBalance = max($startingBalance - $validated['daily_output'], 0);
+
+        // Create entry with required qty_to_be_produced
+        $entry = $production_detail_report->entries()->create(array_merge($validated, [
             'pressman_id' => auth()->id(),
-            'press' => $production_detail_report->press,
-        ]);
+            'qty_to_be_produced' => $originalQty, // always include this
+            'remaining_balance' => $remainingBalance,
+        ]));
 
         return response()->json([
             'message' => 'Entry created successfully',
@@ -100,95 +76,85 @@ class ProductionDetailEntryController extends Controller
     }
 
 
+    /**
+     * Update an existing entry
+     */
     public function update(Request $request, ProductionDetailEntry $production_detail_entry)
-{
-    $data = json_decode($request->getContent(), true) ?? $request->all();
+    {
+        $data = $request->all();
 
-    \Log::info('Update Payload:', $data);
+        $validator = validator($data, [
+            'production_date' => 'required|date',
+            'daily_output' => 'required|integer|min:0',
+            'reject_quantity' => 'nullable|integer|min:0',
+            'day_no' => 'nullable|integer|min:1',
+            'press_no' => 'nullable|string|max:255',
+            'temp_setting' => 'nullable|string|max:255',
+            'start_time' => 'required',
+            'process_duration' => 'nullable|string|max:255',
+            'insert_details' => 'nullable|string|max:255',
+            'beginning_weight_rawmat' => 'nullable|string|max:255',
+            'ending_weight_rawmat' => 'nullable|string|max:255',
+            'rawmat_size_salang' => 'nullable|string|max:255',
+            'rawmat_weight_salang' => 'nullable|string|max:255',
+            'overflow_weight_salang' => 'nullable|string|max:255',
+            'actual_finish_product_weight' => 'nullable|string|max:255',
+            'remarks' => 'nullable|string',
+            'unit_id' => 'nullable|exists:units,id', // <-- added validation for unit
+        ]);
 
-    $validator = validator($data, [
-        'salang_number' => 'required|integer|between:1,3',
-        'production_date' => 'required|date',
-        'time_per_salang' => 'required|string',
-        'weight_per_salang' => 'nullable|string',
-        'finished_weight_with_overflow' => 'nullable|string',
-        'finished_weight_without_overflow' => 'nullable|string',
-        'temperature' => 'required|string',
-        'beginning_weight' => 'required_if:salang_number,1|string',
-        'ending_weight' => 'required_if:salang_number,3|string',
-        'raw_material_weight_salang' => 'required_if:salang_number,3|string',
-        'quantity_made' => 'required|string',
-        'reject_quantity' => 'required_if:salang_number,3|string',
-        'balance' => 'required_if:salang_number,3|string',
-        'finished_product_weight' => 'required_if:salang_number,3|string',
-        'remarks' => 'nullable|string',
-        'correct_size' => 'boolean',
-        'correct_color' => 'boolean',
-        'correct_hardness' => 'boolean',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'message' => 'Validation failed',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    $validated = $validator->validated();
-
-    try {
-        // Sanitize numeric fields to remove units or convert to numbers
-        $numericFields = [
-            'balance', 'quantity_made', 'finished_product_weight', 
-            'ending_weight', 'raw_material_weight_salang', 
-            'finished_weight_with_overflow', 'finished_weight_without_overflow', 
-            'weight_per_salang', 'beginning_weight'
-        ];
-
-        foreach ($numericFields as $field) {
-            if (isset($validated[$field])) {
-                $validated[$field] = preg_replace('/[^\d.]/', '', $validated[$field]);
-            }
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $production_detail_entry->update([
-            'salang_number' => $validated['salang_number'],
-            'production_date' => $validated['production_date'],
-            'time_per_salang' => $validated['time_per_salang'],
-            'weight_per_salang' => $validated['weight_per_salang'] ?? null,
-            'finished_weight_with_overflow' => $validated['finished_weight_with_overflow'] ?? null,
-            'finished_weight_without_overflow' => $validated['finished_weight_without_overflow'] ?? null,
-            'temperature' => $validated['temperature'],
-            'beginning_weight' => $validated['beginning_weight'] ?? null,
-            'ending_weight' => $validated['ending_weight'] ?? null,
-            'raw_material_weight_salang' => $validated['raw_material_weight_salang'] ?? null,
-            'quantity_made' => $validated['quantity_made'] ?? null,
-            'reject_quantity' => $validated['reject_quantity'] ?? null,
-            'balance' => $validated['balance'] ?? null,
-            'finished_product_weight' => $validated['finished_product_weight'] ?? null,
-            'remarks' => $validated['remarks'] ?? null,
-            'correct_size' => $validated['correct_size'] ?? false,
-            'correct_color' => $validated['correct_color'] ?? false,
-            'correct_hardness' => $validated['correct_hardness'] ?? false,
-        ]);
+        $validated = $validator->validated();
+
+        $production_detail_entry->update($validated);
+
+        // Recompute remaining_balance for this and all subsequent entries
+        $entries = $production_detail_entry->productionDetailReport
+            ->entries()
+            ->orderBy('day_no')
+            ->get();
+
+        $originalQty = $entries->first()->qty_to_be_produced ?? 0;
+        $remaining = $originalQty;
+
+        foreach ($entries as $entry) {
+            $entry->remaining_balance = max($remaining - $entry->daily_output, 0);
+            $entry->save();
+            $remaining = $entry->remaining_balance;
+        }
 
         return response()->json([
             'message' => 'Entry updated successfully',
             'entry' => $production_detail_entry
         ], 200);
-
-    } catch (\Exception $e) {
-        \Log::error('Update Error: '.$e->getMessage(), ['payload' => $validated]);
-        return response()->json([
-            'message' => 'Failed to update entry: '.$e->getMessage()
-        ], 500);
     }
-}
 
-
+    /**
+     * Delete an entry
+     */
     public function destroy(ProductionDetailEntry $production_detail_entry)
     {
+        $report = $production_detail_entry->productionDetailReport;
+
         $production_detail_entry->delete();
+
+        // Recompute remaining_balance for all remaining entries
+        $entries = $report->entries()->orderBy('day_no')->get();
+        $originalQty = $entries->first()->qty_to_be_produced ?? 0;
+        $remaining = $originalQty;
+
+        foreach ($entries as $entry) {
+            $entry->remaining_balance = max($remaining - $entry->daily_output, 0);
+            $entry->save();
+            $remaining = $entry->remaining_balance;
+        }
+
         return response()->json(['success' => true]);
     }
 }

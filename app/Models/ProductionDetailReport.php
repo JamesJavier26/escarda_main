@@ -21,9 +21,6 @@ class ProductionDetailReport extends Model
         'metal_insert',
         'metal_insert_types',
         'metal_insert_details',
-        'salang_1',
-        'salang_2',
-        'salang_3',
         'pdr_status',
         'remarks',
     ];
@@ -32,36 +29,46 @@ class ProductionDetailReport extends Model
         'date_production' => 'datetime',
         'ply' => 'boolean',
         'metal_insert' => 'boolean',
-        'salang_1' => 'array',
-        'salang_2' => 'array',
-        'salang_3' => 'array',
+        'is_linear' => 'boolean',
     ];
 
-    public function jobOrder(){
+    // Relationships
+    public function jobOrder()
+    {
         return $this->belongsTo(JobOrder::class);
     }
+
     public function jobOrderItem()
     {
         return $this->belongsTo(JobOrderItem::class, 'jo_item_id');
     }
-    public function customer() {
+
+    public function customer()
+    {
         return $this->belongsTo(Customer::class);
     }
-    public function item(){
-        return $this->belongsTo(Item::class,'item_id');
+
+    public function item()
+    {
+        return $this->belongsTo(Item::class, 'item_id');
     }
-    public function material(){
-        return $this->belongsTo(Material::class,'material_id');
+
+    public function material()
+    {
+        return $this->belongsTo(Material::class, 'material_id');
     }
-    // public function employee(){
-    //     return $this->belongsTo(Employee::class,'pressman');
-    // }
-    public function user(){
-        return $this->belongsTo(User::class,'pressman_id');
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'pressman_id');
     }
 
     public function entries()
     {
         return $this->hasMany(ProductionDetailEntry::class, 'production_detail_report_id');
+    }
+    public function units()
+    {
+        return $this->hasMany(Unit::class);
     }
 }
