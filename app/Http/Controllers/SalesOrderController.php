@@ -25,7 +25,7 @@ class SalesOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $user   = auth()->user();
         $userId = $user->id;
 
         // Validate perPage input
@@ -33,86 +33,113 @@ class SalesOrderController extends Controller
             ? (int) $request->input('perPage')
             : 10;
 
-        // Base query with eager loads: customer, salesRep.employee, quotations, jobOrder with jo_items
+        // Base query with eager loads
         $query = SalesOrder::with([
             'customer',
             'salesRep.employee',
-            'quotation',
+            'quotation.pricing_estimate.customer',
+            'quotation.pricing_estimate.salesRep.employee',
             'approver',
-            'jobOrder.jo_items',
+            'jobOrder.jo_items.item',
             'currency',
         ]);
-        
+
         // Role-based visibility
         if ($user->hasRole(['super-admin', 'admin'])) {
             $query->where(function ($q) use ($userId) {
                 $q->where('so_status', '!=', 'draft')
                 ->orWhere('sr_id', $userId); // allow own drafts
             });
-        } elseif ($user->hasRole('operation-manager')) {
-            $query->where('so_status', '!=', 'draft'); // ops manager sees all non-drafts only
+        } elseif ($user->hasRole(['operation-manager', 'sales-secretary', 'sales-manager'])) {
+            $query->where('so_status', '!=', 'draft');
         } else {
-            $query->where('sr_id', $userId); // regular user: only their own
+            $query->where('sr_id', $userId);
         }
 
-        // Search
+        // 🔍 Search
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('so_no', 'like', "%{$search}%")
                 ->orWhere('attention', 'like', "%{$search}%")
                 ->orWhere('po_no', 'like', "%{$search}%")
                 ->orWhere('pr_no', 'like', "%{$search}%")
-                ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$search}%"));
+                ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('quotation.pricing_estimate', fn ($pe) =>
+                        $pe->where('pe_no', 'like', "%{$search}%")
+                        ->orWhere('attention', 'like', "%{$search}%")
+                        ->orWhereHas('customer', fn ($c) =>
+                            $c->where('name', 'like', "%{$search}%")
+                        )
+                );
             });
         }
 
-        // Filter by status
+        //Status filter
         if ($status = $request->input('status')) {
             $query->where('so_status', $status);
         }
 
-        // Filter by date range
+        //Date range filter
         if ($from = $request->input('from')) {
             $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
         }
-
         if ($to = $request->input('to')) {
             $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
         }
+
+        //Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->where('sr_id', $srId);
+        }
+
+        //Item filter
+        if ($item = $request->input('item')) {
+            $query->where(function ($q) use ($item) {
+                // Search in JobOrder Items
+                $q->whereHas('jobOrder.jo_items.item', function ($sub) use ($item) {
+                    $sub->where('name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+
+                // OR directly in jo_items table
+                $q->orWhereHas('jobOrder.jo_items', function ($sub) use ($item) {
+                    $sub->where('item_name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+            });
+        }
+
+        // Sales reps for filter dropdown
+        $salesReps = User::role(['sales-representative'])->get();
 
         // Fetch paginated results
         $salesOrders = $query->latest('updated_at')
             ->paginate($perPage)
             ->appends($request->except('page'));
 
-        // Counts for stat cards (global)
-        $baseStatQuery = SalesOrder::query();
-
-        if (!$user->hasRole(['super-admin', 'admin', 'operation-manager'])) {
-            $baseStatQuery->where('sr_id', $userId);
-        }
+        // Base query for stats (respect role visibility)
+        $statQuery = clone $query;
 
         return view('sales_orders.index', [
             'salesOrders'      => $salesOrders,
-            'totalSalesOrders' => $baseStatQuery->count(),
-            'pendingOrders'    => (clone $baseStatQuery)->where('so_status', 'pending')->count(),
-            'approvedThisWeek' => (clone $baseStatQuery)->where('so_status', 'approved')
-                                    ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-                                    ->count(),
-            'totalRevenue' => (clone $baseStatQuery)
-                ->where('so_status', 'approved')
-                ->with('jobOrder.jo_items')
-                ->get()
-                ->sum(function ($order) {
-                    if (!$order->jobOrder || !$order->jobOrder->jo_items) return 0;
-
-                    return $order->jobOrder->jo_items->sum(function ($item) {
-                        return ($item->unit_price ?? 0) * ($item->quantity ?? 0);
-                    });
-                }),
+            'totalSalesOrders' => (clone $statQuery)->count(),
+            'pendingOrders'    => (clone $statQuery)->where('so_status', 'pending')->count(),
+            'approvedThisWeek' => (clone $statQuery)->where('so_status', 'approved')
+                                        ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                                        ->count(),
+            'totalRevenue'     => (clone $statQuery)
+                                        ->where('so_status', 'approved')
+                                        ->with('jobOrder.jo_items')
+                                        ->get()
+                                        ->sum(function ($order) {
+                                            if (!$order->jobOrder || !$order->jobOrder->jo_items) return 0;
+                                            return $order->jobOrder->jo_items->sum(function ($item) {
+                                                return ($item->unit_price ?? 0) * ($item->quantity ?? 0);
+                                            });
+                                        }),
+            'salesReps'        => $salesReps,
         ]);
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -153,72 +180,72 @@ class SalesOrderController extends Controller
      * Store a newly created resource in storage.
      */
    public function store(SalesOrderRequest $request)
-{
-    try {
-        DB::beginTransaction();
-        $current = (int) SalesOrder::max('so_no');
-        $startAt = 6442;
-        $so_no = $current ? $current + 1 : $startAt;
+    {
+        try {
+            DB::beginTransaction();
+            $current = (int) SalesOrder::max('so_no');
+            $startAt = 6442;
+            $so_no = $current ? $current + 1 : $startAt;
 
-        $data = $request->validated();
+            $data = $request->validated();
 
-        // Determine tax_status: use from request or fallback to customer's tax_status
-        $taxStatus = $data['tax_status'] ?? null;
-        if (empty($taxStatus) && !empty($data['customer_id'])) {
-            $customer = Customer::find($data['customer_id']);
-            $taxStatus = $customer ? $customer->tax_status : null;
-        }
+            // Determine tax_status: use from request or fallback to customer's tax_status
+            $taxStatus = $data['tax_status'] ?? null;
+            if (empty($taxStatus) && !empty($data['customer_id'])) {
+                $customer = Customer::find($data['customer_id']);
+                $taxStatus = $customer ? $customer->tax_status : null;
+            }
 
-        $order = SalesOrder::create([
-            'date_ordered' => now(),
-            'so_no' => $so_no,
-            'pr_no' => $data['pr_no'],
-            'po_no' => $data['po_no'],
-            'attention' => $data['attention'],
-            'customer_id' => $data['customer_id'],
-            'delivery_date' => $data['delivery_date'],
-            'sr_id' => $data['sr_id'],
-            'remarks' => $data['remarks'],
-            'currency_id' => $data['currency_id'],
-            'tax_status' => $taxStatus,
-            'terms' => $data['terms'] ?? null,
-            'so_status' => 'draft',
-        ]);
-
-        // Create related job order
-        $jobOrder = JobOrder::create([
-            'jo_no' => $order->so_no, 
-            'sales_order_id' => $order->id,
-            'user_id' => auth()->id(),
-            'jo_status' => 'draft',
-            'approval_status' => 'draft',
-        ]);
-
-        // Save the jo_items (from new_items)
-        foreach ($data['new_items'] as $item) {
-            if (!empty($item['_delete'])) continue;
-
-            JobOrderItem::create([
-                'job_order_id' => $jobOrder->id,
-                'sales_order_id' => $order->id,
-                'item_id' => $item['item_id'],
-                'item_name' => $item['name'],
-                'item_description' => $item['description'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['final_unit_price'] ?? $item['unit_price'],
-                'unit_id' => $item['unit_id'],
+            $order = SalesOrder::create([
+                'date_ordered' => now(),
+                'so_no' => $so_no,
+                'pr_no' => $data['pr_no'],
+                'po_no' => $data['po_no'],
+                'attention' => $data['attention'],
+                'customer_id' => $data['customer_id'],
+                'delivery_date' => $data['delivery_date'],
+                'sr_id' => $data['sr_id'],
+                'remarks' => $data['remarks'],
+                'currency_id' => $data['currency_id'],
+                'tax_status' => $taxStatus,
+                'terms' => $data['terms'] ?? null,
+                'so_status' => 'draft',
             ]);
-        }
 
-        DB::commit();
-        $this->saveNewUploads($order, $request);
-        return redirect()->route('sales-orders.edit', $order)
-            ->with('success', 'Sales Order created successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Failed to create Sales Order: ' . $e->getMessage());
+            // Create related job order
+            $jobOrder = JobOrder::create([
+                'jo_no' => $order->so_no, 
+                'sales_order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'jo_status' => 'draft',
+                'approval_status' => 'draft',
+            ]);
+
+            // Save the jo_items (from new_items)
+            foreach ($data['new_items'] as $item) {
+                if (!empty($item['_delete'])) continue;
+
+                JobOrderItem::create([
+                    'job_order_id' => $jobOrder->id,
+                    'sales_order_id' => $order->id,
+                    'item_id' => $item['item_id'],
+                    'item_name' => $item['name'],
+                    'item_description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['final_unit_price'] ?? $item['unit_price'],
+                    'unit_id' => $item['unit_id'],
+                ]);
+            }
+
+            DB::commit();
+            $this->saveNewUploads($order, $request);
+            return redirect()->route('sales-orders.edit', $order)
+                ->with('success', 'Sales Order created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to create Sales Order: ' . $e->getMessage());
+        }
     }
-}
 
 
     /**
@@ -257,69 +284,47 @@ class SalesOrderController extends Controller
             DB::beginTransaction();
 
             $data = $request->validated();
+            $salesOrder->update($data);
 
-            $salesOrder->update([
-                'pr_no'         => $data['pr_no'] ?? $salesOrder->pr_no,
-                'po_no'         => $data['po_no'] ?? $salesOrder->po_no,
-                'attention'     => $data['attention'] ?? $salesOrder->attention,
-                'customer_id'   => $data['customer_id'] ?? $salesOrder->customer_id,
-                'delivery_date' => $data['delivery_date'] ?? $salesOrder->delivery_date,
-                'sr_id'         => $data['sr_id'] ?? $salesOrder->sr_id,
-                'remarks'       => $data['remarks'] ?? $salesOrder->remarks,
-                'currency_id'   => $data['currency_id'] ?? $salesOrder->currency_id,
-                'tax_status'    => $data['tax_status'] ?? $salesOrder->tax_status,
-                'so_status'     => 'draft',
-            ]);
+            // Handle removed job order items (if any)
+            $removedItems = $request->input('removed_items', '');
+            if ($removedItems) {
+                $ids = explode(',', $removedItems);
+                JobOrderItem::whereIn('id', $ids)->delete();
+            }
 
-            $jobOrder = $salesOrder->jobOrder;
-
-            // === UPDATE EXISTING ITEMS ===
+            // Handle existing items
             foreach ($request->input('items', []) as $id => $itemData) {
-                $jobOrderItem = JobOrderItem::find($id);
-
-                if (!$jobOrderItem) {
-                    continue; // skip if item not found
-                }
-
-                // If flagged for delete
                 if (!empty($itemData['_delete'])) {
-                    $jobOrderItem->delete();
+                    JobOrderItem::where('id', $id)->delete();
                     continue;
                 }
 
-                // Otherwise update
-                $jobOrderItem->update([
-                    'job_order_id'     => $jobOrder->id,
-                    'sales_order_id'   => $salesOrder->id,
-                    'item_id'          => $itemData['item_id'],
-                    'item_name'        => $itemData['name'],
-                    'item_description' => $itemData['description'],
-                    'unit_id'          => $itemData['unit_id'],
-                    'quantity'         => $itemData['quantity'],
-                    'unit_price'       => $itemData['unit_price'],
-                ]);
+                JobOrderItem::updateOrCreate(
+                    ['id' => $id],
+                    [
+                        'sales_order_id' => $salesOrder->id,
+                        'item_id'        => $itemData['item_id'],
+                        'item_name'      => $itemData['name'],
+                        'item_description' => $itemData['description'],
+                        'quantity'       => $itemData['quantity'],
+                        'unit_price'     => $itemData['unit_price'],
+                        'unit_id'        => $itemData['unit_id'] ?? null,
+                        'notes'          => $itemData['notes'] ?? '',
+                    ]
+                );
             }
 
-            // === INSERT NEW ITEMS ===
-            foreach ($request->input('new_items', []) as $itemData) {
-                if (!empty($itemData['_delete'])) continue;
-
-                JobOrderItem::create([
-                    'job_order_id'     => $jobOrder->id,
-                    'sales_order_id'   => $salesOrder->id,
-                    'item_id'          => $itemData['item_id'],
-                    'item_name'        => $itemData['name'],
-                    'item_description' => $itemData['description'],
-                    'unit_id'          => $itemData['unit_id'],
-                    'quantity'         => $itemData['quantity'],
-                    'unit_price'       => $itemData['unit_price'],
-                ]);
+            // Handle existing attachments labels
+            foreach ($request->input('existing_file_labels', []) as $id => $label) {
+                $attachment = $salesOrder->attachments()->find($id);
+                if ($attachment) {
+                    $attachment->update(['label' => $label]);
+                }
             }
 
-            DB::commit();
-
-            // === ATTACHMENT HANDLING ===
-            $keepIds = collect($request->input('keep_attachments', []));
+            // Handle removed attachments
+            $keepIds = collect($request->input('keep_attachments', []))->filter()->all();
             $salesOrder->attachments()
                 ->whereNotIn('id', $keepIds)
                 ->each(function ($attachment) {
@@ -328,14 +333,11 @@ class SalesOrderController extends Controller
                     $attachment->delete();
                 });
 
-            foreach ($request->input('existing_file_labels', []) as $id => $label) {
-                $attachment = $salesOrder->attachments()->find($id);
-                if ($attachment) {
-                    $attachment->update(['label' => $label]);
-                }
-            }
 
+            // Save new attachments and their labels immediately
             $this->saveNewUploads($salesOrder, $request);
+
+            DB::commit();
 
             return redirect()
                 ->route('sales-orders.edit', $salesOrder)
@@ -345,7 +347,6 @@ class SalesOrderController extends Controller
             return back()->with('error', 'Failed to update Sales Order: ' . $e->getMessage());
         }
     }
-
 
 
 
@@ -435,13 +436,13 @@ class SalesOrderController extends Controller
     {
         if (!$request->hasFile('so_attachment')) return;
 
-        $labels = $request->input('file_labels', []);
+        $labels = $request->input('file_labels', []); // user-inputted labels
 
         foreach ($request->file('so_attachment') as $idx => $file) {
             $path = $file->store("sales-orders/{$order->id}", 'public');
 
             $order->attachments()->create([
-                'label'    => $labels[$idx] ?? null,
+                'label'    => $labels[$idx] ?? null, // label from user input
                 'metadata' => [
                     'disk'          => 'public',
                     'path'          => $path,
@@ -452,5 +453,4 @@ class SalesOrderController extends Controller
             ]);
         }
     }
-
 }

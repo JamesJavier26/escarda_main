@@ -26,8 +26,38 @@
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                 <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
                 <h2 class="text-xl font-semibold text-black-100">Customer Details</h2>
-                <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">P.E NO: #{{$pricing_estimate->pe_no}}</span>
-                </div>
+                    <span class="inline-flex flex-wrap gap-1">
+                    {{-- Pricing Estimate --}}
+                    <a href="{{ route('pricing-estimates.show', $pricing_estimate->id) }}" target="_blank"
+                    class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                        P.E NO: #{{ $pricing_estimate->pe_no }}
+                    </a>
+
+                    {{-- Approved Quotation --}}
+                    @if($pricing_estimate->approvedQuotation)
+                        <a href="{{ route('quotations.edit', $pricing_estimate->approvedQuotation->id) }}" target="_blank"
+                        class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                            Quotation NO: #{{ $pricing_estimate->approvedQuotation->quote_no }}
+                        </a>
+
+                        {{-- Sales Order --}}
+                        @if($pricing_estimate->approvedQuotation->salesOrder)
+                            <a href="{{ route('sales-orders.show', $pricing_estimate->approvedQuotation->salesOrder->id) }}" target="_blank"
+                            class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                                S.O NO: #{{ $pricing_estimate->approvedQuotation->salesOrder->so_no }}
+                            </a>
+
+                            {{-- Job Order --}}
+                            @if($pricing_estimate->approvedQuotation->salesOrder->jobOrder)
+                                <a href="{{ route('job-orders.show', $pricing_estimate->approvedQuotation->salesOrder->jobOrder->id) }}" target="_blank"
+                                class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                                    J.O NO: #{{ $pricing_estimate->approvedQuotation->salesOrder->jobOrder->jo_no }}
+                                </a>
+                            @endif
+                        @endif
+                    @endif
+                </span>
+            </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Personal Info -->

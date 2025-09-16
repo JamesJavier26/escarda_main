@@ -224,7 +224,9 @@
                 <td style="padding: 2px 0;"></td>
             </tr>
             <tr>
-                <td colspan="2">{!! $salesOrder->remarks !!}</td>
+                <td colspan="2">
+                    {!! nl2br(e($salesOrder->remarks ?? 'No remarks yet')) !!}
+                </td>
             </tr>
         </table>
         <table style="margin-top:100px">

@@ -69,10 +69,39 @@
                         </div>
                     </div>
 
+                    <!-- Item manual search -->
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="item"
+                            value="{{ request('item') }}"
+                            placeholder="Search items..."
+                            class="pl-10 pr-4 py-2 w-full md:w-64 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <div class="absolute left-3 top-2.5 text-gray-400">
+                            <!-- Cube / Box icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m0 0v10l8 4 8-4V7m-16 0l8 4 8-4"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Sales Representative dropdown -->
+                    <select name="sales_rep" class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
+                        <option value="">All Sales Reps</option>
+                        @foreach($salesReps as $rep)
+                            <option value="{{ $rep->id }}" {{ request('sales_rep') == $rep->id ? 'selected' : '' }}>
+                                {{ $rep->employee->full_name ?? $rep->username }}
+                            </option>
+                        @endforeach
+                    </select>
+                    
                     <select name="status"
                             class="px-3 py-2  rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
                         <option value="">All Statuses</option>
-                        @foreach (['pending', 'approved', 'canceled'] as $status)
+                        @foreach (['pending', 'approved', 'cancelled'] as $status)
                             <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
                                 {{ ucfirst($status) }}
                             </option>
@@ -91,6 +120,12 @@
                             class="px-4 py-2  rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
                             <i class="fas fa-filter"></i>
                     </button>
+                        <a href="{{ route('reports.pricing-estimates', request()->except('page')) }}" 
+                        class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium ml-2 inline-flex items-center" 
+                        target="_blank">
+                            <i class="fas fa-file-pdf"></i>
+                            <span class="ml-2">Generate Report</span>
+                        </a>
                     @if(request()->hasAny(['search', 'status', 'from', 'to']))
                         <a href="{{ route('pricing-estimates.index') }}"
                             class="px-4 py-2  rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
@@ -169,13 +204,14 @@
                                 @if($pe->pe_status !== 'canceled')
                                 <div class="flex justify-end items-center space-x-2">
                                     {{-- Price Entry Button --}}
-                                    <a href="{{ route('pricing-estimates.price-entry', $pe->id) }}" 
-                                    class="flex items-center justify-center w-8 h-8 text-white bg-indigo-600 hover:bg-indigo-700 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                                    title="Add Price Entry">
-                                        <i class="fas fa-peso-sign text-sm"></i>
-                                        <span class="sr-only">Add Price Entry</span>
-                                    </a>
-
+                                    @hasanyrole('super-admin|admin|operations-manager|sales-manager')
+                                        <a href="{{ route('pricing-estimates.price-entry', $pe->id) }}" 
+                                            class="flex items-center justify-center w-8 h-8 text-white bg-indigo-600 hover:bg-indigo-700 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                            title="Add Price Entry">
+                                            <i class="fas fa-peso-sign text-sm"></i>
+                                            <span class="sr-only">Add Price Entry</span>
+                                        </a>
+                                    @endhasanyrole
                                     {{-- Edit Button (Conditional) --}}
                                     @if($pe->sr_id == Auth::user()->id && $pe->pe_status !== 'approved')
                                         <a href="{{ route('pricing-estimates.edit', $pe->id) }}" 
@@ -185,7 +221,7 @@
                                             <span class="sr-only">Edit</span>
                                         </a>
                                     @endif
-
+                                    @hasrole('super-admin')
                                     {{-- Delete Button --}}
                                     <form action="{{ route('pricing-estimates.destroy', $pe) }}" method="POST"
                                         onsubmit="return confirm('Are you sure you want to delete this pricing estimate?')" class="inline">
@@ -198,6 +234,7 @@
                                             <span class="sr-only">Delete</span>
                                         </button>
                                     </form>
+                                    @endhasrole
                                 </div>
                                 @endif
                             </td>

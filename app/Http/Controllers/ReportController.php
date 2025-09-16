@@ -16,6 +16,7 @@ use App\Models\Setting;
 use App\Models\Unit;
 use Barryvdh\DomPDF\PDF;
 use DB;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use NumberFormatter;
 use function App\Helpers\notify_user;
@@ -25,6 +26,358 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ReportController extends Controller
 {
+
+    public function generatePricingReport(Request $request, PDF $pdf)
+    {
+        $query = PricingEstimate::with([
+            'customer',
+            'salesRep.employee',
+        ])->withCount('pe_items') // this ensures pe_items_count exists
+        ->where('pe_status', '!=', 'draft');
+
+        // Search filter (PE No, Attention, Customer)
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('pe_no', 'like', "%{$search}%")
+                ->orWhere('attention', 'like', "%{$search}%")
+                ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        // Status filter
+        if ($status = $request->input('status')) {
+            $query->where('pe_status', $status);
+        }
+
+        // Date range filter
+        if ($from = $request->input('from')) {
+            $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        }
+        if ($to = $request->input('to')) {
+            $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        // Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->where('sr_id', $srId);
+        }
+
+        // Item filter (searching in pricing_estimate_items table)
+        if ($item = $request->input('item')) {
+            $query->whereHas('pe_items', function ($q) use ($item) {
+                $q->where('item_name', 'like', "%{$item}%")
+                ->orWhere('item_description', 'like', "%{$item}%");
+            });
+        }
+
+        $pricingEstimates = $query->latest('updated_at')->get();
+
+        return $pdf->loadView('reports.generatePricingReport', compact('pricingEstimates'))
+                ->setPaper('a4', 'landscape')
+                ->stream('pricing-estimates-report.pdf');
+    }
+
+    public function generateQuoteReport(Request $request, PDF $pdf)
+    {
+        $query = Quotation::with([
+            'pricing_estimate.customer',
+            'pricing_estimate.salesRep.employee', // <-- make sure this is here
+            'salesOrder',
+        ]);
+
+        // Search filter
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('quote_no', 'like', "%{$search}%")
+                ->orWhereHas('pricing_estimate', fn ($q) =>
+                    $q->where('pe_no', 'like', "%{$search}%")
+                        ->orWhere('attention', 'like', "%{$search}%")
+                        ->orWhereHas('customer', fn ($c) =>
+                            $c->where('name', 'like', "%{$search}%")
+                        )
+                );
+            });
+        }
+
+        // Status filter
+        if ($status = $request->input('status')) {
+            if ($status === 'to_send') {
+                $query->where('quote_status', 'approved')
+                    ->where('is_sent', false);
+            } else {
+                $query->where('quote_status', $status);
+            }
+        }
+
+        // Date range filter
+        if ($from = $request->input('from')) {
+            $query->where('quote_date', '>=', Carbon::parse($from)->startOfDay());
+        }
+        if ($to = $request->input('to')) {
+            $query->where('quote_date', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        // Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->whereHas('pricing_estimate', fn($q) => $q->where('sr_id', $srId));
+        }
+
+        // Item filter
+        if ($item = $request->input('item')) {
+            $query->where(function ($q) use ($item) {
+                $q->whereHas('pricing_estimate.pe_items.item', function ($sub) use ($item) {
+                    $sub->where('name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+
+                $q->orWhereHas('pricing_estimate.pe_items', function ($sub) use ($item) {
+                    $sub->where('item_name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+            });
+        }
+
+        $quotations = $query->latest('updated_at')->get();
+
+        return $pdf->loadView('reports.generateQuoteReport', compact('quotations'))
+                ->setPaper('a4', 'landscape')
+                ->stream('quotations-report.pdf');
+    }
+
+    public function generateSalesReport(Request $request, PDF $pdf)
+    {
+        $user   = auth()->user();
+        $userId = $user->id;
+
+        // Base query with eager loads
+        $query = SalesOrder::with([
+            'customer',
+            'salesRep.employee',
+            'quotation.pricing_estimate.customer',
+            'quotation.pricing_estimate.salesRep.employee',
+            'approver',
+            'jobOrder.jo_items.item',
+            'currency',
+        ]);
+
+        // Role-based visibility
+        if ($user->hasRole(['super-admin', 'admin'])) {
+            $query->where(function ($q) use ($userId) {
+                $q->where('so_status', '!=', 'draft')
+                ->orWhere('sr_id', $userId); // allow own drafts
+            });
+        } elseif ($user->hasRole(['operation-manager', 'sales-secretary', 'sales-manager'])) {
+            $query->where('so_status', '!=', 'draft');
+        } else {
+            $query->where('sr_id', $userId);
+        }
+
+        // 🔍 Search
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('so_no', 'like', "%{$search}%")
+                ->orWhere('attention', 'like', "%{$search}%")
+                ->orWhere('po_no', 'like', "%{$search}%")
+                ->orWhere('pr_no', 'like', "%{$search}%")
+                ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('quotation.pricing_estimate', fn ($pe) =>
+                    $pe->where('pe_no', 'like', "%{$search}%")
+                        ->orWhere('attention', 'like', "%{$search}%")
+                        ->orWhereHas('customer', fn ($c) =>
+                            $c->where('name', 'like', "%{$search}%")
+                        )
+                );
+            });
+        }
+
+        // Status filter
+        if ($status = $request->input('status')) {
+            $query->where('so_status', $status);
+        }
+
+        // Date range filter
+        if ($from = $request->input('from')) {
+            $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        }
+        if ($to = $request->input('to')) {
+            $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        // Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->where('sr_id', $srId);
+        }
+
+        // Item filter
+        if ($item = $request->input('item')) {
+            $query->where(function ($q) use ($item) {
+                // Search in JobOrder Items
+                $q->whereHas('jobOrder.jo_items.item', function ($sub) use ($item) {
+                    $sub->where('name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+
+                // OR directly in jo_items table
+                $q->orWhereHas('jobOrder.jo_items', function ($sub) use ($item) {
+                    $sub->where('item_name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+            });
+        }
+
+        // 👉 Fetch all (no pagination for report)
+        $salesOrders = $query->latest('updated_at')->get();
+
+        // Calculate totals for report summary
+        $totalOrders   = $salesOrders->count();
+        $pendingOrders = $salesOrders->where('so_status', 'pending')->count();
+        $approvedThisWeek = $salesOrders
+            ->where('so_status', 'approved')
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+        $totalRevenue = $salesOrders->sum(function ($order) {
+            if (!$order->jobOrder || !$order->jobOrder->jo_items) return 0;
+            return $order->jobOrder->jo_items->sum(function ($item) {
+                return ($item->unit_price ?? 0) * ($item->quantity ?? 0);
+            });
+        });
+
+        return $pdf->loadView('reports.generateSalesReport', [
+            'salesOrders'      => $salesOrders,
+            'totalOrders'      => $totalOrders,
+            'pendingOrders'    => $pendingOrders,
+            'approvedThisWeek' => $approvedThisWeek,
+            'totalRevenue'     => $totalRevenue,
+        ])
+        ->setPaper('a4', 'landscape')
+        ->stream('sales-orders-report.pdf');
+    }
+
+    public function generateJOReport(Request $request, PDF $pdf)
+    {
+        $user = auth()->user();
+        $userId = $user->id;
+
+        // Base query with eager loads
+        $query = JobOrder::with(['salesOrder.customer', 'jo_items.item']);
+
+        // Role-based visibility (same as your index)
+        if ($user->hasRole(['super-admin', 'admin'])) {
+            $query->where(function ($q) use ($userId) {
+                $q->where('jo_status', '!=', 'draft')
+                ->orWhereHas('salesOrder', fn($so) => $so->where('sr_id', $userId));
+            });
+        } elseif ($user->hasRole('operation-manager')) {
+            $query->where('jo_status', '!=', 'draft');
+        } else {
+            $query->whereHas('salesOrder', fn($so) => $so->where('sr_id', $userId));
+        }
+
+        // Search filter
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('jo_no', 'like', "%{$search}%")
+                ->orWhereHas('salesOrder.customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        // Status filter
+        if ($status = $request->input('status')) {
+            if ($status === 'to_deliver') {
+                $query->where('jo_status', 'approved')
+                    ->where('is_delivered', false);
+            } else {
+                $query->where('jo_status', $status);
+            }
+        }
+
+        // Date filters
+        if ($from = $request->input('from')) {
+            $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        }
+        if ($to = $request->input('to')) {
+            $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        // Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->whereHas('salesOrder', fn($so) => $so->where('sr_id', $srId));
+        }
+
+        // Item filter
+        if ($item = $request->input('item')) {
+            $query->where(function ($q) use ($item) {
+                $q->whereHas('jo_items.item', fn($sub) =>
+                    $sub->where('name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%")
+                );
+                $q->orWhereHas('jo_items', fn($sub) =>
+                    $sub->where('item_name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%")
+                );
+            });
+        }
+
+        // Fetch all for report
+        $jobOrders = $query->latest('updated_at')->get();
+
+        // Calculate totals
+        $totalJobOrders     = $jobOrders->count();
+        $pendingJobOrders   = $jobOrders->where('jo_status', 'pending')->count();
+        $approvedJobOrders  = $jobOrders->where('jo_status', 'approved')->count();
+        $deliveredJobOrders = $jobOrders->where('is_delivered', true)->count();
+        $cancelledJobOrders = $jobOrders->where('jo_status', 'cancel')->count();
+        $totalAmount        = $jobOrders->sum(function ($jo) {
+            return $jo->jo_items->sum(fn($item) => ($item->unit_price ?? 0) * ($item->quantity ?? 0));
+        });
+
+        return $pdf->loadView('reports.generateJOReport', [
+            'jobOrders'          => $jobOrders,
+            'totalJobOrders'     => $totalJobOrders,
+            'pendingJobOrders'   => $pendingJobOrders,
+            'approvedJobOrders'  => $approvedJobOrders,
+            'deliveredJobOrders' => $deliveredJobOrders,
+            'cancelledJobOrders' => $cancelledJobOrders,
+            'totalAmount'        => $totalAmount,
+        ])
+        ->setPaper('a4', 'landscape')
+        ->stream('job-orders-report.pdf');
+    }
+
+
+    public function generatePricingPreview(PDF $pdf, Request $request, $pe_no)
+    {
+        if (!$pe_no) {
+            abort(404, 'Missing PE No.');
+        }
+
+        $price_estimates = PricingEstimate::with([
+            'customer',
+            'salesRep.employee',
+            'pe_items.unit',
+            'currency'
+        ])->where('pe_no', $pe_no)->first();
+
+        if (!$price_estimates) {
+            abort(404, 'Pricing Estimate not found.');
+        }
+
+        $data = [
+            'pe_no'           => $pe_no,
+            'price_estimates' => $price_estimates,
+            'date'            => now()->format('F d, Y'),
+            'setting'         => Setting::all(),
+            'rejected_at'     => null,
+            'revision_reason' => null,
+            'is_rejected'     => false,
+        ];
+
+        $pdf->loadView('reports.generatePricingPreview', $data)
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Pricing Entry - #' . $pe_no . '.pdf');
+    }
+
     public function generateQuote(PDF $pdf, Request $request, $pe_no)   // ← Laravel will inject it
     {
         

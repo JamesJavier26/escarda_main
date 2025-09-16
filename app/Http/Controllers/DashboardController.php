@@ -21,11 +21,12 @@ public function index()
 {
     $user = Auth::user();
 
-    if ($user->hasRole(['super-admin', 'admin'])) {
+    if ($user->hasRole(['super-admin', 'admin', 'sales-manager', 'operations-manager'])) {
         return $this->admin_dashboard();
-    }
-
-    else{
+    } elseif ($user->hasRole(['operation-staff', 'production-staff'])) {
+        // redirect production/operation staff to production report index
+        return redirect()->route('production-detail-reports.index');
+    } else {
         return $this->sales_dashboard();
     }
         
@@ -55,7 +56,7 @@ public function index()
             'pendingEstimatesCount' => PricingEstimate::where('pe_status', 'pending')->count(),
             'newEstimatesToday' => PricingEstimate::whereDate('created_at', today())->count(),
             'approvedQuotesCount' => Quotation::where('quote_status', 'approved')->count(),
-            'quotesReadyForPO' => Quotation::where('quote_status', 'approved')->where('is_final', true)->count(),
+            'quotesReadyForPO' => Quotation::where('quote_status', 'approved')->where('is_final', true)->doesntHave('salesOrder')->count(),
             'monthlyRevenue' => $monthlyRevenue,
             'revenueChange' => 0,
             'activeProjectsCount' => 0,

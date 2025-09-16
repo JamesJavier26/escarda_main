@@ -114,11 +114,39 @@
                 <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 w-full">
                     <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
                         <h2 class="text-xl font-semiboldtext-gray-900 dark:text-gray-100">Customer Details</h2>
-                        @if($so_no)
-                        <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">
-                            S.O NO: #{{ $so_no ?? ($sales_order->so_no ?? '--') }}
+                        <span class="inline-flex flex-wrap gap-1">
+                            {{-- Pricing Estimate --}}
+                            @if($sales_order->quotation?->pricing_estimate)
+                                <a href="{{ route('pricing-estimates.show', $sales_order->quotation->pricing_estimate->id) }}" target="_blank"
+                                class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                                    P.E NO: #{{ $sales_order->quotation->pricing_estimate->pe_no }}
+                                </a>
+                            @endif
+
+                            {{-- Quotation --}}
+                            @if($sales_order->quotation)
+                                <a href="{{ route('quotations.edit', $sales_order->quotation->id) }}" target="_blank"
+                                class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                                    Quotation NO: #{{ $sales_order->quotation->quote_no }}
+                                </a>
+                            @endif
+
+                            {{-- Sales Order --}}
+                            @if($sales_order)
+                            <a href="{{ route('sales-orders.show', $sales_order->id) }}" target="_blank"
+                            class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                                S.O NO: #{{ $sales_order->so_no }}
+                            </a>
+                            @endif
+
+                            {{-- Job Order --}}
+                            @if($sales_order->jobOrder)
+                                <a href="{{ route('job-orders.show', $sales_order->jobOrder->id) }}" target="_blank"
+                                class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                                    J.O NO: #{{ $sales_order->jobOrder->jo_no }}
+                                </a>
+                            @endif
                         </span>
-                        @endif
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -405,36 +433,23 @@
                 </div>
             </div>
         </div>
-            <!-- Remarks & Attachments -->                                  
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Remarks & Attachments -->                                  
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {{-- Remarks --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
                 <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Remarks</h2>
                 <textarea name="remarks" rows="4"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+                        focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
                 >{{ old('remarks', $sales_order->remarks) }}</textarea>
-
             </div>
 
-            <div x-data="{
-                    files: [],
-                    pickFiles(e) {
-                        const newOnes = Array.from(e.target.files).map(f => ({ file: f, label: '' }));
-                        this.files = [...this.files, ...newOnes];
-                        this.syncFilesToInput();
-                    },
-                    removeFile(i) {
-                        this.files.splice(i, 1);
-                        this.syncFilesToInput();
-                    },
-                    syncFilesToInput() {
-                        const dt = new DataTransfer();
-                        this.files.forEach(f => dt.items.add(f.file));
-                        this.$refs.fileInput.files = dt.files;
-                    }
-                }"
-
-                class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
-
+            {{-- Attachments --}}
+            <div 
+                x-data="attachmentsHandler()"
+                class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4"
+            >
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Attachments</h2>
 
                 <input type="file" name="so_attachment[]" multiple x-ref="fileInput" class="hidden" @change="pickFiles">
@@ -444,31 +459,21 @@
                     <i class="fas fa-paperclip mr-1"></i> Select files
                 </button>
 
-                {{-- existing attachments (edit) --}}
+                {{-- Existing attachments (edit mode) --}}
                 @if($editing && $sales_order->attachments->count())
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
                         @foreach($sales_order->attachments as $file)
-                            {{-- each file gets its own Alpine scope --}}
-                            <div x-data="{ keep: true }"
-                                x-show="keep"
+                            <div x-data="{ keep: true }" x-show="keep"
                                 class="relative border border-gray-300 dark:border-gray-600 p-3 rounded-md">
+                                
+                                <input type="hidden" name="keep_attachments[]" :value="keep ? '{{ $file->id }}' : 0">
 
-                                <!-- hidden field tells Laravel which attachments to keep -->
-                                <input type="hidden"
-                                    name="keep_attachments[]"
-                                    :value="keep ? '{{ $file->id }}' : ''"
-                                    x-show="keep">
-
-                                <!-- remove button -->
-                                <button type="button"
-                                        @click="keep = false"
-                                        class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full
-                                            w-6 h-6 flex items-center justify-center hover:bg-red-700"
-                                        title="Remove this file">
+                                <button type="button" @click="keep = false"
+                                    class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700"
+                                    title="Remove this file">
                                     <i class="fas fa-times text-xs"></i>
                                 </button>
 
-                                {{-- preview --}}
                                 @if(\Illuminate\Support\Str::startsWith($file->metadata['mime_type'] ?? '', 'image/'))
                                     <img src="{{ Storage::url($file->metadata['path']) }}" class="w-full h-40 object-contain rounded">
                                 @elseif(($file->metadata['mime_type'] ?? '') === 'application/pdf')
@@ -479,28 +484,32 @@
                                     </div>
                                 @endif
 
-                                <p class="mt-2 text-xs truncate">
-                                    {{ $file->metadata['original_name'] ?? basename($file->metadata['path']) }}
-                                </p>
+                                <p class="mt-2 text-xs truncate">{{ $file->metadata['original_name'] ?? basename($file->metadata['path']) }}</p>
 
-                                <!-- editable label -->
-                                <input type="text"
-                                    class="mt-2 w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600
-                                            rounded dark:bg-gray-700 dark:text-gray-100"
-                                    name="existing_file_labels[{{ $file->id }}]"
-                                    value="{{ $file->label }}"
-                                    placeholder="Enter label/description">
+                                <div class="mt-3">
+                                    <label for="file-label-{{ $file->id }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                        Label
+                                    </label>
+                                    <input type="text"
+                                        id="file-label-{{ $file->id }}"
+                                        name="existing_file_labels[{{ $file->id }}]"
+                                        value="{{ $file->label }}"
+                                        placeholder="Enter label/description"
+                                        class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 
+                                            rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:ring focus:ring-blue-500 focus:border-blue-500" 
+                                        aria-label="Label for attachment {{ $file->id }}">
+                                </div>
                             </div>
                         @endforeach
-
                     </div>
                 @endif
 
-                {{-- new uploads --}}
+                {{-- New uploads --}}
                 <template x-if="files.length">
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
                         <template x-for="(entry, idx) in files" :key="idx">
                             <div class="relative border border-gray-300 dark:border-gray-600 p-3 rounded-md">
+
                                 <button type="button" @click="removeFile(idx)"
                                     class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700">
                                     <i class="fas fa-times text-xs"></i>
@@ -520,17 +529,25 @@
 
                                 <p class="mt-2 text-xs truncate" x-text="entry.file.name"></p>
 
-                                <input type="text"
-                                    class="mt-2 w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-gray-100"
-                                    x-model="entry.label"
-                                    name="file_labels[]"
-                                    placeholder="Enter label/description">
+                                <div class="mt-3">
+                                    <label :for="'file-label-new-' + idx" class="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                        Label
+                                    </label>
+                                    <input type="text"
+                                        :id="'file-label-new-' + idx"
+                                        class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 
+                                            rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:ring focus:ring-blue-500 focus:border-blue-500" 
+                                        x-model="entry.label"
+                                        placeholder="Enter label/description">
+                                </div>
                             </div>
                         </template>
                     </div>
                 </template>
             </div>
+
         </div>
+
  
         @if($editing)
         @hasrole('super-admin|admin')
@@ -819,17 +836,41 @@
     </x-modal>
 
 </div>
-{{-- <script>
-    function submitJobOrderForm() {
-        if (confirm('Approve and create Job Order #{{ $sales_order->jobOrder->jo_no }}?')) {
-            document.getElementById('activate-job-order-form').submit();
-        }
-    }
-</script> --}}
 
 <script>
 
 window.currencySymbol = @js($sales_order->currency->symbol ?? '₱');
+
+function attachmentsHandler() {
+    return {
+        files: [],
+        pickFiles(e) {
+            const newOnes = Array.from(e.target.files).map(f => ({ file: f, label: '' }));
+            this.files.push(...newOnes);
+            this.syncFilesToInput();
+        },
+        removeFile(i) {
+            this.files.splice(i, 1);
+            this.syncFilesToInput();
+        },
+        syncFilesToInput() {
+            const dt = new DataTransfer();
+            this.files.forEach(f => dt.items.add(f.file));
+            this.$refs.fileInput.files = dt.files;
+        },
+        appendLabelsToForm(form) {
+            this.files.forEach((entry, idx) => {
+                form.append(`file_labels[${idx}]`, entry.label);
+            });
+        },
+        init() {
+            window.addEventListener('save-draft', (e) => {
+                this.appendLabelsToForm(e.detail.formData);
+            });
+        }
+    }
+}
+
 
 function commentSection(initialComments, salesOrderId) {
     return {
@@ -1252,24 +1293,58 @@ document.addEventListener('alpine:init', () => {
     }));
 
  
-    Alpine.data('saveDraftHandler', () => ({
-        async confirmSave() {
-            const result = await Swal.fire({
-                title: 'Save as Draft?',
-                text: 'Do you want to save this Sales Order as draft?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Save',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#16a34a',
-                cancelButtonColor: '#6b7280'
+Alpine.data('saveDraftHandler', () => ({
+    isSaving: false, // Track loading state
+
+    async confirmSave() {
+        const result = await Swal.fire({
+            title: 'Save as Draft?',
+            text: 'Do you want to save this Sales Order as draft?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Save',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280'
+        });
+
+        if (!result.isConfirmed) return;
+
+        this.isSaving = true; // Start loading
+
+        const $form = this.$el;
+        const formData = new FormData($form);
+
+        // Let attachmentsHandler append labels
+        window.dispatchEvent(new CustomEvent('save-draft', { detail: { formData } }));
+
+        try {
+            const response = await fetch($form.action, {
+                method: $form.method,
+                body: formData
             });
 
-            if (result.isConfirmed) {
-   
-                this.$root.submit();
+            if (response.ok) {
+                // Optional: show a success toast instead of full reload
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Draft saved!',
+                    showConfirmButton: false,
+                    timer: 1000
+                }).then(() => {
+                    window.location.reload(); // or update UI dynamically
+                });
+            } else {
+                throw new Error('Server returned an error');
             }
+        } catch (error) {
+            Swal.fire('Error', 'Failed to save draft', 'error');
+            console.error(error);
+        } finally {
+            this.isSaving = false; // Stop loading
         }
-    }));
+    }
+}));
+
 });
 </script>

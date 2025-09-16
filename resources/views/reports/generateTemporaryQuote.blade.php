@@ -172,10 +172,12 @@
         <div style="clear: both;"></div>
 
         <!-- Remarks -->
-        <table class="no-border" style="width: 100%; margin-top: 20px;">
-            <tr><td><strong>REMARKS:</strong></td></tr>
-            <tr><td>{{ $temporaryQuotation->remarks ?? 'No remarks yet' }}</td></tr>
-        </table>
+    <table class="no-border" style="width: 100%; margin-top: 20px;">
+        <tr><td><strong>REMARKS:</strong></td></tr>
+        <tr>
+            <td>{!! nl2br(e($temporaryQuotation->remarks ?? 'No remarks yet')) !!}</td>
+        </tr>
+    </table>
     </main>
 </body>
 </html>

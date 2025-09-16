@@ -202,6 +202,7 @@
                 <tr>
                     <th class="text-center w-5">Ref. #</th>
                     <th class="text-center w-5">Item #</th>
+                    <th class="text-center w-5">Item Name</th>
                     <th class="text-center w-5">Quantity</th>
                     <th class="text-center w-5">Unit</th>
                     <th class="text-left w-25">Item Description</th>
@@ -229,6 +230,7 @@
                     <tr class="{{ $hasOffers ? '' : 'row-border-bottom' }}">
                         <td>{{ $pe_item->ref_no ?? '' }}</td>
                         <td>{{ $key + 1 }}</td>
+                        <td>{{ $pe_item->item_name }}</td> <!-- ADDED -->
                         <td>{{ $pe_item->quantity }}</td>
                         <td>{{ $pe_item->unit->short_name }}</td>
                         <td class="wrap-text">
@@ -278,7 +280,7 @@
                                         </span>
                                     </div>
                                 @else
-                                   {{ $price_estimates->currency->symbol }} {{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
+                                {{ $price_estimates->currency->symbol }} {{ number_format($pe_item->unit_price * $pe_item->quantity, 2) }}
                                 @endif
                             </td>
                         @endif
@@ -289,6 +291,7 @@
                         <tr>
                             <td></td>
                             <td></td>
+                            <td></td> <!-- ADDED for alignment -->
                             <td style="background-color: #f0f0f0;" colspan="5" class="text-center" >
                                 <div style="text-align:left; padding-left: 117px;"> 
                                     <strong>List of Offers:</strong>
@@ -304,6 +307,7 @@
                             <tr class="{{ $isLastOffer ? 'row-border-bottom' : '' }}">
                                 <td></td>
                                 <td></td>
+                                <td>{{ $offer->item_name }}</td> <!-- ADDED -->
                                 <td>{{ $offer->quantity }}</td>
                                 <td>{{ $offer->unit->short_name }}</td>
                                 <td class="wrap-text">
@@ -327,7 +331,7 @@
                                                 @if ($offer->discount_type === 'percentage')
                                                     {{ $offer->discount_amount }}% off
                                                 @else
-                                                   {{ $price_estimates->currency->symbol }} {{ number_format($offer->discount_amount, 2) }} off
+                                                {{ $price_estimates->currency->symbol }} {{ number_format($offer->discount_amount, 2) }} off
                                                 @endif
                                                 )
                                             </span>
@@ -357,8 +361,8 @@
                     @endif
                 @endforeach
             </tbody>
-
         </table>
+
             @php
                 $subtotal = $price_estimates->pe_items->sum(function ($item) {
                     return ($item->final_unit_price ?? $item->unit_price) * $item->quantity;
@@ -434,11 +438,14 @@
                 <td style="text-align: left; padding: 4px 0;"><strong>REMARKS:</strong></td>
             </tr>
             <tr>
-                <td style="text-align: left; padding: 4px 0;">        {{ 
-                $price_estimates->quote_remarks 
-                ?? optional($price_estimates->latest_quote)->quote_remarks 
-                ?? 'No remarks yet' 
-                }}
+                <td style="text-align: left; padding: 4px 0;">
+                    {!! nl2br(
+                        e(
+                            $price_estimates->quote_remarks 
+                            ?? optional($price_estimates->latest_quote)->quote_remarks 
+                            ?? 'No remarks yet'
+                        )
+                    ) !!}
                 </td>
             </tr>
         </table>

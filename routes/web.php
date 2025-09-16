@@ -97,7 +97,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('pricing-estimates', PricingEstimateController::class);
         Route::patch('/pricing-estimate-items/{item}/update-unit-price', [PricingEstimateController::class, 'updateUnitPrice'])->name('pricing-estimate-items.update-unit-price');
         Route::patch('/pricing-estimate-items/{item}/update-remarks', [PricingEstimateController::class, 'updateRemarks'])->name('pricing-estimate-items.update-remarks');
-
         
 
 
@@ -187,6 +186,11 @@ Route::middleware(['auth'])->group(function () {
 
 
         // Reports
+        Route::get('/reports/pricing-estimates', [ReportController::class, 'generatePricingReport'])->name('reports.pricing-estimates');
+        Route::get('/reports/quotations', [ReportController::class, 'generateQuoteReport'])->name('reports.quotations.report');
+        Route::get('/reports/sales-orders', [ReportController::class, 'generateSalesReport'])->name('reports.sales-orders.report');
+        Route::get('/reports/job-orders', [ReportController::class, 'generateJOReport'])->name('reports.job-orders.report');
+        Route::get('generate-pricing-preview/{pe_no}', [ReportController::class, 'generatePricingPreview'])->name('reports.pricing-preview');
         Route::get('generate-quote/{pe_no}', [ReportController::class, 'generateQuote'])->name('reports.quotations');
         Route::get('generate-sales/{so_no}', [ReportController::class, 'generateSales'])->name('reports.salesOrder');
         Route::get('generate-invoice/{so_no}', [ReportController::class, 'generateInvoice'])->name('reports.invoice');

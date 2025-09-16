@@ -24,6 +24,19 @@ class JobOrder extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id', 'salesOrder');
     }
+
+        // Access Quotation through SalesOrder
+    public function quotation()
+    {
+        return $this->salesOrder ? $this->salesOrder->quotation() : null;
+    }
+
+    // Access Pricing Estimate through Quotation
+    public function pricingEstimate()
+    {
+        $quotation = $this->quotation();
+        return $quotation ? $quotation->pricing_estimate() : null;
+    }
     
 
     public function jo_items()

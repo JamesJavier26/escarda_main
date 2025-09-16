@@ -9,6 +9,7 @@ use App\Models\Material;
 use App\Models\Mould;
 use App\Models\Unit;
 use App\Models\ProductionDetailReport;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class JobOrderController extends Controller
@@ -27,10 +28,11 @@ class JobOrderController extends Controller
 
         $query = JobOrder::with(['salesOrder.customer', 'jo_items']);
 
+        // Keep your existing role-based visibility unchanged
         if ($user->hasRole(['super-admin', 'admin'])) {
             $query->where(function ($q) use ($userId) {
                 $q->where('jo_status', '!=', 'draft')
-                  ->orWhereHas('salesOrder', fn($so) => $so->where('sr_id', $userId));
+                ->orWhereHas('salesOrder', fn($so) => $so->where('sr_id', $userId));
             });
         } elseif ($user->hasRole('operation-manager')) {
             $query->where('jo_status', '!=', 'draft');
@@ -38,13 +40,15 @@ class JobOrderController extends Controller
             $query->whereHas('salesOrder', fn($so) => $so->where('sr_id', $userId));
         }
 
+        // Existing search
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('jo_no', 'like', "%{$search}%")
-                  ->orWhereHas('salesOrder.customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
+                ->orWhereHas('salesOrder.customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
             });
         }
 
+        // Existing status filter
         if ($status = $request->input('status')) {
             if ($status === 'to_deliver') {
                 $query->where('jo_status', 'approved')
@@ -54,18 +58,38 @@ class JobOrderController extends Controller
             }
         }
 
+        // Existing date filters
         if ($from = $request->input('from')) {
             $query->where('created_at', '>=', \Carbon\Carbon::parse($from)->startOfDay());
         }
-
         if ($to = $request->input('to')) {
             $query->where('created_at', '<=', \Carbon\Carbon::parse($to)->endOfDay());
         }
 
+        // Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->whereHas('salesOrder', fn($so) => $so->where('sr_id', $srId));
+        }
+
+        // Item filter
+        if ($item = $request->input('item')) {
+            $query->where(function ($q) use ($item) {
+                $q->whereHas('jo_items.item', fn($sub) =>
+                    $sub->where('name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%")
+                );
+
+                $q->orWhereHas('jo_items', fn($sub) =>
+                    $sub->where('item_name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%")
+                );
+            });
+        }
+          
+        $salesReps = User::role('sales-representative')->get();
         $jobOrders = $query->latest('updated_at')->paginate($perPage)->appends($request->except('page'));
 
         $baseStatQuery = JobOrder::query();
-
         if (!$user->hasRole(['super-admin', 'admin', 'operation-manager'])) {
             $baseStatQuery->whereHas('salesOrder', fn($so) => $so->where('sr_id', $userId));
         }
@@ -77,8 +101,10 @@ class JobOrderController extends Controller
             'approvedJobOrders'  => (clone $baseStatQuery)->where('jo_status', 'approved')->count(),
             'deliveredJobOrders' => (clone $baseStatQuery)->where('is_delivered', true)->count(),
             'cancelledJobOrders' => (clone $baseStatQuery)->where('jo_status', 'cancel')->count(),
+            'salesReps'          => $salesReps,
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -177,64 +203,89 @@ class JobOrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, JobOrder $jobOrder)
-    {
-        $jobOrder->load('jo_items.pricingEstimateItem');
+public function update(Request $request, JobOrder $jobOrder)
+{
+    $jobOrder->load('jo_items.pricingEstimateItem');
 
-        $validated = $request->validate([
-            'duedate'            => ['nullable', 'date'],
-            'remarks'            => ['nullable', 'string'],
-            'delivery_details'   => ['nullable', 'string'],
-            'instructions'       => ['nullable', 'string'],
-            'mark_as_delivered'  => ['nullable', 'boolean'],
-            'items'              => ['array'],
-            'items.*.rubber_material' => ['nullable'],
-            'items.*.hardness'        => ['nullable', 'string'],
-            'items.*.thickness'       => ['nullable', 'string'],
-            'items.*.thickness_unit'  => ['nullable', 'string'],
-            'items.*.note'            => ['nullable', 'string', 'max:255'],
+    $validated = $request->validate([
+        'duedate'            => ['nullable', 'date'],
+        'remarks'            => ['nullable', 'string'],
+        'delivery_details'   => ['nullable', 'string'],
+        'instructions'       => ['nullable', 'string'],
+        'mark_as_delivered'  => ['nullable', 'boolean'],
+        'items'              => ['array'],
+        'items.*.id'         => ['required', 'exists:job_order_items,id'],
+        'items.*.rubber_material' => ['nullable'],
+        'items.*.hardness'        => ['nullable', 'string'],
+        'items.*.thickness'       => ['nullable', 'string'],
+        'items.*.thickness_unit'  => ['nullable', 'string'],
+        
+        // Add a validation rule for the mould type itself
+        'items.*.mould_type' => ['required', 'in:old,new,trade'],
 
-            // ✅ Fix: allow both old and new mould fields
-            'items.*.mould_id'        => ['nullable', 'exists:moulds,id'],
-            'items.*.new_mould_no'    => ['nullable', 'string', 'max:255'],
-            'items.*.new_mould_name'  => ['nullable', 'string', 'max:255'],
+        // Make the other fields conditional using `sometimes`
+        'items.*.note'            => ['sometimes', 'nullable', 'string', 'max:255'],
+        'items.*.mould_id'        => ['sometimes', 'nullable', 'exists:moulds,id'],
+        'items.*.new_mould_no'    => ['sometimes', 'nullable', 'string', 'max:255'],
+        'items.*.new_mould_name'  => ['sometimes', 'nullable', 'string', 'max:255'],
+        
+        'items.*.is_linear'       => ['nullable', 'boolean'],
+        'items.*.total_length'    => ['nullable', 'string', 'required_if:items.*.is_linear,true'],
+    ]);
 
-            'items.*.is_linear'    => ['nullable', 'boolean'],
-            'items.*.total_length' => ['nullable', 'string', 'required_if:items.*.is_linear,true'],
-        ]);
+    // Update job order main fields
+    $jobOrder->update([
+        'duedate'          => $validated['duedate'] ?? null,
+        'remarks'          => $validated['remarks'] ?? null,
+        'instructions'     => $validated['instructions'] ?? null,
+        'delivery_details' => $validated['delivery_details'] ?? null,
+        'status'           => $request->has('mark_as_delivered') ? 'delivered' : $jobOrder->status,
+    ]);
 
-        $jobOrder->update([
-            'duedate'          => $validated['duedate'] ?? null,
-            'remarks'          => $validated['remarks'] ?? null,
-            'instructions'     => $validated['instructions'] ?? null,
-            'delivery_details' => $validated['delivery_details'] ?? null,
-            'status'           => $request->has('mark_as_delivered') ? 'delivered' : $jobOrder->status,
-        ]);
+    foreach ($validated['items'] as $itemData) {
+        $joItem = $jobOrder->jo_items()->find($itemData['id']);
+        if (!$joItem) continue;
 
-        foreach ($validated['items'] as $index => $itemData) {
-            $mouldId = $itemData['mould_id'] ?? null;
+        // Reset all mutually exclusive fields
+        $mouldId = null;
+        $newMouldNo = null;
+        $newMouldName = null;
+        $note = null;
 
-            $jobOrder->jo_items()
-                ->where('id', $jobOrder->jo_items[$index]->id)
-                ->update([
-                    'material_id'     => $itemData['rubber_material'] ?? null,
-                    'hardness'        => $itemData['hardness'] ?? '',
-                    'thickness'       => $itemData['thickness'] ?? '',
-                    'thickness_unit'  => $itemData['thickness_unit'] ?? '',
-                    'mould_id'        => $mouldId,
-                    'is_linear'       => $itemData['is_linear'] ?? false,
-                    'total_length'    => $itemData['is_linear'] ? ($itemData['total_length'] ?? null) : null,
-
-                    // ✅ Now these fields will persist
-                    'new_mould_no'    => $itemData['new_mould_no'] ?? null,
-                    'new_mould_name'  => $itemData['new_mould_name'] ?? null,
-                    'note'            => $itemData['note'] ?? null,
-                ]);
+        // Determine which type is selected based on the submitted radio button value
+        if (isset($itemData['mould_type'])) {
+            switch ($itemData['mould_type']) {
+                case 'old':
+                    $mouldId = $itemData['mould_id'] ?? null;
+                    break;
+                case 'new':
+                    $newMouldNo = $itemData['new_mould_no'] ?? null;
+                    $newMouldName = $itemData['new_mould_name'] ?? null;
+                    break;
+                case 'trade':
+                    $note = $itemData['note'] ?? null;
+                    break;
+            }
         }
 
-        return redirect()->route('job-orders.edit', $jobOrder)
-            ->with('success', 'Job Order updated successfully.');
+        // Update the JO item
+        $joItem->update([
+            'material_id'      => $itemData['rubber_material'] ?? null,
+            'hardness'         => $itemData['hardness'] ?? '',
+            'thickness'        => $itemData['thickness'] ?? '',
+            'thickness_unit'   => $itemData['thickness_unit'] ?? '',
+            'mould_id'         => $mouldId,
+            'new_mould_no'     => $newMouldNo,
+            'new_mould_name'   => $newMouldName,
+            'note'             => $note,
+            'is_linear'        => !empty($itemData['is_linear']),
+            'total_length'     => !empty($itemData['is_linear']) ? ($itemData['total_length'] ?? null) : null,
+        ]);
     }
+
+    return redirect()->route('job-orders.edit', $jobOrder)
+        ->with('success', 'Job Order updated successfully.');
+}
 
 
     public function destroy(JobOrder $jobOrder)
@@ -274,37 +325,38 @@ class JobOrderController extends Controller
     public function approve(JobOrder $jobOrder)
     {
         foreach ($jobOrder->jo_items as $item) {
-            // Check if this item is for a new mould
-            if (is_null($item->mould_id) && !empty($item->new_mould_no) && !empty($item->new_mould_name)) {
+            // Only create a new mould if new_mould_no and new_mould_name are provided
+            if (!empty($item->new_mould_no) && !empty($item->new_mould_name)) {
                 
-                // Create the new mould
-                $mould = Mould::create([
-                    'no'        => $item->new_mould_no,
-                    'name'      => $item->new_mould_name,
-                    'is_active' => true,
-                ]);
+                // Check if a mould with the same no or name already exists
+                $exists = Mould::where('no', $item->new_mould_no)
+                                ->orWhere('name', $item->new_mould_name)
+                                ->exists();
 
-                // Link the JO item to the new mould and clear temp fields
-                $item->update([
-                    'mould_id'       => $mould->id,
-                    'new_mould_no'   => null,
-                    'new_mould_name' => null,
-                ]);
+                if (!$exists) {
+                    // Create the new mould
+                    Mould::create([
+                        'no'        => $item->new_mould_no,
+                        'name'      => $item->new_mould_name,
+                        'is_active' => true,
+                    ]);
+                }
             }
         }
 
         // Approve the job order
         $jobOrder->update([
-            'jo_status'        => 'approved',
-            'approval_status'  => 'approved',
-            'approval_date'    => now(),
-            'approved_by'      => auth()->id(), // <-- optional: record approver
+            'jo_status'       => 'approved',
+            'approval_status' => 'approved',
+            'approval_date'   => now(),
+            'approved_by'     => auth()->id(),
         ]);
 
         return redirect()
             ->route('job-orders.index')
             ->with('success', 'Job Order approved successfully.');
     }
+
 
 
     public function cancel(JobOrder $jobOrder)

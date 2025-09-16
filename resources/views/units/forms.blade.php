@@ -107,33 +107,22 @@
                             Type <span class="text-red-500">*</span>
                         </label>
 
-                        <select
+                        <input 
+                            type="text"
                             id="type"
                             name="type"
-                            @class([
-                                'w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
+                            value="{{ old('type', $unit->type) }}"
+                            class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300
                                 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2
-                                focus:ring-blue-500 focus:border-transparent',
-                                'border-red-500 dark:border-red-500' => $errors->has('type')
-                            ])>
+                                focus:ring-blue-500 focus:border-transparent
+                                @error('type') border-red-500 dark:border-red-500 @enderror"
+                            placeholder="Enter unit type">
 
-                            {{-- Placeholder --}}
-                            <option value="" disabled
-                                @selected(! old('type', $unit->type))>
-                                Select unit type
-                            </option>
-
-                            {{-- Options --}}
-                            @foreach(['weight'=>'Weight','volume'=>'Volume','length'=>'Length','count'=>'Count'] as $val => $label)
-                                <option value="{{ $val }}"
-                                    @selected(strtolower(old('type', $unit->type)) === $val)>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        @error('type') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('type')
+                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
+
                 </div>
 
                 {{-- Description -------------------------------------------------------- --}}

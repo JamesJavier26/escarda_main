@@ -67,66 +67,110 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
 
         {{-- Filters & Actions --}}
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <div class="flex flex-col-reverse gap-4 md:flex-row md:items-end md:justify-between">
-                <form method="GET" class="flex flex-wrap items-end gap-3 w-full md:w-auto">
-                    <div class="relative">
-                        <input
-                            type="text"
-                            name="search"
-                            value="{{ request('search') }}"
-                            placeholder="Search sales orders..."
-                            class="pl-10 pr-4 py-2 w-full md:w-64 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                        <div class="absolute left-3 top-2.5 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
+    <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div class="flex flex-col-reverse gap-4 md:flex-row md:items-end md:justify-between">
+            <form method="GET" class="flex flex-wrap items-end gap-3 w-full md:w-auto">
+                {{-- 🔍 Search --}}
+                <div class="relative">
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Search sales orders..."
+                        class="pl-10 pr-4 py-2 w-full md:w-64 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <div class="absolute left-3 top-2.5 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
                     </div>
+                </div>
 
-                    <select name="status"
-                            class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
-                        <option value="">All Statuses</option>
-                        @foreach (['draft', 'pending', 'approved', 'rejected'] as $status)
-                            <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
-                                {{ ucfirst($status) }}
-                            </option>
-                        @endforeach
-                    </select>
+                {{--Item --}}
+                <div class="relative">
+                    <input
+                        type="text"
+                        name="item"
+                        value="{{ request('item') }}"
+                        placeholder="Search items..."
+                        class="pl-10 pr-4 py-2 w-full md:w-64 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400 dark:text-gray-300">
+                        <i class="fas fa-box"></i>
+                    </div>
+                </div>
+                    
+                {{-- Sales Representative --}}
+                <select name="sales_rep"
+                    class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
+                    <option value="">All Sales Reps</option>
+                    @foreach($salesReps as $rep)
+                        @php
+                            $displayName = $rep->employee->full_name
+                                ?? $rep->name
+                                ?? $rep->email; // fallback so it never goes blank
+                        @endphp
+                        <option value="{{ $rep->id }}" {{ request('sales_rep') == $rep->id ? 'selected' : '' }}>
+                            {{ $displayName }}
+                        </option>
+                    @endforeach
+                </select>
+                
+                {{-- Status --}}
+                <select name="status"
+                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
+                    <option value="">All Statuses</option>
+                    @foreach (['draft', 'pending', 'approved', 'rejected'] as $status)
+                        <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
+                            {{ ucfirst($status) }}
+                        </option>
+                    @endforeach
+                </select>
 
-                    <input type="date" name="from" value="{{ request('from') }}"
-                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
-                        placeholder="From">
+                {{-- Date filters --}}
+                <input type="date" name="from" value="{{ request('from') }}"
+                    class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
+                    placeholder="From">
 
-                    <input type="date" name="to" value="{{ request('to') }}"
-                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
-                        placeholder="To">
+                <input type="date" name="to" value="{{ request('to') }}"
+                    class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
+                    placeholder="To">
 
-                    <button type="submit"
-                            class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
-                            <i class="fas fa-filter"></i>
-                    </button>
-                    @if(request()->hasAny(['search', 'status', 'from', 'to']))
+                {{-- Apply Filters --}}
+                <button type="submit"
+                        class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+                        <i class="fas fa-filter"></i>
+                </button>
+
+                {{-- Clear Filters --}}
+                @if(request()->hasAny(['search', 'status', 'from', 'to', 'sales_rep', 'item']))
                     <a href="{{ route('sales-orders.index') }}"
-                        class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
+                    class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
                         <i class="fas fa-times-circle"></i> 
                     </a>
                 @endif
-                </form>
 
-
-                <div class="flex justify-end">
-                    <a href="{{ route('sales-orders.create') }}"
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm whitespace-nowrap">
-                        <i class="fas fa-plus mr-1"></i>
-                        Add New
+                {{-- Generate Report --}}
+                    <a href="{{ route('reports.sales-orders.report') }}?{{ http_build_query(request()->except('page')) }}" 
+                    target="_blank"
+                    class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium inline-flex items-center">
+                        <i class="fas fa-file-pdf"></i>
+                        <span class="ml-2">Generate Report</span>
                     </a>
-                </div>
+            </form>
+
+            {{-- Add New --}}
+            <div class="flex justify-end">
+                <a href="{{ route('sales-orders.create') }}"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm whitespace-nowrap">
+                    <i class="fas fa-plus mr-1"></i>
+                    Add New
+                </a>
             </div>
         </div>
+    </div>
 
         {{-- Table --}}
         <div class="overflow-x-auto">
@@ -232,16 +276,16 @@
                                     @endhasrole
                                   
                                     {{-- Delete --}}
-                                    @hasrole('super-admin|admin|operation-manager')
-                                    <form action="{{ route('sales-orders.destroy', $order) }}" method="POST" onsubmit="return confirm('Delete this Sales Order?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="w-8 h-8 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white">
-                                            <i class="far fa-trash-alt text-xs"></i>
-                                        </button>
-                                    </form>
-                                    @endhasrole
+                                    @if($order->so_status === 'rejected' || auth()->user()->hasAnyRole(['super-admin', 'admin', 'operation-manager']))
+                                        <form action="{{ route('sales-orders.destroy', $order) }}" method="POST" onsubmit="return confirm('Delete this Sales Order?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="w-8 h-8 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white">
+                                                <i class="far fa-trash-alt text-xs"></i>
+                                            </button>
+                                        </form>
+                                    @endif
 
                                 </div>
                                 

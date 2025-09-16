@@ -40,28 +40,66 @@
         </div>
 
         <!-- Job Order Info -->
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Job Order Information</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Sales Order</p>
-                    <p class="font-medium">{{ optional($jobOrder->salesOrder)->so_no ?? 'N/A' }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
-                    <p class="font-medium">{{ $jobOrder->duedate ? $jobOrder->duedate->format('M d, Y') : 'N/A' }}</p>
-                </div>
-                <div>
-                    @php
-                        $status = $jobOrder->jo_status;
-                    @endphp
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                    <x-status-badge :status="$jobOrder->jo_status">{{ ucfirst($status) }}</x-status-badge>
-                </div>
+<div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+    <div class="flex justify-between items-center mb-2">
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            Job Order Information
+        </h2>
 
+        <span class="inline-flex flex-wrap gap-1">
+            {{-- Pricing Estimate --}}
+            @if($jobOrder->salesOrder && $jobOrder->salesOrder->quotation && $jobOrder->salesOrder->quotation->pricing_estimate)
+                <a href="{{ route('pricing-estimates.show', $jobOrder->salesOrder->quotation->pricing_estimate->id) }}" target="_blank"
+                   class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                    P.E NO: #{{ $jobOrder->salesOrder->quotation->pricing_estimate->pe_no }}
+                </a>
+            @endif
 
-            </div>
+            {{-- Quotation --}}
+            @if($jobOrder->salesOrder && $jobOrder->salesOrder->quotation)
+                <a href="{{ route('quotations.edit', $jobOrder->salesOrder->quotation->id) }}" target="_blank"
+                   class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                    Quotation NO: #{{ $jobOrder->salesOrder->quotation->quote_no }}
+                </a>
+            @endif
+
+            {{-- Sales Order --}}
+            @if($jobOrder->salesOrder)
+                <a href="{{ route('sales-orders.show', $jobOrder->salesOrder->id) }}" target="_blank"
+                   class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                    S.O NO: #{{ $jobOrder->salesOrder->so_no }}
+                </a>
+            @endif
+
+            {{-- Job Order --}}
+            <a href="{{ route('job-orders.show', $jobOrder->id) }}" target="_blank"
+               class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                J.O NO: #{{ $jobOrder->jo_no }}
+            </a>
+        </span>
+    </div>
+
+    <hr class="border-t border-gray-300 dark:border-gray-600 mb-4">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Sales Order</p>
+            <p class="font-medium">{{ optional($jobOrder->salesOrder)->so_no ?? 'N/A' }}</p>
         </div>
+        <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
+            <p class="font-medium">{{ $jobOrder->duedate ? $jobOrder->duedate->format('M d, Y') : 'N/A' }}</p>
+        </div>
+        <div>
+            @php
+                $status = $jobOrder->jo_status;
+            @endphp
+            <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+            <x-status-badge :status="$jobOrder->jo_status">{{ ucfirst($status) }}</x-status-badge>
+        </div>
+    </div>
+</div>
+
 
         <!-- Instructions and Delivery -->
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">

@@ -69,7 +69,41 @@
 
         <!-- Basic Information Section -->
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Order Information</h2>
+            <div class="flex items-center justify-between mb-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Order Information</h2>
+            <span class="inline-flex flex-wrap gap-1">
+                    {{-- Pricing Estimate --}}
+                    @if($salesOrder->quotation?->pricing_estimate)
+                        <a href="{{ route('pricing-estimates.show', $salesOrder->quotation->pricing_estimate->id) }}" target="_blank"
+                        class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                            P.E NO: #{{ $salesOrder->quotation->pricing_estimate->pe_no }}
+                        </a>
+                    @endif
+
+                    {{-- Quotation --}}
+                    @if($salesOrder->quotation)
+                        <a href="{{ route('quotations.edit', $salesOrder->quotation->id) }}" target="_blank"
+                        class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                            Quotation NO: #{{ $salesOrder->quotation->quote_no }}
+                        </a>
+                    @endif
+
+                    {{-- Sales Order --}}
+                    <a href="{{ route('sales-orders.show', $salesOrder->id) }}" target="_blank"
+                    class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                        S.O NO: #{{ $salesOrder->so_no }}
+                    </a>
+
+                    {{-- Job Order --}}
+                    @if($salesOrder->jobOrder)
+                        <a href="{{ route('job-orders.show', $salesOrder->jobOrder->id) }}" target="_blank"
+                        class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                            J.O NO: #{{ $salesOrder->jobOrder->jo_no }}
+                        </a>
+                    @endif
+                </span>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Customer</p>
@@ -81,7 +115,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Sales Representative</p>
-                    <p class="font-medium"> {{ optional($salesOrder->salesRep->employee)->full_name ?? '—' }}</p>
+                    <p class="font-medium">{{ optional($salesOrder->salesRep->employee)->full_name ?? '—' }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">PR Number</p>
@@ -98,7 +132,6 @@
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">VAT</p>
                     <p class="font-medium">{{ $salesOrder->tax_status ?? 'N/A' }}</p>
-
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Currency</p>
@@ -222,13 +255,13 @@
         
         <div class="grid grid-cols-1 gap-6 w-full mb-6">
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-100 mb-4 border-b border-gray-600 pb-2">Remarks & Attachments</h2>
+                <h2 class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">Remarks & Attachments</h2>
 
                 {{-- Remarks --}}
                 @if($salesOrder->remarks)
                 <div class="mb-6">
-                    <p class="text-sm font-medium text-gray-400">Remarks</p>
-                    <p class="text-gray-100 whitespace-pre-line">
+                    <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Remarks</p>
+                    <p class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300 whitespace-pre-line">
                         {{ $salesOrder->remarks ?? '—' }}
                     </p>
                 </div>

@@ -149,9 +149,16 @@
                                 @if(!empty($joItem->note))
                                     <strong>Trade:</strong> {{ $joItem->note }}
                                 @else
-                                    <strong>Mould:</strong> {{ $joItem->new_mould_name ?: ($joItem->mould->name ?? '—') }}
+                                    @if(!empty($joItem->new_mould_name))
+                                        <strong>New Mould:</strong> {{ $joItem->new_mould_name }}
+                                    @elseif(!empty($joItem->mould->name))
+                                        <strong>Old Mould:</strong> {{ $joItem->mould->name }}
+                                    @else
+                                        <strong>Mould:</strong> —
+                                    @endif
                                 @endif
-                                    @if($joItem->is_linear)
+
+                                @if($joItem->is_linear)
                                     , <strong>MOP:</strong> Linear: {{ $joItem->total_length ?? '—' }}
                                 @endif
                             </div>

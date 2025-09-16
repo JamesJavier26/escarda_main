@@ -68,7 +68,8 @@
         <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
             <div class="flex flex-col-reverse gap-4 md:flex-row md:items-end md:justify-between">
                 <form method="GET" class="flex flex-wrap items-end gap-3 w-full md:w-auto">
-                    {{-- Search --}}
+
+                    {{-- General Search --}}
                     <div class="relative">
                         <input
                             type="text"
@@ -85,6 +86,31 @@
                             </svg>
                         </div>
                     </div>
+
+                    {{-- Item Filter --}}
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="item"
+                            value="{{ request('item') }}"
+                            placeholder="Search items..."
+                            class="pl-10 pr-4 py-2 w-full md:w-64 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <div class="absolute left-3 top-2.5 text-gray-400">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+
+                    {{-- Sales Representative Filter --}}
+                    <select name="sales_rep"
+                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
+                        <option value="">All Sales Reps</option>
+                        @foreach($salesReps as $rep)
+                            <option value="{{ $rep->id }}" {{ request('sales_rep') == $rep->id ? 'selected' : '' }}>
+                                {{ $rep->employee->full_name ?? $rep->username ?? $rep->name }}
+                            </option>
+                        @endforeach
+                    </select>
 
                     {{-- Status Filter --}}
                     <select name="status"
@@ -105,32 +131,33 @@
 
                     {{-- Date Filters --}}
                     <input type="date" name="from" value="{{ request('from') }}"
-                        class="px-3 py-2  rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
+                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
                         placeholder="From">
 
                     <input type="date" name="to" value="{{ request('to') }}"
-                        class="px-3 py-2  rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
+                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
                         placeholder="To">
 
+                    {{-- Filter Button --}}
                     <button type="submit"
-                        class="px-4 py-2  rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+                        class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
                         <i class="fas fa-filter"></i>
                     </button>
+                        <a href="{{ route('reports.quotations.report', request()->except('page')) }}" 
+                            class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium ml-2 inline-flex items-center" 
+                            target="_blank">
+                            <i class="fas fa-file-pdf"></i>
+                            <span class="ml-2">Generate Quotation Report</span>
+                        </a>
 
-                    @if(request()->hasAny(['search', 'status', 'from', 'to']))
+                    {{-- Reset Button --}}
+                    @if(request()->hasAny(['search', 'status', 'from', 'to', 'item', 'sales_rep']))
                         <a href="{{ route('quotations.index') }}"
-                            class="px-4 py-2  rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
+                            class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
                             <i class="fas fa-times-circle"></i>
                         </a>
                     @endif
                 </form>
-
-        
-                {{-- @hasrole('admin|super-admin|sales-secretary')
-                <a href="{{ route('quotations.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm">
-                    <i class="fas fa-plus mr-1"></i> Add New
-                </a>
-                @endhasrole --}}
             </div>
         </div>
 
@@ -199,7 +226,7 @@
                                                     </form>
                                                 @endif
                                             @endif
-                                    @hasrole('super-admin|admin|sales-secretary')
+                                    @hasrole('super-admin|admin|sales-secretary|sales-representative')
                                     <a href="{{ route('quotations.edit', $quote) }}"
                                         class="flex items-center justify-center w-8 h-8 text-white bg-green-600 hover:bg-green-700 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                                         title="Edit Quotation">
@@ -225,15 +252,15 @@
                                             </a>
                                     @endif
 
-                                    {{-- @hasrole('super-admin') --}}
-                                    {{-- <form action="{{ route('quotations.destroy', $quote) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition" title="Delete">
-                                            <i class="far fa-trash-alt text-sm"></i>
-                                        </button>
-                                    </form> --}}
-                                    {{-- @endhasrole --}}
+                                    @if(auth()->user()->hasRole('super-admin') || $quote->quote_status === 'rejected')
+                                        <form action="{{ route('quotations.destroy', $quote) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition" title="Delete">
+                                                <i class="far fa-trash-alt text-sm"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

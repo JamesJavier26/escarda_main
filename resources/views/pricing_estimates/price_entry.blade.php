@@ -31,8 +31,36 @@
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Customer & Estimate Details</h2>
-            <span class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded">
-                P.E NO: #{{ $pricingEstimate->pe_no }}
+            <span class="inline-flex flex-wrap gap-1">
+                {{-- Pricing Estimate --}}
+                <a href="{{ route('pricing-estimates.show', $pricingEstimate->id) }}" target="_blank"
+                class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                    P.E NO: #{{ $pricingEstimate->pe_no }}
+                </a>
+
+                {{-- Quotation(s) --}}
+                @foreach($pricingEstimate->quotations ?? [] as $quotation)
+                    <a href="{{ route('quotations.edit', $quotation->id) }}" target="_blank"
+                    class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                        Quotation NO: #{{ $quotation->quote_no }}
+                    </a>
+
+                    {{-- Sales Order --}}
+                    @if($quotation->salesOrder)
+                        <a href="{{ route('sales-orders.show', $quotation->salesOrder->id) }}" target="_blank"
+                        class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                            S.O NO: #{{ $quotation->salesOrder->so_no }}
+                        </a>
+
+                        {{-- Job Order --}}
+                        @if($quotation->salesOrder->jobOrder)
+                            <a href="{{ route('job-orders.show', $quotation->salesOrder->jobOrder->id) }}" target="_blank"
+                            class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                                J.O NO: #{{ $quotation->salesOrder->jobOrder->jo_no }}
+                            </a>
+                        @endif
+                    @endif
+                @endforeach
             </span>
         </div>
 
@@ -106,22 +134,26 @@
                     <p class="text-sm font-medium text-gray-400">Remarks</p>
                     <p class="text-gray-900 dark:text-gray-100" whitespace-pre-line">{{ $pricingEstimate->pe_remarks ?? '--' }}</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input 
-                        type="text" 
-                        name="delivery_date" 
-                        value="{{ $pricingEstimate->delivery_date }}" 
-                        class="border rounded p-2"
-                    >
-                    <button 
-                        type="button" 
-                        x-data 
-                        @click="saveDeliveryDate({{ $pricingEstimate->id }})"
-                        class="bg-blue-500 text-white px-3 py-1 rounded"
-                    >
-                        Save
-                    </button>
-                </div>
+                    <div class="flex flex-col gap-2">
+                        <label for="delivery_date" class="text-sm font-medium text-gray-400">Delivery</label>
+                        <div class="flex items-center gap-2">
+                            <input 
+                                type="text" 
+                                id="delivery_date"
+                                name="delivery_date" 
+                                value="{{ $pricingEstimate->delivery_date }}" 
+                                class="border rounded p-2"
+                            >
+                            <button 
+                                type="button" 
+                                x-data 
+                                @click="saveDeliveryDate({{ $pricingEstimate->id }})"
+                                class="bg-blue-500 text-white px-3 py-1 rounded"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
             </div>
         </div>
     </div>
@@ -397,11 +429,6 @@
         </button>
 
         <!-- Approve Button -->
-        {{-- <button type="button"
-                @click="openModal('approve')"
-                class="px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none dark:bg-green-700 dark:hover:bg-green-800">
-            <i class="fa fa-check mr-1"></i> Approve and Create Quotation
-        </button> --}}
         <div x-data>
             <button
                 @click="
@@ -428,6 +455,14 @@
                 <i class="fa fa-check mr-1"></i> Approve and Create Quotation
             </button>
         </div>
+
+        <a href="{{ route('reports.pricing-preview', $pricingEstimate->pe_no) }}" target="_blank"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg 
+                focus:outline-none focus:ring-2 focus:ring-blue-500 transition flex items-center gap-2"
+            title="Print Pricing Preview">
+            <i class="fas fa-file-invoice-dollar text-sm"></i>
+            Pricing Preview
+        </a>
 
         <!-- Modal -->
         <div 

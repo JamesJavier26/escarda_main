@@ -11,11 +11,13 @@ use App\Models\PricingEstimateItem;
 use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\Setting;
+use App\Models\User;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use function App\Helpers\notify_user;
 use Barryvdh\DomPDF\PDF;
+use Illuminate\Support\Facades\Auth;
 
 class QuotationController extends Controller
 {
@@ -32,9 +34,7 @@ class QuotationController extends Controller
 
         $query = Quotation::with(['pricing_estimate.customer', 'pricing_estimate.salesRep.employee', 'salesOrder']);
 
-        // If user is NOT super-admin, admin, or sales-secretary, limit quotations to:
-        // - quotations created by the user OR
-        // - quotations where pricing_estimate->salesRep_id = user id
+        // Permission-based filtering
         if (! $user->hasAnyRole(['super-admin', 'admin', 'sales-secretary'])) {
             $query->where(function($q) use ($user) {
                 $q->where('created_by', $user->id)
@@ -42,21 +42,21 @@ class QuotationController extends Controller
             });
         }
 
-        // Search logic
+        // Search filter
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('quote_no', 'like', "%$search%")
+                $q->where('quote_no', 'like', "%{$search}%")
                 ->orWhereHas('pricing_estimate', fn ($q) =>
-                    $q->where('pe_no', 'like', "%$search%")
-                        ->orWhere('attention', 'like', "%$search%")
+                    $q->where('pe_no', 'like', "%{$search}%")
+                        ->orWhere('attention', 'like', "%{$search}%")
                         ->orWhereHas('customer', fn ($c) =>
-                            $c->where('name', 'like', "%$search%")
+                            $c->where('name', 'like', "%{$search}%")
                         )
                 );
             });
         }
 
-        // Filter by status
+        // Status filter
         if ($status = $request->input('status')) {
             if ($status === 'to_send') {
                 $query->where('quote_status', 'approved')
@@ -66,30 +66,51 @@ class QuotationController extends Controller
             }
         }
 
-        // Filter by date range
+        // Date range filter
         if ($from = $request->input('from')) {
             $query->where('quote_date', '>=', Carbon::parse($from)->startOfDay());
         }
-
         if ($to = $request->input('to')) {
             $query->where('quote_date', '<=', Carbon::parse($to)->endOfDay());
         }
 
-        // Final paginated results
+        // Sales Representative filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->whereHas('pricing_estimate', fn($q) => $q->where('sr_id', $srId));
+        }
+
+        if ($item = $request->input('item')) {
+            $query->where(function ($q) use ($item) {
+                // Search in related items
+                $q->whereHas('pricing_estimate.pe_items.item', function ($sub) use ($item) {
+                    $sub->where('name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+
+                // OR search directly in pe_items table
+                $q->orWhereHas('pricing_estimate.pe_items', function ($sub) use ($item) {
+                    $sub->where('item_name', 'like', "%{$item}%")
+                        ->orWhere('item_description', 'like', "%{$item}%");
+                });
+            });
+        }
+
+        // Sales reps for filter dropdown
+        $salesReps = User::role(['sales-representative'])->get();
+
         $quotations = $query->latest('updated_at')
                             ->paginate($perPage)
                             ->appends($request->except('page'));
 
         return view('quotations.index', [
-            'quotations'         => $quotations,
-            'totalQuotations'    => Quotation::count(),
-            'approvedQuotation'  => Quotation::where('quote_status', 'approved')->count(),
-            'pendingQuotation'   => Quotation::where('quote_status', 'pending')->count(),
-            'rejectQuotation'    => Quotation::where('quote_status', 'rejected')->count(),
+            'quotations'        => $quotations,
+            'totalQuotations'   => Quotation::count(),
+            'approvedQuotation' => Quotation::where('quote_status', 'approved')->count(),
+            'pendingQuotation'  => Quotation::where('quote_status', 'pending')->count(),
+            'rejectQuotation'   => Quotation::where('quote_status', 'rejected')->count(),
+            'salesReps'         => $salesReps,
         ]);
     }
-
-
 
     public function quote_items($pe_id)
     {
@@ -309,7 +330,7 @@ class QuotationController extends Controller
                 'attention' => $quotation->pricing_estimate->attention,
                 'terms' => $quotation->pricing_estimate->terms,
                 'po_no' => '', 
-                'sr_id' => auth()->id(),
+                'sr_id' => $quotation->pricing_estimate->sr_id,
                 'jo_no' => $joNo,
                 'tax_status' => $quotation->pricing_estimate->vat,
                 'approval_status' => 'draft',
@@ -402,6 +423,7 @@ class QuotationController extends Controller
                 'quote_status' => 'pending',
                 'quote_remarks' => $request->remarks,
                 'currency_id' => $pricing_estimate->currency_id,
+                'created_by' => Auth::id(),
             ]);
 
             
@@ -431,6 +453,7 @@ class QuotationController extends Controller
                 'currency_id' => $pricing_estimate->currency_id,
                 'parent_id' => $quotation->id,
                 'quote_remarks' => $request->remarks,
+                'created_by' => Auth::id(),
             ]);
 
             // Optionally copy items from old quotation (if needed)

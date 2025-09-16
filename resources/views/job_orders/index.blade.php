@@ -86,6 +86,34 @@
                             </svg>
                         </div>
                     </div>
+                    
+                    {{-- Item Filter --}}
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="item"
+                            value="{{ request('item') }}"
+                            placeholder="Search items..."
+                            class="pl-10 pr-4 py-2 w-full md:w-64 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <div class="absolute left-3 top-2 text-gray-400">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+
+                    {{-- Sales Representative --}}
+                    <select name="sales_rep"
+                        class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none">
+                        <option value="">All Sales Reps</option>
+                        @foreach($salesReps as $rep)
+                            @php
+                                $displayName = $rep->employee->full_name ?? $rep->name ?? $rep->email;
+                            @endphp
+                            <option value="{{ $rep->id }}" {{ request('sales_rep') == $rep->id ? 'selected' : '' }}>
+                                {{ $displayName }}
+                            </option>
+                        @endforeach
+                    </select>
 
                     {{-- Status Filter --}}
                     <select name="status"
@@ -113,12 +141,21 @@
                         class="px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none"
                         placeholder="To">
 
+                    {{-- Submit Button --}}
                     <button type="submit"
                         class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
                         <i class="fas fa-filter"></i>
                     </button>
 
-                    @if(request()->hasAny(['search', 'status', 'from', 'to']))
+                    {{-- Generate Job Orders Report --}}
+                    <a href="{{ route('reports.job-orders.report') }}?{{ http_build_query(request()->except('page')) }}" 
+                    target="_blank"
+                    class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium inline-flex items-center">
+                        <i class="fas fa-file-pdf"></i>
+                        <span class="ml-2">Generate Report</span>
+                    </a>
+
+                    @if(request()->hasAny(['search', 'status', 'from', 'to', 'sales_rep', 'item']))
                         <a href="{{ route('job-orders.index') }}"
                             class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
                             <i class="fas fa-times-circle"></i>
@@ -127,14 +164,15 @@
                 </form>
 
                 {{-- Add New Button --}}
-               {{--  @hasrole('super-admin|admin')
+                {{-- @hasrole('super-admin|admin')
                 <a href="{{ route('job-orders.create') }}"
                     class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm">
                     <i class="fas fa-plus mr-1"></i> Add New
                 </a>
-                @endhasrole--}}
+                @endhasrole --}}
             </div>
         </div>
+
 
         {{-- Table --}}
         <div class="overflow-x-auto">
@@ -200,18 +238,18 @@
                                         <i class="fas fa-pencil-alt text-xs"></i>
                                     </a>
 
-                                    @hasrole('super-admin|admin')
-                                    <form action="{{ route('job-orders.destroy', $order) }}" method="POST"
-                                        onsubmit="return confirm('Delete this Job Order?')" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full"
-                                            title="Delete">
-                                            <i class="far fa-trash-alt text-xs"></i>
-                                        </button>
-                                    </form>
-                                    @endhasrole
+                                    @if(auth()->user()->hasRole('super-admin|admin') || $order->jo_status === 'cancelled')
+                                        <form action="{{ route('job-orders.destroy', $order) }}" method="POST"
+                                            onsubmit="return confirm('Delete this Job Order?')" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full"
+                                                title="Delete">
+                                                <i class="far fa-trash-alt text-xs"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

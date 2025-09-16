@@ -5,14 +5,16 @@
                     <!-- Sidebar Menu -->
                     <nav class="flex-1 overflow-y-auto custom-scrollbar py-4">
                         <ul class="space-y-1 px-2">
-                            <!-- Dashboard -->
-                            @hasrole('super-admin|admin|sales-manager|operation-manager')
-                            <x-layouts.sidebar-link href="{{ route('dashboard') }}" icon='fas-house'
-                                :active="request()->routeIs('dashboard*')">Dashboard</x-layouts.sidebar-link>
+                            @hasrole('super-admin|admin|sales-manager|operations-manager')
+                                <x-layouts.sidebar-link href="{{ route('dashboard') }}" icon='fas-house'
+                                    :active="request()->routeIs('dashboard*')">Dashboard</x-layouts.sidebar-link>
+                            @else
+                                @unlessrole('operation-staff|production-staff')
+                                    <x-layouts.sidebar-link href="{{ route('dashboard') }}" icon='fas-house'
+                                        :active="request()->routeIs('dashboard*')">Sales Dashboard</x-layouts.sidebar-link>
+                                @endunlessrole
                             @endhasrole
-                            {{-- <x-layouts.sidebar-link href="{{ route('pricing-estimates.index') }}" icon='fas-tags'
-                                :active="request()->routeIs('pricing-estimates*')">Pricing Estimate</x-layouts.sidebar-link> --}}
-                                
+                            @unlessrole('operation-staff|production-staff')
                             <x-layouts.sidebar-two-level-link-parent title="Pricing Estimate" icon="fas-tags"
                                 :active="request()->routeIs('pricing-estimates*',)">
                                 @hasrole('super-admin|admin|sales-manager|operation-manager|sales-secretary')
@@ -24,6 +26,7 @@
                                     :active="request()->routeIs('pricing-estimates.edit','pricing_estimate.create','pricing-estimates.my', 'pricing-estimates.show')">My P.E</x-layouts.sidebar-two-level-link>
                                 @endhasrole
                             </x-layouts.sidebar-two-level-link-parent>
+                            @endunlessrole
 
                             @hasrole('super-admin|admin|sales-manager|operation-manager|sales-representative|sales-secretary')
                             <x-layouts.sidebar-link href="{{ route('quotations.index') }}" icon='fas-file-invoice'
@@ -75,14 +78,14 @@
                             </x-layouts.sidebar-two-level-link-parent>
                             @endhasrole
                             
-                     
+                            @hasrole('super-admin|admin|sales-manager|operation-manager') 
                             <x-layouts.sidebar-two-level-link-parent title="Master Data" icon="fas-database"
                                 :active="request()->routeIs('items*', 'customers*', 'currencies*', 'moulds*','materials*','units*')">
                                 <x-layouts.sidebar-two-level-link href="{{ route('customers.index')  }}" icon='fas-user'
                                     :active="request()->routeIs('customers*')">Customers</x-layouts.sidebar-two-level-link>
                                 <x-layouts.sidebar-two-level-link href="{{ route('items.index')  }}" icon='fas-box'
                                     :active="request()->routeIs('items*')">Items</x-layouts.sidebar-two-level-link>
-                                @hasrole('super-admin|admin')
+                                
                                 <x-layouts.sidebar-two-level-link href="{{ route('currencies.index')  }}" icon='fas-peso-sign'
                                     :active="request()->routeIs('currencies*')">Currency</x-layouts.sidebar-two-level-link>
                                 <x-layouts.sidebar-two-level-link href="{{ route('moulds.index')  }}" icon='fas-industry'
@@ -91,9 +94,8 @@
                                     :active="request()->routeIs('materials*')">Material</x-layouts.sidebar-two-level-link>
                                 <x-layouts.sidebar-two-level-link href="{{ route('units.index')  }}" icon='fas-balance-scale'
                                     :active="request()->routeIs('units*')">Unit</x-layouts.sidebar-two-level-link>
-                                @endhasrole
                             </x-layouts.sidebar-two-level-link-parent>
-                            
+                            @endhasrole
                             <x-layouts.sidebar-link href="{{ route('settings.profile.edit') }}" icon='fas-cog'
                                 :active="request()->routeIs('settings*')">Settings</x-layouts.sidebar-link>
                

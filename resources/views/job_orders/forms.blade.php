@@ -93,22 +93,32 @@
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse ($job_order->jo_items as $index => $jo_item)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    {{-- Hidden ID for the item --}}
+                                    <input type="hidden" name="items[{{ $index }}][id]" value="{{ $jo_item->id }}">
+
+                                    {{-- Index --}}
                                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $index + 1 }}</td>
+
+                                    {{-- Item Name & Description --}}
                                     <td class="px-3 py-2 max-w-[50px] truncate">
                                         <div class="text-sm text-gray-800 dark:text-gray-200">
                                             <div class="font-medium">{{ $jo_item->item->name }}</div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $jo_item->item->description }}</div>
                                         </div>
                                     </td>
+
+                                    {{-- Specifications --}}
                                     <td class="px-4 py-3">
                                         <div class="space-y-2 text-sm">
-                                            <!-- Rubber Material -->
+
+                                            {{-- Rubber Material --}}
                                             <div>
                                                 <label class="block text-xs text-gray-600 dark:text-gray-400">Rubber Material</label>
                                                 <select name="items[{{ $index }}][rubber_material]"
-                                                        {{ $isApproved ? 'disabled' : '' }}
-                                                        class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
-                                                    @foreach ($materials as $material)
+                                                    {{ $isApproved ? 'disabled' : '' }}
+                                                    class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
+                                                    <option value="" disabled selected>--Select Material--</option>
+                                                    @foreach($materials as $material)
                                                         <option value="{{ $material->id }}" {{ $material->id == $jo_item->material_id ? 'selected' : '' }}>
                                                             {{ $material->name }}
                                                         </option>
@@ -116,22 +126,20 @@
                                                 </select>
                                             </div>
 
-                                            <!-- Hardness -->
+                                            {{-- Hardness --}}
                                             <div>
                                                 <label class="block text-xs text-gray-600 dark:text-gray-400">Hardness/Duro</label>
-                                                <input type="text" 
-                                                    name="items[{{ $index }}][hardness]" 
+                                                <input type="text" name="items[{{ $index }}][hardness]"
                                                     value="{{ $jo_item->hardness }}"
                                                     {{ $isApproved ? 'disabled' : '' }}
                                                     class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
                                             </div>
 
-                                            <!-- Thickness + Unit -->
+                                            {{-- Thickness + Unit --}}
                                             <div>
                                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Thickness</label>
                                                 <div class="flex space-x-2">
-                                                    <input type="text" 
-                                                        name="items[{{ $index }}][thickness]" 
+                                                    <input type="text" name="items[{{ $index }}][thickness]"
                                                         value="{{ $jo_item->thickness }}"
                                                         {{ $isApproved ? 'disabled' : '' }}
                                                         class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
@@ -139,9 +147,9 @@
                                                     <select name="items[{{ $index }}][thickness_unit]"
                                                             {{ $isApproved ? 'disabled' : '' }}
                                                             class="w-20 px-2 py-1 text-xs border rounded {{ $disabledClass }}">
+                                                        <option value="" disabled selected>-- Select Unit --</option>
                                                         @foreach ($units as $unit)
-                                                            <option value="{{ $unit->short_name }}"
-                                                                {{ $jo_item->thickness_unit == $unit->short_name ? 'selected' : '' }}>
+                                                            <option value="{{ $unit->short_name }}" {{ $jo_item->thickness_unit == $unit->short_name ? 'selected' : '' }}>
                                                                 {{ $unit->short_name }} ({{ $unit->name }})
                                                             </option>
                                                         @endforeach
@@ -149,35 +157,30 @@
                                                 </div>
                                             </div>
 
-                                            @php
-                                                $serverMouldType = old("items.$index.mould_type")
-                                                    ?? ($jo_item->new_mould_no || $jo_item->new_mould_name
-                                                        ? 'new'
-                                                        : ($jo_item->note ? 'trade' : 'old'));
-                                            @endphp
-
-                                            <div x-data='{ mouldType: @json($serverMouldType) }' class="space-y-3">
+                                            {{-- Mould Section --}}
+                                            <div x-data="{
+                                                mouldType: '{{ $jo_item->mould_id ? 'old' : ($jo_item->new_mould_no || $jo_item->new_mould_name ? 'new' : ($jo_item->note ? 'trade' : '')) }}'
+                                            }" class="space-y-3">
                                                 <label class="block text-xs text-gray-600 dark:text-gray-400">Mould</label>
 
-                                                <!-- Toggle Old / New / Trade -->
+                                                {{-- Toggle Old / New / Trade --}}
                                                 <div class="flex items-center space-x-4">
                                                     <label class="flex items-center space-x-1">
+                                                        {{-- Radio buttons with the correct name attribute --}}
                                                         <input type="radio" name="items[{{ $index }}][mould_type]" value="old" x-model="mouldType">
                                                         <span class="text-sm text-gray-700 dark:text-gray-300">Old</span>
                                                     </label>
-
                                                     <label class="flex items-center space-x-1">
                                                         <input type="radio" name="items[{{ $index }}][mould_type]" value="new" x-model="mouldType">
                                                         <span class="text-sm text-gray-700 dark:text-gray-300">New</span>
                                                     </label>
-
                                                     <label class="flex items-center space-x-1">
                                                         <input type="radio" name="items[{{ $index }}][mould_type]" value="trade" x-model="mouldType">
                                                         <span class="text-sm text-gray-700 dark:text-gray-300">Trade</span>
                                                     </label>
                                                 </div>
 
-                                                <!-- Old: Dropdown -->
+                                                {{-- Old: Dropdown --}}
                                                 <div x-show="mouldType === 'old'" x-cloak>
                                                     <select name="items[{{ $index }}][mould_id]" {{ $isApproved ? 'disabled' : '' }}
                                                         class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
@@ -188,73 +191,46 @@
                                                             </option>
                                                         @endforeach
                                                     </select>
-
-                                                    @if ($isApproved)
-                                                        <input type="hidden" name="items[{{ $index }}][mould_id]" value="{{ $jo_item->mould_id }}">
-                                                    @endif
                                                 </div>
 
-                                                <!-- New: Inputs -->
-                                                <div x-show="mouldType === 'new'" x-cloak class="space-y-3">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Mould No. <span class="text-red-500">*</span>
-                                                        </label>
-                                                        <input type="text" name="items[{{ $index }}][new_mould_no]"
-                                                            value="{{ old("items.$index.new_mould_no", $jo_item->new_mould_no) }}"
-                                                            placeholder="Enter mould number"
-                                                            :disabled="mouldType !== 'new' {{ $isApproved ? '|| true' : '' }}"
-                                                            class="w-full px-3 py-1 rounded-lg border">
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Name <span class="text-red-500">*</span>
-                                                        </label>
-                                                        <input type="text" name="items[{{ $index }}][new_mould_name]"
-                                                            value="{{ old("items.$index.new_mould_name", $jo_item->new_mould_name) }}"
-                                                            placeholder="Enter mould name"
-                                                            :disabled="mouldType !== 'new' {{ $isApproved ? '|| true' : '' }}"
-                                                            class="w-full px-3 py-1 rounded-lg border">
-                                                    </div>
+                                                {{-- New: Inputs --}}
+                                                <div x-show="mouldType === 'new'" x-cloak class="space-y-2">
+                                                    <input type="text" name="items[{{ $index }}][new_mould_no]"
+                                                        value="{{ $jo_item->new_mould_no }}"
+                                                        placeholder="Mould No."
+                                                        class="w-full px-2 py-1 text-xs border rounded">
+                                                    <input type="text" name="items[{{ $index }}][new_mould_name]"
+                                                        value="{{ $jo_item->new_mould_name }}"
+                                                        placeholder="Mould Name"
+                                                        class="w-full px-2 py-1 text-xs border rounded">
                                                 </div>
 
-                                                <!-- Trade: Input -->
+                                                {{-- Trade: Input --}}
                                                 <div x-show="mouldType === 'trade'" x-cloak>
-                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                        Note <span class="text-red-500">*</span>
-                                                    </label>
                                                     <input type="text" name="items[{{ $index }}][note]"
-                                                        value="{{ old("items.$index.note", $jo_item->note) }}"
-                                                        placeholder="Enter trade note"
-                                                        :disabled="mouldType !== 'trade' {{ $isApproved ? '|| true' : '' }}"
-                                                        class="w-full px-3 py-1 rounded-lg border">
+                                                        value="{{ $jo_item->note }}"
+                                                        placeholder="Trade Note"
+                                                        class="w-full px-2 py-1 text-xs border rounded">
                                                 </div>
                                             </div>
+                                        </div>
+                                    </td>
+
+                                    {{-- Quantity --}}
                                     <td class="px-4 py-3 text-right">{{ $jo_item->quantity }}</td>
+
+                                    {{-- Linear --}}
                                     <td class="px-4 py-3" x-data="{ is_linear: {{ $jo_item->is_linear ? 'true' : 'false' }} }">
                                         <div class="space-y-2 text-sm">
-                                            <!-- Is Linear Toggle -->
-                                            <div class="flex items-center">
-                                                <input type="hidden" name="items[{{ $index }}][is_linear]" value="0">
-                                                <input type="checkbox" 
-                                                    name="items[{{ $index }}][is_linear]" 
-                                                    x-model="is_linear"
-                                                    value="1"
-                                                    {{ $jo_item->is_linear ? 'checked' : '' }}
-                                                    {{ $isApproved ? 'disabled' : '' }}
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 {{ $isApproved ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                                <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">Is Linear</span>
-                                            </div>
+                                            <input type="hidden" name="items[{{ $index }}][is_linear]" value="0">
+                                            <input type="checkbox" name="items[{{ $index }}][is_linear]" x-model="is_linear" value="1" {{ $jo_item->is_linear ? 'checked' : '' }}
+                                                {{ $isApproved ? 'disabled' : '' }} class="rounded border-gray-300 text-indigo-600">
+                                            <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">Is Linear</span>
 
-                                            <!-- Total Length -->
                                             <div x-show="is_linear" x-transition>
-                                                <label class="block text-xs text-gray-600 dark:text-gray-400">Total Length</label>
-                                                <input type="text" 
-                                                    name="items[{{ $index }}][total_length]" 
-                                                    value="{{ $jo_item->total_length }}"
+                                                <input type="text" name="items[{{ $index }}][total_length]" value="{{ $jo_item->total_length }}"
                                                     {{ $isApproved ? 'disabled' : '' }}
-                                                    class="w-full px-2 py-1 text-xs border rounded {{ $disabledClass }}">
+                                                    class="w-full px-2 py-1 text-xs border rounded mt-1">
                                             </div>
                                         </div>
                                     </td>
@@ -424,8 +400,8 @@
                     @endif
 
                     @elseif($job_order->jo_status === 'pending')
-                        {{-- Cancel --}}
-                        <div x-data="{
+                    <div x-data="{
+                            isSubmitting: false,
                             confirmCancel() {
                                 Swal.fire({
                                     title: 'Cancel Job Order?',
@@ -437,16 +413,19 @@
                                     confirmButtonText: 'Yes, Cancel'
                                 }).then((result) => {
                                     if (result.isConfirmed) {
+                                        this.isSubmitting = true;
                                         document.getElementById('cancel-form').submit();
                                     }
                                 });
                             }
-                        }" class="inline-block mr-2">
+                        }" class="inline-block">
                             <button
                                 type="button"
                                 @click="confirmCancel"
+                                :disabled="isSubmitting"
                                 class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm shadow-sm">
-                                <i class="fas fa-times-circle mr-1"></i> Cancel
+                                <span x-show="!isSubmitting"><i class="fas fa-times-circle mr-1"></i> Cancel</span>
+                                <span x-show="isSubmitting"><i class="fas fa-spinner fa-spin mr-1"></i> Cancelling...</span>
                             </button>
                         </div>
 
@@ -480,13 +459,12 @@
                                 class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm shadow-sm">
                                 <i class="fas fa-check mr-1"></i> Approve
                             </button>
-                        </div>
-
-                        {{-- Hidden form for approve --}}
+                                                    {{-- Hidden form for approve --}}
                         <form id="approve-form" method="POST" action="{{ route('job-orders.approve', $job_order->id) }}" class="hidden">
                             @csrf
                             @method('PATCH')
                         </form>
+                        </div>
                     @endif
                 </div>
         @endif
@@ -500,6 +478,13 @@
             @method('PATCH')
         </form>
     @endif
+    <form method="POST"
+    id="cancel-form"
+    action="{{ route('job-orders.cancel', $job_order) }}"
+    class="hidden">
+    @csrf
+    @method('PATCH')
+</form>
 
 </div>
 <script>

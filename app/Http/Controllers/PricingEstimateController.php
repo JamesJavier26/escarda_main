@@ -14,8 +14,10 @@ use App\Models\SalesOrder;
 use App\Models\Setting;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\Item;
 use Barryvdh\DomPDF\PDF;
 use DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -27,12 +29,11 @@ class PricingEstimateController extends Controller
     /**
      * Display a listing of the resource.
      */
+
     public function index(Request $request)
     {
-        
-        // Validate perPage input with fallback
-        $perPage = in_array($request->input('perPage'), [10, 25, 50, 100]) 
-            ? (int) $request->input('perPage') 
+        $perPage = in_array($request->input('perPage'), [10, 25, 50, 100])
+            ? (int) $request->input('perPage')
             : 10;
 
         // Base query: exclude drafts, eager load relationships, count related
@@ -45,35 +46,65 @@ class PricingEstimateController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('pe_no', 'like', "%$search%")
                 ->orWhere('attention', 'like', "%$search%")
-                ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%$search%"));
+                ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%$search%"));
             });
         }
 
-        // Filter by status (optional)
+        // Status filter
         if ($status = $request->input('status')) {
             $query->where('pe_status', $status);
         }
 
-        // Date range filter
+        // Date filters
         if ($from = $request->input('from')) {
             $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
         }
-
         if ($to = $request->input('to')) {
             $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
         }
 
-        // Paginate with query string to retain filters
-        $pricingEstimates = $query->latest('updated_at')->paginate($perPage)->appends($request->except('page'));
+        // Item filter
+        if ($item = $request->input('item')) {
+            $query->where(function($q) use ($item) {
+                // Search the related Item table
+                $q->whereHas('pe_items.item', function ($q2) use ($item) {
+                    $q2->where('name', 'like', "%{$item}%")
+                    ->orWhere('item_description', 'like', "%{$item}%");
+                });
+                
+                // OR search the pricing_estimate_items table directly
+                $q->orWhereHas('pe_items', function ($q3) use ($item) {
+                    $q3->where('item_name', 'like', "%{$item}%")
+                    ->orWhere('item_description', 'like', "%{$item}%");
+                });
+            });
+        }
+
+        // Sales Rep filter
+        if ($srId = $request->input('sales_rep')) {
+            $query->where('sr_id', $srId);
+        }
+
+        // Paginate
+        $pricingEstimates = $query->latest('updated_at')->paginate($perPage)
+            ->appends($request->except('page'));
+
+        // Get sales reps just like in your form
+        $salesReps = User::role('sales-representative')
+            ->with('employee')
+            ->get();
 
         return view('pricing_estimates.index', [
-            'pricingEstimates'    => $pricingEstimates,
-            'totalEstimates'      => PricingEstimate::where('pe_status', '!=', 'draft')->count(),
-            'draftEstimates'      => PricingEstimate::where('pe_status', 'draft')->count(),
-            'pendingEstimates'    => PricingEstimate::where('pe_status', 'pending')->count(),
-            'totalRevenue'        => 0, // You can compute this if needed
+            'pricingEstimates' => $pricingEstimates,
+            'salesReps' => $salesReps,
+            'totalEstimates' => PricingEstimate::where('pe_status', '!=', 'draft')->count(),
+            'draftEstimates' => PricingEstimate::where('pe_status', 'draft')->count(),
+            'pendingEstimates' => PricingEstimate::where('pe_status', 'pending')->count(),
+            'totalRevenue' => 0,
         ]);
     }
+
+
 
     public function my_estimates(Request $request)
     {
@@ -596,6 +627,7 @@ class PricingEstimateController extends Controller
                 'quote_date' => now(),
                 'quote_status' => 'pending',
                 'currency_id' => $pricing_estimate->currency_id,
+                'created_by' => Auth::id(),
             ]);
 
             return redirect()->route('quotations.edit', $newQuotation)->with('success', 'Quotation created successfully!');
@@ -617,6 +649,7 @@ class PricingEstimateController extends Controller
                 'quote_status' => 'pending',
                 'currency_id' => $pricing_estimate->currency_id,
                 'parent_id' => $quotation->id,
+                'created_by' => Auth::id(),
             ]);
 
             foreach ($quotation->quotation_items as $item) {
