@@ -252,11 +252,14 @@
                                             </a>
                                     @endif
 
-                                    @if(auth()->user()->hasRole('super-admin') || $quote->quote_status === 'rejected')
-                                        <form action="{{ route('quotations.destroy', $quote) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="inline">
+                                    @if(auth()->user()->hasRole('super-admin') || $quote->quote_status === 'disapproved')
+                                        <form action="{{ route('quotations.destroy', $quote) }}" method="POST" 
+                                            onsubmit="return confirm('Are you sure?')" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition" title="Delete">
+                                            <button type="submit" 
+                                                    class="flex items-center justify-center w-8 h-8 text-white bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition" 
+                                                    title="Delete">
                                                 <i class="far fa-trash-alt text-sm"></i>
                                             </button>
                                         </form>

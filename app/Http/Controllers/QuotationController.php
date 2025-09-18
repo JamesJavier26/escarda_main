@@ -190,7 +190,21 @@ class QuotationController extends Controller
      */
     public function destroy(Quotation $quotation)
     {
-        //
+        try {
+            // Delete related items first to avoid FK constraint issues
+            $quotation->quotation_items()->delete();
+
+            // Delete the quotation itself
+            $quotation->delete();
+
+            return redirect()
+                ->route('quotations.index')
+                ->with('success', 'Quotation deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to delete quotation: ' . $e->getMessage());
+        }
     }
 
     public function approve(Quotation $quotation)
@@ -401,7 +415,13 @@ class QuotationController extends Controller
 
     public function generate(Request $request, PricingEstimate $pricing_estimate)
     {
-        // dd($request->quote_remarks);
+        // Always approve the pricing estimate first if still pending
+        if ($pricing_estimate->pe_status === 'pending') {
+            $pricing_estimate->update([
+                'pe_status' => 'approved',
+            ]);
+        }
+
         // Check if a quotation already exists
         $quotation = Quotation::where('pricing_estimate_id', $pricing_estimate->id)
                             ->latest('created_at')
@@ -409,12 +429,9 @@ class QuotationController extends Controller
 
         // If no quotation exists, create the first one
         if (!$quotation) {
-            // $quoteNo = Quotation::max('quote_no') ?? 6442;
-            // $newQuoteNo = $quoteNo + 1;
             $baseQuotes = Quotation::whereRaw("quote_no NOT LIKE '%_Rev%'")->pluck('quote_no');
             $maxQuote = $baseQuotes->map(fn ($q) => (int) $q)->max() ?? 6442;
             $newQuoteNo = $maxQuote + 1;
-
 
             $newQuotation = Quotation::create([
                 'quote_no' => $newQuoteNo,
@@ -426,22 +443,19 @@ class QuotationController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            
-
-            return redirect()->route('quotations.edit', $newQuotation)->with('success', 'Quotation created successfully!');
+            return redirect()->route('quotations.edit', $newQuotation)
+                            ->with('success', 'Quotation created successfully!');
         }
 
         // If existing quotation is pending or approved, just return it
         if (in_array($quotation->quote_status, ['pending', 'approved'])) {
-            return redirect()->route('quotations.edit', $quotation)->with('info', 'Existing quotation loaded.');
+            return redirect()->route('quotations.edit', $quotation)
+                            ->with('info', 'Existing quotation loaded.');
         }
 
         // If existing is rejected, create revision
         if ($quotation->quote_status === 'rejected') {
-            // Extract base quote number
             $baseNo = explode('_', $quotation->quote_no)[0];
-
-            // Count existing revisions
             $revCount = Quotation::where('quote_no', 'LIKE', "{$baseNo}_Rev%")->count();
             $newQuoteNo = "{$baseNo}_Rev" . ($revCount + 1);
 
@@ -456,21 +470,20 @@ class QuotationController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            // Optionally copy items from old quotation (if needed)
+            // Copy items from old quotation
             foreach ($quotation->quotation_items as $item) {
                 $newQuotation->quotation_items()->create($item->toArray());
             }
-            $quotation->pricing_estimate->update([
-                'pe_status' => 'approved',
-            ]);
 
-
-            return redirect()->route('quotations.edit', $newQuotation)->with('success', 'Revision quotation created.');
+            return redirect()->route('quotations.edit', $newQuotation)
+                            ->with('success', 'Revision quotation created.');
         }
 
         // Fallback
-        return redirect()->route('quotations.index')->with('error', 'Unable to generate quotation.');
+        return redirect()->route('quotations.index')
+                        ->with('error', 'Unable to generate quotation.');
     }
+
     
     public function toggleSentStatus(Quotation $quotation)
     {

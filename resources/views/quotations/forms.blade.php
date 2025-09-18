@@ -28,7 +28,7 @@
                 <h2 class="text-xl font-semibold text-black-100">Customer Details</h2>
                     <span class="inline-flex flex-wrap gap-1">
                     {{-- Pricing Estimate --}}
-                    <a href="{{ route('pricing-estimates.show', $pricing_estimate->id) }}" target="_blank"
+                    <a href="{{ url('pricing-estimates/' . $pricing_estimate->id . '/price-entry') }}" target="_blank"
                     class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
                         P.E NO: #{{ $pricing_estimate->pe_no }}
                     </a>
@@ -40,14 +40,14 @@
                             Quotation NO: #{{ $pricing_estimate->approvedQuotation->quote_no }}
                         </a>
 
-                        {{-- Sales Order --}}
-                        @if($pricing_estimate->approvedQuotation->salesOrder)
+                        {{-- Sales Order (only if approved) --}}
+                        @if($pricing_estimate->approvedQuotation->salesOrder && $pricing_estimate->approvedQuotation->salesOrder->so_status === 'approved')
                             <a href="{{ route('sales-orders.show', $pricing_estimate->approvedQuotation->salesOrder->id) }}" target="_blank"
                             class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
                                 S.O NO: #{{ $pricing_estimate->approvedQuotation->salesOrder->so_no }}
                             </a>
 
-                            {{-- Job Order --}}
+                            {{-- Job Order (only if SO is approved) --}}
                             @if($pricing_estimate->approvedQuotation->salesOrder->jobOrder)
                                 <a href="{{ route('job-orders.show', $pricing_estimate->approvedQuotation->salesOrder->jobOrder->id) }}" target="_blank"
                                 class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
@@ -193,7 +193,7 @@
                                         // force all checkboxes to reflect visually
                                         document.querySelectorAll('input[name=\'selected_items[]\']').forEach(el => el.checked = $event.target.checked);"
                                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mx-auto">
-                                    </th>
+                            </th>
                             <th class="px-2 py-4 w-16 whitespace-nowrap text-left text-sm font-medium text-gray-700 dark:text-gray-200">
                                 #
                             </th>
@@ -208,7 +208,12 @@
                             </th>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            @php $index = 1; @endphp
+                            @php 
+                                $index = 1; 
+                                $totalQty = 0;
+                                $totalAmount = 0;
+                            @endphp
+
                             @foreach ($pe_items as $pe_item)
                                 @if ($pe_item->is_offer)
                                     @continue
@@ -217,20 +222,26 @@
                                 @php
                                     $offers = $pe_items->where('parent_item_id', $pe_item->id);
                                     $hasOffers = $offers->isNotEmpty();
+                                    $unitPrice = $pe_item->final_unit_price ?? $pe_item->unit_price;
+                                    $lineAmount = $pe_item->quantity * $unitPrice;
+
+                                    if (!$hasOffers) {
+                                        $totalQty += $pe_item->quantity;
+                                        $totalAmount += $lineAmount;
+                                    }
                                 @endphp
 
                                 {{-- Parent Row --}}
                                 <tr class="font-semibold text-sm text-gray-800 dark:text-gray-100">
                                     <td class="px-2 py-4 text-center align-middle align-top">
                                         @if (!$hasOffers)
-                                       <input type="checkbox"
+                                        <input type="checkbox"
                                             name="selected_items[]"
                                             value="{{ $pe_item->id }}"
                                             @change="$event.target.checked 
                                                 ? $store.quotationSelection.selected.push({{ $pe_item->id }}) 
                                                 : $store.quotationSelection.selected = $store.quotationSelection.selected.filter(id => id !== {{ $pe_item->id }})"
                                             class="h-4 w-4 text-blue-600 border-gray-300 rounded">
-
                                         @endif
                                     </td>
                                     <td class="px-4 py-2">
@@ -246,17 +257,14 @@
                                             <div class="flex flex-col items-center">
                                                 <!-- Final / Discounted Price -->
                                                 <span class="text-base font-semibold text-gray-900 dark:text-white">
-                                                    {{ $pricing_estimate->currency->symbol }}{{ number_format($pe_item->final_unit_price ?? $pe_item->unit_price, 2) }}
+                                                    {{ $pricing_estimate->currency->symbol }}{{ number_format($unitPrice, 2) }}
                                                 </span>
 
                                                 @if ($pe_item->discount_amount > 0)
                                                     <div class="flex flex-col text-xs text-green-600 dark:text-green-400">
-                                                        <!-- Original Price with Strikethrough -->
                                                         <span class="line-through text-gray-500 dark:text-gray-400">
                                                             {{ $pricing_estimate->currency->symbol }}{{ number_format($pe_item->unit_price, 2) }}
                                                         </span>
-
-                                                        <!-- Discount Label -->
                                                         <span>
                                                             ({{ $pe_item->discount_type === 'percentage'
                                                                 ? $pe_item->discount_amount . '% off'
@@ -272,16 +280,18 @@
                                     </td>
                                 </tr>
 
-                                {{-- Offer Header --}}
+                                {{-- Offer Rows --}}
                                 @if ($hasOffers)
                                     <tr class="bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                                        {{-- <td></td>
-                                        <td></td> --}}
                                         <td colspan="5" class="px-4 py-2 text-center">Offer List</td>
                                     </tr>
 
-                                    {{-- Offer Rows --}}
                                     @foreach ($offers as $offer)
+                                        @php
+                                            $offerUnitPrice = $offer->final_unit_price ?? $offer->unit_price;
+                                            $totalQty += $offer->quantity;
+                                            $totalAmount += $offer->quantity * $offerUnitPrice;
+                                        @endphp
                                         <tr class="bg-blue-50 dark:bg-blue-900/30 text-sm text-gray-800 dark:text-gray-100">
                                             <td class="px-2 py-4 text-center align-middle">
                                                 <input type="checkbox"
@@ -291,29 +301,23 @@
                                                         ? $store.quotationSelection.selected.push({{ $offer->id }}) 
                                                         : $store.quotationSelection.selected = $store.quotationSelection.selected.filter(id => id !== {{ $offer->id }})"
                                                     class="h-4 w-4 text-blue-600 border-gray-300 rounded">
-
                                             </td>
-                                            <td class="px-4 py-2">
-                                            </td>
+                                            <td class="px-4 py-2"></td>
                                             <td class="px-4 py-2">
                                                 <div>{{ $offer->item_name }}</div>
                                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $offer->item_description }}</div>
                                             </td>
                                             <td class="px-4 py-2 text-center">{{ $offer->quantity }}</td>
                                             <td class="px-4 py-2 text-sm text-center">
-                                                <!-- Discounted Price -->
                                                 <span class="text-base font-semibold text-gray-900 dark:text-white">
-                                                    {{ $pricing_estimate->currency->symbol }}{{ number_format($offer->final_unit_price ?? $offer->unit_price, 2) }}
+                                                    {{ $pricing_estimate->currency->symbol }}{{ number_format($offerUnitPrice, 2) }}
                                                 </span>
 
                                                 @if ($offer->discount_amount > 0)
                                                     <div class="flex flex-col text-xs text-green-600 dark:text-green-400">
-                                                        <!-- Original Price with Strikethrough -->
                                                         <span class="line-through text-gray-500 dark:text-gray-400">
                                                             {{ $pricing_estimate->currency->symbol }} {{ number_format($offer->unit_price, 2) }}
                                                         </span>
-
-                                                        <!-- Discount Label -->
                                                         <span>
                                                             ({{ $offer->discount_type === 'percentage'
                                                                 ? $offer->discount_amount . '% off'
@@ -328,10 +332,27 @@
                                 @endif
                             @endforeach
                         </tbody>
+
+                        {{-- Totals --}}
+                        <tfoot class="bg-gray-100 dark:bg-gray-700 font-semibold">
+                            <tr>
+                                <td></td> <!-- Empty for checkbox column -->
+                                <td></td> <!-- Empty for # column -->
+                                <td class="px-4 py-2 text-right text-gray-700 dark:text-gray-200">Total</td>
+                                <td class="px-4 py-2 text-sm text-center text-gray-700 dark:text-gray-200">
+                                    {{ $totalQty }}
+                                </td>
+                                <td class="px-4 py-2 text-sm text-center text-gray-900 dark:text-white">
+                                    {{ $pricing_estimate->currency?->symbol ?? '' }}
+                                    {{ number_format($totalAmount, 2) }}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
         </div>
+
 
 
         @if($quotation->quote_status === 'pending')

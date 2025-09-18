@@ -207,6 +207,14 @@
                                         <template x-if="item.item_description">
                                             <div class="text-[10px] text-gray-400 dark:text-gray-500 italic mt-1" x-text="item.item_description"></div>
                                         </template>
+                                        <template x-if="item.pe_remarks">
+                                            <div class="text-[10px] text-green-400 dark:text-green-500 italic mt-1"
+                                                x-text="item.pe_remarks"></div>
+                                        </template>
+                                        <template x-if="item.notes">
+                                            <div class="text-[10px] text-blue-400 dark:text-blue-500 italic mt-1"
+                                                x-text="item.notes"></div>
+                                        </template>
                                     </div>
                                 </template>
 
@@ -262,39 +270,41 @@
                             
                             <!-- Actions -->
                             <td class="px-4 py-3 text-center space-x-2">
-                                @if (
-                                    $pricingEstimate->pe_status === 'pending' &&
-                                    !$pricingEstimate->quotations->contains(fn ($q) => $q->quote_status === 'approved' && $q->is_final)
-                                )
-                                    <!-- For offer rows -->
-                                    <template x-if="item.__type === 'offer'">
-                                        <div class="flex justify-center space-x-1">
-                                            <button type="button" 
-                                                    @click="openPriceModal(item)"
-                                                    class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
-                                                    title="Add Price">
-                                                <i class="fas fa-calculator"></i>
-                                            </button>
-
-                                            <button type="button" @click="removeOffer(item)"
-                                                class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-gray-700"
-                                                title="Remove Offer">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-
-                                    <!-- For parent rows without existing offers -->
-                                    <template x-if="item.__type === 'parent' && !hasOfferFor(item.id)">
+                                <!-- For offer rows -->
+                                <template x-if="item.__type === 'offer'">
+                                    <div class="flex justify-center space-x-1">
+                                        <!-- Add Price always visible -->
                                         <button type="button" 
                                                 @click="openPriceModal(item)"
                                                 class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
                                                 title="Add Price">
                                             <i class="fas fa-calculator"></i>
                                         </button>
-                                    </template>
 
-                                    <!-- For parent rows -->
+                                        @if ($pricingEstimate->pe_status === 'pending' &&
+                                            !$pricingEstimate->quotations->contains(fn ($q) => $q->quote_status === 'approved' && $q->is_final))
+                                            <button type="button" @click="removeOffer(item)"
+                                                class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-gray-700"
+                                                title="Remove Offer">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </template>
+
+                                <!-- For parent rows without existing offers -->
+                                <template x-if="item.__type === 'parent' && !hasOfferFor(item.id)">
+                                    <button type="button" 
+                                            @click="openPriceModal(item)"
+                                            class="text-blue-500 hover:text-blue-700 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700"
+                                            title="Add Price">
+                                        <i class="fas fa-calculator"></i>
+                                    </button>
+                                </template>
+
+                                <!-- For parent rows -->
+                                @if ($pricingEstimate->pe_status === 'pending' &&
+                                    !$pricingEstimate->quotations->contains(fn ($q) => $q->quote_status === 'approved' && $q->is_final))
                                     <template x-if="item.__type === 'parent'">
                                         <button type="button" 
                                                 @click="openOfferModal(item)"
@@ -305,9 +315,28 @@
                                     </template>
                                 @endif
                             </td>
+
                         </tr>
                     </template>
                 </tbody>
+                <tfoot class="bg-gray-100 dark:bg-gray-700 font-semibold">
+                    <tr>
+                        <td colspan="2" class="px-4 py-2 text-right text-gray-700 dark:text-gray-200">Total</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200">
+                            <span x-text="totalQuantity()"></span>
+                        </td>
+                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">
+                            {{ $pricingEstimate->currency?->symbol ?? '' }}
+                            <span x-text="formatCurrency(totalAmount())"></span>
+                        </td>
+                        @if (
+                            $pricingEstimate->pe_status === 'pending' &&
+                            !$pricingEstimate->quotations->contains(fn ($q) => $q->quote_status === 'approved' && $q->is_final)
+                        )
+                            <td></td>
+                        @endif
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -679,18 +708,21 @@
                         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded-md text-sm font-medium transition-colors">
                     Cancel
                 </button>
-                <button type="button" @click="applyPrice" :disabled="isSubmitting"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center min-w-[100px] disabled:opacity-70">
-                    <template x-if="!isSubmitting">
-                        <span>Apply Changes</span>
-                    </template>
-                    <template x-if="isSubmitting">
-                        <span class="flex items-center space-x-2">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <span>Applying...</span>
-                        </span>
-                    </template>
-                </button>
+
+                @if($pricingEstimate->pe_status !== 'approved')
+                    <button type="button" @click="applyPrice" :disabled="isSubmitting"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center min-w-[100px] disabled:opacity-70">
+                        <template x-if="!isSubmitting">
+                            <span>Apply Changes</span>
+                        </template>
+                        <template x-if="isSubmitting">
+                            <span class="flex items-center space-x-2">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Applying...</span>
+                            </span>
+                        </template>
+                    </button>
+                @endif
             </div>
         </div>
     </x-modal>
@@ -955,6 +987,22 @@ document.addEventListener('alpine:init', () => {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
+        },
+                
+        totalAmount() {
+            return this.displayItems()
+                .filter(i => i.__type === 'parent' || i.__type === 'offer')
+                .reduce((sum, i) => {
+                    const price = Number(i.final_unit_price ?? i.unit_price ?? 0) || 0;
+                    const qty   = Number(i.quantity) || 0;
+                    return sum + price * qty;
+                }, 0);
+        },
+
+        totalQuantity() {
+            return this.displayItems()
+                .filter(i => i.__type === 'parent' || i.__type === 'offer')
+                .reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
         },
 
         displayItems() {

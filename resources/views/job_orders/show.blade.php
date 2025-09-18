@@ -39,66 +39,111 @@
             </div>
         </div>
 
-        <!-- Job Order Info -->
-<div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-    <div class="flex justify-between items-center mb-2">
-        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
-            Job Order Information
-        </h2>
+        <!-- Job Order Information -->
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+            <!-- Header with links -->
+            <div class="flex items-center justify-between mb-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                    Job Order Information
+                </h2>
 
-        <span class="inline-flex flex-wrap gap-1">
-            {{-- Pricing Estimate --}}
-            @if($jobOrder->salesOrder && $jobOrder->salesOrder->quotation && $jobOrder->salesOrder->quotation->pricing_estimate)
-                <a href="{{ route('pricing-estimates.show', $jobOrder->salesOrder->quotation->pricing_estimate->id) }}" target="_blank"
-                   class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
-                    P.E NO: #{{ $jobOrder->salesOrder->quotation->pricing_estimate->pe_no }}
-                </a>
-            @endif
+                <span class="inline-flex flex-wrap gap-1">
+                    {{-- Pricing Estimate --}}
+                    @if($jobOrder->salesOrder?->quotation?->pricing_estimate)
+                        <a href="{{ url('pricing-estimates/' . $jobOrder->salesOrder->quotation->pricing_estimate->id . '/price-entry') }}" target="_blank"
+                        class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                            P.E NO: #{{ $jobOrder->salesOrder->quotation->pricing_estimate->pe_no }}
+                        </a>
+                    @endif
 
-            {{-- Quotation --}}
-            @if($jobOrder->salesOrder && $jobOrder->salesOrder->quotation)
-                <a href="{{ route('quotations.edit', $jobOrder->salesOrder->quotation->id) }}" target="_blank"
-                   class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
-                    Quotation NO: #{{ $jobOrder->salesOrder->quotation->quote_no }}
-                </a>
-            @endif
+                    {{-- Quotation --}}
+                    @if($jobOrder->salesOrder?->quotation)
+                        <a href="{{ route('quotations.edit', $jobOrder->salesOrder->quotation->id) }}" target="_blank"
+                        class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                            Quotation NO: #{{ $jobOrder->salesOrder->quotation->quote_no }}
+                        </a>
+                    @endif
 
-            {{-- Sales Order --}}
-            @if($jobOrder->salesOrder)
-                <a href="{{ route('sales-orders.show', $jobOrder->salesOrder->id) }}" target="_blank"
-                   class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
-                    S.O NO: #{{ $jobOrder->salesOrder->so_no }}
-                </a>
-            @endif
+                    {{-- Sales Order --}}
+                    @if($jobOrder->salesOrder)
+                        <a href="{{ route('sales-orders.show', $jobOrder->salesOrder->id) }}" target="_blank"
+                        class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                            S.O NO: #{{ $jobOrder->salesOrder->so_no }}
+                        </a>
+                    @endif
 
-            {{-- Job Order --}}
-            <a href="{{ route('job-orders.show', $jobOrder->id) }}" target="_blank"
-               class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
-                J.O NO: #{{ $jobOrder->jo_no }}
-            </a>
-        </span>
-    </div>
+                    {{-- Job Order --}}
+                    <a href="{{ route('job-orders.show', $jobOrder->id) }}" target="_blank"
+                    class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                        J.O NO: #{{ $jobOrder->jo_no }}
+                    </a>
+                </span>
+            </div>
 
-    <hr class="border-t border-gray-300 dark:border-gray-600 mb-4">
+            <!-- Info Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Customer</p>
+                    <p class="font-medium">{{ $jobOrder->salesOrder?->customer->name ?? 'N/A' }}</p>
+                </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Sales Order</p>
-            <p class="font-medium">{{ optional($jobOrder->salesOrder)->so_no ?? 'N/A' }}</p>
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Attention</p>
+                    <p class="font-medium">{{ $jobOrder->salesOrder?->attention ?? '—' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Sales Representative</p>
+                    <p class="font-medium">{{ optional($jobOrder->salesOrder?->salesRep?->employee)->full_name ?? '—' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">PR Number</p>
+                    <p class="font-medium">{{ $jobOrder->salesOrder?->pr_no ?? '—' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">PO Number</p>
+                    <p class="font-medium">{{ $jobOrder->salesOrder?->po_no ?? '—' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">SO Due Date</p>
+                    <p class="font-medium">{{ $jobOrder->duedate ? $jobOrder->duedate->format('M d, Y') : 'N/A' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">JO Number</p>
+                    <p class="font-medium">{{ $jobOrder->jo_no ?? 'N/A' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">VAT</p>
+                    <p class="font-medium">{{ $jobOrder->salesOrder?->tax_status ?? 'N/A' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Currency</p>
+                    <p class="font-medium">{{ $jobOrder->salesOrder?->currency?->name ?? 'N/A' }}</p>
+                </div>
+
+                <!-- Status (only one, full width) -->
+                <div class="md:col-span-3">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                    <p class="font-medium">
+                        @php $status = $jobOrder->jo_status; @endphp
+                        @if($status === 'approved')
+                            <span class="text-green-600 dark:text-green-400">Approved</span>
+                        @elseif($status === 'rejected')
+                            <span class="text-red-600 dark:text-red-400">Rejected</span>
+                        @else
+                            <x-status-badge :status="$status">{{ ucfirst($status) }}</x-status-badge>
+                        @endif
+                    </p>
+                </div>
+            </div>
         </div>
-        <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
-            <p class="font-medium">{{ $jobOrder->duedate ? $jobOrder->duedate->format('M d, Y') : 'N/A' }}</p>
-        </div>
-        <div>
-            @php
-                $status = $jobOrder->jo_status;
-            @endphp
-            <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
-            <x-status-badge :status="$jobOrder->jo_status">{{ ucfirst($status) }}</x-status-badge>
-        </div>
-    </div>
-</div>
+
 
 
         <!-- Instructions and Delivery -->
@@ -157,5 +202,14 @@
             </div>
         </div>
         @endif
+    </div>
+        <div class="w-full flex justify-center mb-10">
+        <a href="{{ route('reports.jobOrder', $jobOrder->jo_no) }}" target="_blank"
+           class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg 
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 transition flex items-center gap-2"
+           title="Print Job Order">
+            <i class="fas fa-print text-sm"></i>
+            Print Job Order
+        </a>
     </div>
 </x-layouts.app>

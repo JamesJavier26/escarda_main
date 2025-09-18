@@ -71,10 +71,10 @@
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
             <div class="flex items-center justify-between mb-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                 <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Order Information</h2>
-            <span class="inline-flex flex-wrap gap-1">
+                <span class="inline-flex flex-wrap gap-1">
                     {{-- Pricing Estimate --}}
                     @if($salesOrder->quotation?->pricing_estimate)
-                        <a href="{{ route('pricing-estimates.show', $salesOrder->quotation->pricing_estimate->id) }}" target="_blank"
+                        <a href="{{ url('pricing-estimates/' . $salesOrder->quotation->pricing_estimate->id . '/price-entry') }}" target="_blank"
                         class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
                             P.E NO: #{{ $salesOrder->quotation->pricing_estimate->pe_no }}
                         </a>
@@ -88,18 +88,20 @@
                         </a>
                     @endif
 
-                    {{-- Sales Order --}}
-                    <a href="{{ route('sales-orders.show', $salesOrder->id) }}" target="_blank"
-                    class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
-                        S.O NO: #{{ $salesOrder->so_no }}
-                    </a>
-
-                    {{-- Job Order --}}
-                    @if($salesOrder->jobOrder)
-                        <a href="{{ route('job-orders.show', $salesOrder->jobOrder->id) }}" target="_blank"
-                        class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
-                            J.O NO: #{{ $salesOrder->jobOrder->jo_no }}
+                    {{-- Sales Order (only if approved) --}}
+                    @if($salesOrder->so_status === 'approved')
+                        <a href="{{ route('sales-orders.show', $salesOrder->id) }}" target="_blank"
+                        class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                            S.O NO: #{{ $salesOrder->so_no }}
                         </a>
+
+                        {{-- Job Order (only if SO is approved) --}}
+                        @if($salesOrder->jobOrder)
+                            <a href="{{ route('job-orders.show', $salesOrder->jobOrder->id) }}" target="_blank"
+                            class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                                J.O NO: #{{ $salesOrder->jobOrder->jo_no }}
+                            </a>
+                        @endif
                     @endif
                 </span>
             </div>

@@ -46,15 +46,12 @@ class SalesOrderController extends Controller
 
         // Role-based visibility
         if ($user->hasRole(['super-admin', 'admin'])) {
-            $query->where(function ($q) use ($userId) {
-                $q->where('so_status', '!=', 'draft')
-                ->orWhere('sr_id', $userId); // allow own drafts
-            });
         } elseif ($user->hasRole(['operation-manager', 'sales-secretary', 'sales-manager'])) {
             $query->where('so_status', '!=', 'draft');
         } else {
             $query->where('sr_id', $userId);
         }
+
 
         // 🔍 Search
         if ($search = $request->input('search')) {

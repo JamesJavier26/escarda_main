@@ -48,7 +48,7 @@
                 </h2>
                 <span class="inline-flex flex-wrap gap-1">
                     {{-- Pricing Estimate --}}
-                    <a href="{{ route('pricing-estimates.show', $pricingEstimate->id) }}" target="_blank"
+                    <a href="{{ url('pricing-estimates/' . $pricingEstimate->id . '/price-entry') }}" target="_blank"
                     class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
                         P.E NO: #{{ $pricingEstimate->pe_no }}
                     </a>
@@ -60,14 +60,14 @@
                             Quotation NO: #{{ $pricingEstimate->approvedQuotation->quote_no }}
                         </a>
 
-                        {{-- Sales Order --}}
-                        @if($pricingEstimate->approvedQuotation->salesOrder)
+                        {{-- Sales Order (only if approved) --}}
+                        @if($pricingEstimate->approvedQuotation->salesOrder && $pricingEstimate->approvedQuotation->salesOrder->so_status === 'approved')
                             <a href="{{ route('sales-orders.show', $pricingEstimate->approvedQuotation->salesOrder->id) }}" target="_blank"
                             class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
                                 S.O NO: #{{ $pricingEstimate->approvedQuotation->salesOrder->so_no }}
                             </a>
 
-                            {{-- Job Order --}}
+                            {{-- Job Order (only if SO is approved) --}}
                             @if($pricingEstimate->approvedQuotation->salesOrder->jobOrder)
                                 <a href="{{ route('job-orders.show', $pricingEstimate->approvedQuotation->salesOrder->jobOrder->id) }}" target="_blank"
                                 class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
