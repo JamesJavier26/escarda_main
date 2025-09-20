@@ -290,8 +290,23 @@ public function update(Request $request, JobOrder $jobOrder)
 
     public function destroy(JobOrder $jobOrder)
     {
-        // Optional: handle hard deletes if required
+        try {
+            // Delete the job order
+            $jobOrder->delete();
+
+            // Redirect back with success message
+            return redirect()->route('job-orders.index')
+                            ->with('success', 'Job Order deleted successfully.');
+        } catch (\Exception $e) {
+            // Optional: log the error
+            \Log::error('Job Order deletion failed: '.$e->getMessage());
+
+            // Redirect back with error message
+            return redirect()->route('job-orders.index')
+                            ->with('error', 'Failed to delete Job Order. Please try again.');
+        }
     }
+
 
     public function activate(JobOrder $jobOrder)
     {
@@ -344,20 +359,18 @@ public function update(Request $request, JobOrder $jobOrder)
             }
         }
 
-        // Approve the job order
+        // Approve the job order and log the approver
         $jobOrder->update([
             'jo_status'       => 'approved',
             'approval_status' => 'approved',
             'approval_date'   => now(),
-            'approved_by'     => auth()->id(),
+            'approved_by'     => auth()->id(), // added
         ]);
 
         return redirect()
             ->route('job-orders.index')
             ->with('success', 'Job Order approved successfully.');
     }
-
-
 
     public function cancel(JobOrder $jobOrder)
     {

@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('approval_status')->nullable();
             $table->boolean('is_delivered')->default(false)->after('approval_status');
             $table->timestamp('approval_date')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

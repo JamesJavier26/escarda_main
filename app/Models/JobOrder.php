@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class JobOrder extends Model
 {
     protected $fillable = [
-        'jo_no', 'sales_order_id', 'user_id','duedate','remarks', 'instructions', 'delivery_details','jo_status' ,'approval_status', 'approval_date', 'is_delivered',
+        'jo_no', 'sales_order_id', 'user_id','duedate','remarks', 'instructions', 'delivery_details',
+        'jo_status' ,'approval_status', 'approval_date','approved_by', 'is_delivered',
     ];
     protected $casts = [
         'duedate' => 'datetime',
@@ -56,5 +57,9 @@ class JobOrder extends Model
     public function isPending()
     {
         return $this->approval_status === 'pending';
+    }
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

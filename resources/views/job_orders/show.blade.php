@@ -48,36 +48,44 @@
                 </h2>
 
                 <span class="inline-flex flex-wrap gap-1">
-                    {{-- Pricing Estimate --}}
-                    @if($jobOrder->salesOrder?->quotation?->pricing_estimate)
-                        <a href="{{ url('pricing-estimates/' . $jobOrder->salesOrder->quotation->pricing_estimate->id . '/price-entry') }}" target="_blank"
-                        class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
-                            P.E NO: #{{ $jobOrder->salesOrder->quotation->pricing_estimate->pe_no }}
-                        </a>
-                    @endif
-
-                    {{-- Quotation --}}
-                    @if($jobOrder->salesOrder?->quotation)
-                        <a href="{{ route('quotations.edit', $jobOrder->salesOrder->quotation->id) }}" target="_blank"
-                        class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
-                            Quotation NO: #{{ $jobOrder->salesOrder->quotation->quote_no }}
-                        </a>
-                    @endif
-
-                    {{-- Sales Order --}}
-                    @if($jobOrder->salesOrder)
-                        <a href="{{ route('sales-orders.show', $jobOrder->salesOrder->id) }}" target="_blank"
-                        class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
-                            S.O NO: #{{ $jobOrder->salesOrder->so_no }}
-                        </a>
-                    @endif
-
-                    {{-- Job Order --}}
-                    <a href="{{ route('job-orders.show', $jobOrder->id) }}" target="_blank"
-                    class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
-                        J.O NO: #{{ $jobOrder->jo_no }}
+                {{-- Pricing Estimate --}}
+                @if($jobOrder->salesOrder?->quotation?->pricing_estimate)
+                    <a href="{{ url('pricing-estimates/' . $jobOrder->salesOrder->quotation->pricing_estimate->id . '/price-entry') }}" target="_blank"
+                    class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                        P.E NO: #{{ $jobOrder->salesOrder->quotation->pricing_estimate->pe_no }}
                     </a>
-                </span>
+                @endif
+
+                {{-- Quotation --}}
+                @if($jobOrder->salesOrder?->quotation)
+                    <a href="{{ route('quotations.edit', $jobOrder->salesOrder->quotation->id) }}" target="_blank"
+                    class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                        Quotation NO: #{{ $jobOrder->salesOrder->quotation->quote_no }}
+                    </a>
+                @endif
+
+                {{-- Sales Order --}}
+                @if($jobOrder->salesOrder)
+                    <a href="{{ route('sales-orders.show', $jobOrder->salesOrder->id) }}" target="_blank"
+                    class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                        S.O NO: #{{ $jobOrder->salesOrder->so_no }}
+                    </a>
+                @endif
+
+                {{-- Job Order --}}
+                <a href="{{ route('job-orders.show', $jobOrder->id) }}" target="_blank"
+                class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                    J.O NO: #{{ $jobOrder->jo_no }}
+                </a>
+
+                {{-- Product Detail Report --}}
+                @if($jobOrder->productionDetailReports && $jobOrder->productionDetailReports->isNotEmpty())
+                    <a href="{{ route('production-detail-reports.show', $jobOrder->productionDetailReports->first()->id) }}" target="_blank"
+                    class="bg-purple-900 text-purple-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-purple-800">
+                        P.D.R NO: #{{ $jobOrder->productionDetailReports->first()->id }}
+                    </a>
+                @endif
+            </span>
             </div>
 
             <!-- Info Grid -->

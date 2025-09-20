@@ -224,17 +224,22 @@ class QuotationController extends Controller
                 'pe_status' => 'approved',
             ]);
         }
-        notify_user(
-            $quotation->pricing_estimate->sr_id, 
-            'Quotation Approved',
-            "Quotation #{$quotation->quote_no} has been approved.",
-            [
-                'action_button' => [
-                    'label' => 'View Quotation',
-                    'url' => route('quotations.edit', $quotation->id),
-                ]
-            ]
-        );
+        if ($quotation->pricing_estimate) {
+                notify_user(
+                    $quotation->pricing_estimate->sr_id,
+                    'Quotation Disapproved',
+                    "Quotation #{$quotation->quote_no} has been disapproved. {$quotation->revision_reason}",
+                    [
+                        // ⚠️ Only keep this if notify_user supports attachments
+                        // 'attachment' => $pdfPath,  
+
+                        'action_button' => [
+                            'label' => 'Revise Pricing',
+                            'url'   => route('pricing-estimates.price-entry', $quotation->pricing_estimate->id),
+                        ]
+                    ]
+                );
+            }
         // return redirect()->route('quotations.edit', $quotation)->with('success', 'Quotation has been approved.');
         return redirect()->back()->with('success', 'Quotation has been approved.');
     }

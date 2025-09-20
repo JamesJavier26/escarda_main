@@ -234,99 +234,112 @@
                             focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
+{{-- Ply Section --}}
+<div class="mt-6" 
+    x-data="{ 
+        ply: @js(old('ply', $report->ply ?? '0')), 
+        plyType: @js(old('ply_types', $report->ply_types ?? '')),
+        resetPly() { 
+            if (this.ply == '0') { 
+                this.plyType = ''; 
+            }
+        }
+    }"
+    x-init="resetPly()"
+    x-watch="ply" @watch="resetPly()">
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ply</label>
+    <div class="flex items-center space-x-6">
+        <label class="inline-flex items-center">
+            <input type="radio" name="ply" value="1" x-model="ply" class="text-blue-600 focus:ring-blue-500">
+            <span class="ml-2">Yes</span>
+        </label>
+        <label class="inline-flex items-center">
+            <input type="radio" name="ply" value="0" x-model="ply" class="text-blue-600 focus:ring-blue-500">
+            <span class="ml-2">No</span>
+        </label>
+    </div>
 
-            {{-- Ply Section --}}
-            <div class="mt-6" 
-                x-data="{ 
-                    ply: '{{ old('ply', $report->ply ?? 0) }}', 
-                    plyType: '{{ old('ply_types', $report->ply_types ?? '') }}'
-                }">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ply</label>
-                <div class="flex items-center space-x-6">
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="ply" value="1" x-model="ply"
-                            class="text-blue-600 focus:ring-blue-500">
-                        <span class="ml-2">Yes</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="ply" value="0" x-model="ply"
-                            class="text-blue-600 focus:ring-blue-500">
-                        <span class="ml-2">No</span>
-                    </label>
-                </div>
+    <!-- Show subchoices if plyType already has value OR ply == '1' -->
+    <div x-show="plyType !== '' || ply == '1'" x-cloak class="mt-2 space-y-2">
+        <div class="flex gap-4">
+            <template x-for="type in ['clothe','metal','others']" :key="type">
+                <label class="inline-flex items-center">
+                    <input type="radio" 
+                        name="ply_types" 
+                        :value="type" 
+                        x-model="plyType"
+                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-offset-0 focus:ring-blue-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700">
+                    <span class="ml-2" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></span>
+                </label>
+            </template>
+        </div>
 
-                <!-- Ply Options: only show if Yes is selected -->
-                <div x-show="ply == '1'" class="mt-2 space-y-2">
-                    <div class="flex gap-4">
-                        <template x-for="type in ['clothe','metal','others']" :key="type">
-                            <label class="inline-flex items-center">
-                                <input type="radio" 
-                                    name="ply_types" 
-                                    :value="type" 
-                                    x-model="plyType"
-                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-offset-0 focus:ring-blue-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700">
-                                <span class="ml-2" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></span>
-                            </label>
-                        </template>
-                    </div>
-
-                    <!-- Text field only shows if 'others' is selected -->
-                    <input type="text" 
-                        name="ply_type_others" 
-                        placeholder="If others, specify"
-                        x-show="plyType === 'others'" 
-                        x-bind:required="plyType === 'others'"
-                        class="w-full px-4 py-2 mt-1 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value="{{ old('ply_type_others', $report->ply_type_others ?? '') }}">
-                </div>
-            </div>
-
-
-            {{-- Metal Insert --}}
-            <div class="mt-6" 
-                x-data="{ 
-                    metalInsert: '{{ old('metal_insert', $report->metal_insert ?? 0) }}',
-                    metalType: '{{ old('metal_insert_types', $report->metal_insert_types ?? '') }}'
-                }">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Metal Insert</label>
-                
-                <div class="flex items-center space-x-6">
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="metal_insert" value="1" x-model="metalInsert"
-                            class="text-blue-600 focus:ring-blue-500">
-                        <span class="ml-2">Yes</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="metal_insert" value="0" x-model="metalInsert"
-                            class="text-blue-600 focus:ring-blue-500">
-                        <span class="ml-2">No</span>
-                    </label>
-                </div>
-
-                <!-- Metal Insert Options: only show if Yes is selected -->
-                <div x-show="metalInsert === '1'" class="mt-2 space-y-2">
-                    <div class="flex gap-4">
-                        @foreach(['screws', 'bolt_nuts', 'plate'] as $type)
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" 
-                                    name="metal_insert_types" 
-                                    value="{{ $type }}"
-                                    @checked(old('metal_insert_types', $report->metal_insert_types ?? '') === $type)
-                                    class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-offset-0 focus:ring-blue-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700">
-                                <span class="ml-2">{{ ucwords(str_replace('_', ' ', $type)) }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Details field (always shown with options) -->
-                <input type="text" name="metal_insert_details" placeholder="Details..."
-                    value="{{ old('metal_insert_details', $report->metal_insert_details ?? '') }}"
-                    class="w-full px-4 py-2 mt-1 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+        <!-- Text field only shows if 'others' is selected -->
+        <input type="text" 
+            name="ply_type_others" 
+            placeholder="If others, specify"
+            x-show="plyType === 'others'" 
+            x-bind:required="plyType === 'others'"
+            class="w-full px-4 py-2 mt-1 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value="{{ old('ply_type_others', $report->ply_type_others ?? '') }}">
+    </div>
+</div>
 
 
+{{-- Metal Insert --}}
+<div class="mt-6" 
+    x-data="{ 
+        metalInsert: @js(old('metal_insert', $report->metal_insert ?? '0')),
+        metalType: @js(old('metal_insert_types', $report->metal_insert_types ?? '')),
+        resetMetal() { 
+            if (this.metalInsert == '0') { 
+                this.metalType = ''; 
+                $refs.metalDetails.value = ''; 
+            }
+        }
+    }"
+    x-init="resetMetal()"
+    x-watch="metalInsert" @watch="resetMetal()">
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Metal Insert</label>
     
+    <div class="flex items-center space-x-6">
+        <label class="inline-flex items-center">
+            <input type="radio" name="metal_insert" value="1" x-model="metalInsert" class="text-blue-600 focus:ring-blue-500">
+            <span class="ml-2">Yes</span>
+        </label>
+        <label class="inline-flex items-center">
+            <input type="radio" name="metal_insert" value="0" x-model="metalInsert" class="text-blue-600 focus:ring-blue-500">
+            <span class="ml-2">No</span>
+        </label>
+    </div>
+
+    <!-- Show subchoices if metalType already has value OR metalInsert == '1' -->
+    <div x-show="metalType !== '' || metalInsert == '1'" x-cloak class="mt-2 space-y-2">
+        <div class="flex gap-4">
+            @foreach(['screws', 'bolt_nuts', 'plate'] as $type)
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" 
+                        name="metal_insert_types" 
+                        value="{{ $type }}"
+                        x-model="metalType"
+                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-offset-0 focus:ring-blue-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700">
+                    <span class="ml-2">{{ ucwords(str_replace('_', ' ', $type)) }}</span>
+                </label>
+            @endforeach
+        </div>
+
+        <!-- Details field (resets when selecting No) -->
+        <input type="text" 
+            x-ref="metalDetails"
+            name="metal_insert_details" 
+            placeholder="Details..."
+            value="{{ old('metal_insert_details', $report->metal_insert_details ?? '') }}"
+            class="w-full px-4 py-2 mt-1 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+</div>
+
+
+
 
             {{-- Remarks --}}
             <div class="mt-4">
@@ -354,12 +367,15 @@
             <!-- Header -->
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Production Entries</h3>
-                <button type="button"
-                        @click="openModal()"
-                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Create PDR
-                </button>
+                @if ($editing && $report->pdr_status !== 'completed')
+                    <button type="button"
+                            @click="openModal()"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Create PDR
+                    </button>
+                @endif
             </div>
+
 
             <!-- Table -->
             <div class="overflow-x-auto rounded shadow-md">
@@ -409,7 +425,6 @@
             </div>
 
 
-        <!-- Entry Modal -->
             <!-- Entry Modal -->
 <x-modal name="entry-modal" maxWidth="6xl" x-show="showModal" x-cloak>
     <div class="p-6 max-h-[80vh] overflow-y-auto">
@@ -635,34 +650,36 @@
         </a>
 
         {{-- Save Button --}}
-        <button type="button"
-                @click="confirmSave($event)"
-                :disabled="isSubmitting"
-                class="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white 
-                    bg-blue-600 hover:bg-blue-700 
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-            <span x-show="!isSubmitting">Save Changes</span>
-            <span x-show="isSubmitting">Saving...</span>
-        </button>
+        @if ($editing && $report->pdr_status !== 'completed')
+            {{-- Save Button --}}
+            <button type="button"
+                    @click="confirmSave($event)"
+                    :disabled="isSubmitting"
+                    class="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white 
+                        bg-blue-600 hover:bg-blue-700 
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                <span x-show="!isSubmitting">Save Changes</span>
+                <span x-show="isSubmitting">Saving...</span>
+            </button>
+        @endif
     </div>
 
-    {{-- RIGHT: Submit Report --}}
-    @if ($report->status !== 'completed' && $editing && $report->entries->last()?->remaining_balance == 0)
-        <div class="flex space-x-2">
-            <!-- New Generate PDR Link -->
-                <a href="{{ route('reports.pdr', $report->id) }}" target="_blank"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm inline-flex items-center">
-                    <i class="fas fa-file-alt mr-1"></i> Generate PDR
-                </a>
-            <!-- Existing Submit Report Button -->
+    <div class="flex space-x-2">
+        <!-- Generate PDR Link (always visible) -->
+        <a href="{{ route('reports.pdr', $report->id) }}" target="_blank"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm inline-flex items-center">
+            <i class="fas fa-file-alt mr-1"></i> Generate PDR
+        </a>
+
+        {{-- Submit Report button (only show if not completed + editing + balance is 0) --}}
+        @if ($report->pdr_status !== 'completed' && $editing && $report->entries->isNotEmpty() && $report->entries->last()->remaining_balance === 0)
             <button type="button"
                 onclick="confirmSubmit()"
                 class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm shadow-sm">
                 <i class="fas fa-check-circle mr-1"></i> Submit Report
             </button>
-        </div>
-    @endif
-
+        @endif
+    </div>
 </div>
 
 </form>
@@ -721,38 +738,16 @@ function productionEntries({ reportId, initialPressmanName }) {
         showModal: false,
         isSubmitting: false,
         entries: [],
-        units: [], // store units here
-        form: {
-            id: null,
-            production_detail_report_id: reportId,
-            pressman_id: window.initialPressmanId || null,
-            production_date: '',
-            daily_output: '',
-            reject_quantity: '',
-            day_no: '',
-            press_no: '',
-            temp_setting: '',
-            start_time: '',
-            process_duration: '',
-            insert_details: '',
-            beginning_weight_rawmat: '',
-            ending_weight_rawmat: '',
-            rawmat_size_salang: '',
-            rawmat_weight_salang: '',
-            overflow_weight_salang: '',
-            actual_finish_product_weight: '',
-            remarks: '',
-            qty_to_be_produced: '',
-            remaining_balance: '',
-            thickness_unit: '', // selected unit
-        },
+        originalQty: null, // fixed qty set by first entry
+        form: {},
 
         init() {
+            this.resetForm();
             this.fetchJoItem();
             this.fetchEntries();
         },
 
-        // fetch JO item
+        // Fetch JO item
         async fetchJoItem() {
             try {
                 const response = await fetch(`/production-detail-reports/${this.reportId}/item`);
@@ -763,43 +758,42 @@ function productionEntries({ reportId, initialPressmanName }) {
                     customer_name: this.selectedJoItemObj.customer_name || '',
                     jo_item_obj: this.selectedJoItemObj
                 };
-
-                // if JO item has a unit defined, set form.unit_id
-                if (this.selectedJoItemObj.unit_id) {
-                    this.form.unit_id = this.selectedJoItemObj.unit_id;
-                }
             } catch (err) {
                 console.error('fetchJoItem error:', err);
             }
         },
 
+        // Fetch entries
         async fetchEntries() {
             try {
                 const response = await fetch(`/production-detail-reports/${this.reportId}/entries`);
                 if (!response.ok) throw new Error('Failed to fetch entries');
                 this.entries = (await response.json()).sort((a, b) => a.day_no - b.day_no);
 
-                this.originalQtyToBeProduced = this.entries[0]?.qty_to_be_produced || null;
+                if (this.entries.length > 0) {
+                    this.originalQty = this.entries[0].qty_to_be_produced;
+                    this.form.unit_id = this.entries[0].unit_id; // ✅ retain the same unit
+                } else {
+                    this.originalQty = null;
+                }
 
-                console.log('Original qty_to_be_produced:', this.originalQtyToBeProduced);
-                this.entries.forEach(entry => {
-                    console.log(`Day ${entry.day_no}: remaining_balance = ${entry.remaining_balance}`);
-                });
+                console.log('Original qty_to_be_produced:', this.originalQty);
             } catch (err) {
                 console.error('fetchEntries error:', err);
             }
         },
 
+        // Open modal (new or edit)
         openModal(entry = null) {
             this.resetForm();
 
             if (entry) {
                 this.form = { ...this.form, ...entry };
             } else {
-                this.form.qty_to_be_produced = this.originalQtyToBeProduced;
-                const lastEntryWithBalance = [...this.entries].reverse().find(e => e.remaining_balance != null);
-                this.form.remaining_balance = lastEntryWithBalance
-                    ? lastEntryWithBalance.remaining_balance
+                this.form.qty_to_be_produced = this.originalQty; 
+                const lastEntry = [...this.entries].reverse().find(e => e.remaining_balance != null);
+                this.form.remaining_balance = lastEntry
+                    ? lastEntry.remaining_balance
                     : this.form.qty_to_be_produced;
             }
 
@@ -810,6 +804,7 @@ function productionEntries({ reportId, initialPressmanName }) {
         editEntry(entry) {
             this.openModal(entry);
         },
+
         closeModal() {
             this.showModal = false;
             this.$dispatch('close-modal', 'entry-modal');
@@ -834,44 +829,36 @@ function productionEntries({ reportId, initialPressmanName }) {
         },
 
         resetForm() {
-            this.form = {
-                id: null,
-                production_detail_report_id: this.reportId,
-                pressman_id: this.pressmanId,
-                production_date: '',
-                daily_output: '',
-                reject_quantity: '',
-                day_no: '',
-                press_no: '',
-                temp_setting: '',
-                start_time: '',
-                process_duration: '',
-                insert_details: '',
-                beginning_weight_rawmat: '',
-                ending_weight_rawmat: '',
-                rawmat_size_salang: '',
-                rawmat_weight_salang: '',
-                overflow_weight_salang: '',
-                actual_finish_product_weight: '',
-                remarks: '',
-                qty_to_be_produced: this.form.qty_to_be_produced || '',
-                remaining_balance: this.form.remaining_balance || '',
-                unit_id: this.form.unit_id || '',
-            };
-        },
+        this.form = {
+            id: null,
+            production_detail_report_id: this.reportId,
+            pressman_id: this.pressmanId,
+            production_date: '',
+            daily_output: '',
+            reject_quantity: '',
+            day_no: '',
+            press_no: '',
+            temp_setting: '',
+            start_time: '',
+            process_duration: '',
+            insert_details: '',
+            beginning_weight_rawmat: '',
+            ending_weight_rawmat: '',
+            rawmat_size_salang: '',
+            rawmat_weight_salang: '',
+            overflow_weight_salang: '',
+            actual_finish_product_weight: '',
+            remarks: '',
+            qty_to_be_produced: this.originalQty || '',
+            remaining_balance: '',
+            unit_id: this.form?.unit_id || '',
+        };
+    },
+
 
         onDailyOutputChange() {
-            if (!this.form.daily_output) {
-                this.form.remaining_balance = this.entries.length > 0
-                    ? this.entries[this.entries.length - 1].remaining_balance
-                    : this.form.qty_to_be_produced;
-                return;
-            }
-
             const dailyOutput = Number(this.form.daily_output || 0);
-            const originalQty = this.entries.length > 0
-                ? Number(this.entries[0].qty_to_be_produced)
-                : Number(this.form.qty_to_be_produced || 0);
+            const baseQty = Number(this.originalQty || this.form.qty_to_be_produced || 0);
 
             let previousOutput = 0;
             if (this.form.id) {
@@ -880,93 +867,76 @@ function productionEntries({ reportId, initialPressmanName }) {
                     previousOutput += Number(e.daily_output || 0);
                 }
             } else {
-                previousOutput = originalQty - (this.entries.length > 0 ? this.entries[this.entries.length - 1].remaining_balance : originalQty);
+                previousOutput = this.entries.reduce((sum, e) => sum + Number(e.daily_output || 0), 0);
             }
 
-            this.form.remaining_balance = Math.max(originalQty - (previousOutput + dailyOutput), 0);
+            this.form.remaining_balance = Math.max(baseQty - (previousOutput + dailyOutput), 0);
         },
 
         async saveEntry() {
-        this.isSubmitting = true;
-        try {
-            const isEdit = !!this.form.id;
-            const url = isEdit
-                ? `/production-detail-entries/${this.form.id}`
-                : `/production-detail-reports/${this.reportId}/entries`;
-            const method = isEdit ? 'PUT' : 'POST';
+            this.isSubmitting = true;
+            try {
+                const isEdit = !!this.form.id;
+                const url = isEdit
+                    ? `/production-detail-entries/${this.form.id}`
+                    : `/production-detail-reports/${this.reportId}/entries`;
+                const method = isEdit ? 'PUT' : 'POST';
 
-            // Read unit_id from the hidden input to ensure it posts correctly
-            const unitIdInput = document.querySelector('input[name="unit_id"]');
-            const unit_id = unitIdInput ? Number(unitIdInput.value) : null;
+                // Payload: always include qty on first save, ignore afterwards
+                const payload = {
+                    production_date: this.form.production_date,
+                    daily_output: this.form.daily_output,
+                    reject_quantity: this.form.reject_quantity,
+                    day_no: this.form.day_no,
+                    press_no: this.form.press_no,
+                    temp_setting: this.form.temp_setting,
+                    start_time: this.form.start_time,
+                    process_duration: this.form.process_duration,
+                    insert_details: this.form.insert_details,
+                    beginning_weight_rawmat: this.form.beginning_weight_rawmat,
+                    ending_weight_rawmat: this.form.ending_weight_rawmat,
+                    rawmat_size_salang: this.form.rawmat_size_salang,
+                    rawmat_weight_salang: this.form.rawmat_weight_salang,
+                    overflow_weight_salang: this.form.overflow_weight_salang,
+                    actual_finish_product_weight: this.form.actual_finish_product_weight,
+                    remarks: this.form.remarks,
+                    unit_id: this.form.unit_id,
+                    ...(this.entries.length === 0 ? { qty_to_be_produced: this.form.qty_to_be_produced } : {}),
+                };
 
-            const payload = {
-                production_date: this.form.production_date,
-                daily_output: this.form.daily_output,
-                reject_quantity: this.form.reject_quantity,
-                day_no: this.form.day_no,
-                press_no: this.form.press_no,
-                temp_setting: this.form.temp_setting,
-                start_time: this.form.start_time,
-                process_duration: this.form.process_duration,
-                insert_details: this.form.insert_details,
-                beginning_weight_rawmat: this.form.beginning_weight_rawmat,
-                ending_weight_rawmat: this.form.ending_weight_rawmat,
-                rawmat_size_salang: this.form.rawmat_size_salang,
-                rawmat_weight_salang: this.form.rawmat_weight_salang,
-                overflow_weight_salang: this.form.overflow_weight_salang,
-                actual_finish_product_weight: this.form.actual_finish_product_weight,
-                remarks: this.form.remarks,
-                qty_to_be_produced: this.originalQtyToBeProduced,
-                unit_id: unit_id, // use hidden input value
-            };
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(payload)
-            });
+                const data = await response.json();
 
-            let data;
-            try { data = await response.clone().json(); } catch { data = { message: await response.clone().text() }; }
-
-            if (!response.ok) {
-                if (response.status === 422 && data.errors) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Validation Failed',
-                        html: Object.values(data.errors).flat().join('<br>')
-                    });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Save Failed', html: data.message || 'Something went wrong.' });
+                if (!response.ok) {
+                    if (response.status === 422 && data.errors) {
+                        Swal.fire({ icon: 'error', title: 'Validation Failed', html: Object.values(data.errors).flat().join('<br>') });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Save Failed', html: data.message || 'Something went wrong.' });
+                    }
+                    return;
                 }
-                return;
+
+                await this.fetchEntries();
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Entry saved successfully!', showConfirmButton: false, timer: 2500 });
+
+                this.closeModal();
+            } catch (err) {
+                console.error('saveEntry error:', err);
+                Swal.fire({ icon: 'error', title: 'Unexpected Error', text: err.message });
+            } finally {
+                this.isSubmitting = false;
             }
-
-            await this.fetchEntries();
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Entry saved successfully!',
-                showConfirmButton: false,
-                timer: 2500
-            });
-
-            this.closeModal();
-        } catch (err) {
-            console.error('saveEntry error:', err);
-            Swal.fire({ icon: 'error', title: 'Unexpected Error', text: err.message });
-        } finally {
-            this.isSubmitting = false;
         }
-    }
     };
 }
-
-
 
 
 function jobOrderSelect(isEditMode) {

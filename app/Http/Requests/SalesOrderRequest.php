@@ -27,9 +27,11 @@ class SalesOrderRequest extends FormRequest
             ]);
         }
 
-        $this->merge([
-            'sr_id' => auth()->id(),
-        ]);
+        if (!$this->has('sr_id')) {
+            $this->merge([
+                'sr_id' => optional($this->route('sales_order'))->sr_id ?? auth()->id(),
+            ]);
+        }
     }
 
     /**

@@ -356,10 +356,10 @@
                             {{ $report->date_production?->format('M d, Y') ?? 'Not set' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-                            {{ $report->item->name ?? 'No Item' }}
+                            {{ $report->jobOrderItem->item->name ?? 'No Item' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-                            {{ number_format($report->quantity) }}
+                            {{ optional($report->jobOrderItem)->quantity ?? 0 }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">

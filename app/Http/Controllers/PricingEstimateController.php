@@ -679,41 +679,32 @@ class PricingEstimateController extends Controller
     public function reject($pricing_estimate_id, Request $request)
     {
         $pricing_estimate = PricingEstimate::findOrFail($pricing_estimate_id);
-        // dd($pricing_estimate);
-
-        // if ($pricing_estimate->pe_status !== 'pending') {
-        //     return back()->with('error', 'Only pending estimates can be rejected.');
-        // }
 
         $validated = $request->validate([
             'revision_reason' => 'nullable|string',
         ]);
 
         $pricing_estimate->update([
-            'pe_status' => 'draft',
+            'pe_status' => 'draft', // or 'pending', depending on your workflow
+            'revision_reason' => $validated['revision_reason'] ?? null, // ✅ save reason
         ]);
-        // dd($pricing_estimate->id);
-        // DB::table('pricing_estimates')
-        //     ->where('id', 47)
-        //     ->update([
-        //         'pe_status' => 'draft',
-        //     ]);
-  
-        // notify_user(
-        //     $pricing_estimate->sr_id,
-        //     'PE Disapproved',
-        //     "PE #{$pricing_estimate->pe_no} has been disapproved. {$pricing_estimate->revision_reason}",
-        //     [
-        //         'attachment' => null,
-        //         'action_button' => [
-        //             'label' => 'Revise Estimate',
-        //             'url' => route('pricing-estimates.edit', $pricing_estimate->id),
-        //         ]
-        //     ]
-        // );
+
+        notify_user(
+            $pricing_estimate->sr_id,
+            'PE Disapproved',
+            "PE #{$pricing_estimate->pe_no} has been disapproved. {$pricing_estimate->revision_reason}",
+            [
+                'attachment' => null,
+                'action_button' => [
+                    'label' => 'Revise Estimate',
+                    'url' => route('pricing-estimates.edit', $pricing_estimate->id),
+                ]
+            ]
+        );
 
         return back()->with('success', 'PE has been disapproved.');
     }
+
 
     public function cancel(PricingEstimate $pricing_estimate)
     {

@@ -31,37 +31,37 @@
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-600">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Customer & Estimate Details</h2>
-            <span class="inline-flex flex-wrap gap-1">
-                {{-- Pricing Estimate --}}
-                <a href="{{ route('pricing-estimates.show', $pricingEstimate->id) }}" target="_blank"
-                class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
-                    P.E NO: #{{ $pricingEstimate->pe_no }}
-                </a>
-
-                {{-- Quotation(s) --}}
-                @foreach($pricingEstimate->quotations ?? [] as $quotation)
-                    <a href="{{ route('quotations.edit', $quotation->id) }}" target="_blank"
-                    class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
-                        Quotation NO: #{{ $quotation->quote_no }}
+                           <span class="inline-flex flex-wrap gap-1">
+                    {{-- Pricing Estimate --}}
+                    <a href="{{ url('pricing-estimates/' . $pricingEstimate->id . '/price-entry') }}" target="_blank"
+                    class="bg-blue-900 text-blue-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-blue-800">
+                        P.E NO: #{{ $pricingEstimate->pe_no }}
                     </a>
 
-                    {{-- Sales Order --}}
-                    @if($quotation->salesOrder)
-                        <a href="{{ route('sales-orders.show', $quotation->salesOrder->id) }}" target="_blank"
-                        class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
-                            S.O NO: #{{ $quotation->salesOrder->so_no }}
+                    {{-- Approved Quotation --}}
+                    @if($pricingEstimate->approvedQuotation)
+                        <a href="{{ route('quotations.edit', $pricingEstimate->approvedQuotation->id) }}" target="_blank"
+                        class="bg-green-900 text-green-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-green-800">
+                            Quotation NO: #{{ $pricingEstimate->approvedQuotation->quote_no }}
                         </a>
 
-                        {{-- Job Order --}}
-                        @if($quotation->salesOrder->jobOrder)
-                            <a href="{{ route('job-orders.show', $quotation->salesOrder->jobOrder->id) }}" target="_blank"
-                            class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
-                                J.O NO: #{{ $quotation->salesOrder->jobOrder->jo_no }}
+                        {{-- Sales Order (only if approved) --}}
+                        @if($pricingEstimate->approvedQuotation->salesOrder && $pricingEstimate->approvedQuotation->salesOrder->so_status === 'approved')
+                            <a href="{{ route('sales-orders.show', $pricingEstimate->approvedQuotation->salesOrder->id) }}" target="_blank"
+                            class="bg-yellow-900 text-yellow-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-yellow-800">
+                                S.O NO: #{{ $pricingEstimate->approvedQuotation->salesOrder->so_no }}
                             </a>
+
+                            {{-- Job Order (only if SO is approved) --}}
+                            @if($pricingEstimate->approvedQuotation->salesOrder->jobOrder)
+                                <a href="{{ route('job-orders.show', $pricingEstimate->approvedQuotation->salesOrder->jobOrder->id) }}" target="_blank"
+                                class="bg-red-900 text-red-100 text-xs font-medium px-2.5 py-1 rounded hover:bg-red-800">
+                                    J.O NO: #{{ $pricingEstimate->approvedQuotation->salesOrder->jobOrder->jo_no }}
+                                </a>
+                            @endif
                         @endif
                     @endif
-                @endforeach
-            </span>
+                </span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1107,7 +1107,7 @@ document.addEventListener('alpine:init', () => {
                 this.factorRate = this.currentItem.factor_rate || 1.0;
                 this.quantity = this.currentItem.quantity || 1;
                 this.notes = this.currentItem.notes || '';
-                this.internal_notes = this.currentItem.internal || '';
+                this.internal_notes = this.currentItem.internal_notes || '';
                 this.unitPrice = this.currentItem.unit_price || 0;
                 this.discountType = this.currentItem.discount_type || 'percentage';
                 this.discountAmount = this.currentItem.discount_amount || 0;

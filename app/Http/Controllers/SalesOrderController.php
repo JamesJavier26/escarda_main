@@ -352,7 +352,25 @@ class SalesOrderController extends Controller
      */
     public function destroy(SalesOrder $salesOrder)
     {
-        //
+        try {
+            // Optional: check for permissions
+            // $this->authorize('delete', $salesOrder);
+
+            // Optional: delete related records if needed
+            // $salesOrder->items()->delete();
+
+            // Delete the sales order
+            $salesOrder->delete();
+
+            return response()->json([
+                'message' => 'Sales order deleted successfully.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to delete sales order.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function storeComment(Request $request)

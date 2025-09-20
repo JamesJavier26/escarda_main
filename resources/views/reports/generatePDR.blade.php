@@ -71,9 +71,6 @@
 @php $entriesPerPage = 3; @endphp
 
 @foreach($report->entries as $index => $entry)
-@php
-    $unitShort = optional($entry->unit)->short_name;
-@endphp
 <table>
     <tr>
         <td colspan="4" class="text-center"><strong>Entry #{{ $loop->iteration }}</strong></td>
@@ -92,39 +89,39 @@
     </tr>
     <tr>
         <td><strong>Beginning Weight</strong></td>
-        <td>{{ $entry->beginning_weight_rawmat ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->beginning_weight_rawmat ?? 0 }}</td>
         <td><strong>Ending Weight</strong></td>
-        <td>{{ $entry->ending_weight_rawmat ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->ending_weight_rawmat ?? 0 }}</td>
     </tr>
     <tr>
         <td><strong>Qty Produced</strong></td>
-        <td>{{ $entry->daily_output ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->daily_output ?? 0 }}</td>
         <td><strong>Rejects</strong></td>
-        <td>{{ $entry->reject_quantity ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->reject_quantity ?? 0 }}</td>
     </tr>
     <tr>
         <td><strong>Press No.</strong></td>
         <td>{{ $entry->press_no ?? '-' }}</td>
         <td><strong>Actual Finish Wt</strong></td>
-        <td>{{ $entry->actual_finish_product_weight ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->actual_finish_product_weight ?? 0 }}</td>
     </tr>
     <tr>
         <td><strong>Remaining Balance</strong></td>
-        <td>{{ $entry->remaining_balance ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->remaining_balance ?? 0 }}</td>
         <td><strong>Insert Details</strong></td>
         <td>{{ $entry->insert_details ?? '-' }}</td>
     </tr>
     <tr>
         <td><strong>Thickness</strong></td>
-        <td>{{ $entry->thickness ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->thickness ?? 0 }}</td>
         <td><strong>Rawmat Size</strong></td>
-        <td>{{ $entry->rawmat_size_salang ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->rawmat_size_salang ?? 0 }}</td>
     </tr>
     <tr>
         <td><strong>Rawmat Weight</strong></td>
-        <td>{{ $entry->rawmat_weight_salang ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->rawmat_weight_salang ?? 0 }}</td>
         <td><strong>Overflow Weight</strong></td>
-        <td>{{ $entry->overflow_weight_salang ?? 0 }} {{ $unitShort }}</td>
+        <td>{{ $entry->overflow_weight_salang ?? 0 }}</td>
     </tr>
     <tr>
         <td colspan="4"><strong>Remarks:</strong> {{ $entry->remarks ?? '-' }}</td>

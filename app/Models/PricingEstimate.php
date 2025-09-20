@@ -8,7 +8,7 @@ class PricingEstimate extends Model
 {
     protected $fillable = [
         'pe_no', 'sr_id', 'customer_id', 'attention', 'terms', 'pr_no',
-        'delivery_date', 'remarks', 'pe_status', 'vat', 'created_by',
+        'delivery_date', 'remarks', 'pe_status','revision_reason', 'vat', 'created_by',
         'pe_remarks', 'sr_remarks', 'currency_id',
     ];
     public function customer() {

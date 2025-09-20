@@ -265,6 +265,24 @@
                 });
             },
 
+            // ✅ New function for "Mark all as read"
+            markAllAsRead() {
+                fetch(`/notifications/mark-all-read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        this.notifications.forEach(n => n.is_read = true);
+                        this.unreadCount = 0;
+                    }
+                }).catch(err => {
+                    console.error('Error marking all as read:', err);
+                });
+            },
+
             logNotificationReceived(id) {
                 console.log('Notification received:', id);
             },
@@ -275,6 +293,7 @@
                     window.location.href = notification.action_button.url;
                 }
             },
+
             showToast(message) {
                 const container = document.getElementById('toast-container');
 
@@ -316,6 +335,7 @@
                 // Clean up after animation
                 setTimeout(() => toast.remove(), 4000);
             },
+
             formatTime(isoString) {
                 const date = new Date(isoString);
                 const now = new Date();
@@ -330,8 +350,6 @@
                 const dateOptions = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
                 return date.toLocaleString(undefined, dateOptions); // e.g. "Jun 29, 10:15 AM"
             }
-
-
         }
     }
 </script>

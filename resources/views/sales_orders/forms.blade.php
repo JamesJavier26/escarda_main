@@ -1294,9 +1294,30 @@ document.addEventListener('alpine:init', () => {
 
  
 Alpine.data('saveDraftHandler', () => ({
-    isSaving: false, // Track loading state
+    isSaving: false,
 
     async confirmSave() {
+        const $form = this.$el;
+
+        // Check required fields: P.O. Number and Delivery Date
+        const poNo = $form.querySelector('[name="po_no"]')?.value.trim();
+        const deliveryDate = $form.querySelector('[name="delivery_date"]')?.value.trim();
+
+        const missingFields = [];
+        if (!poNo) missingFields.push('P.O. Number');
+        if (!deliveryDate) missingFields.push('Delivery Date');
+
+        if (missingFields.length > 0) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Missing Required Fields',
+                text: `Please fill in the following fields before saving: ${missingFields.join(', ')}`,
+                confirmButtonColor: '#f59e0b'
+            });
+            return; // Stop save
+        }
+
+        // Confirm save draft
         const result = await Swal.fire({
             title: 'Save as Draft?',
             text: 'Do you want to save this Sales Order as draft?',
@@ -1310,9 +1331,8 @@ Alpine.data('saveDraftHandler', () => ({
 
         if (!result.isConfirmed) return;
 
-        this.isSaving = true; // Start loading
+        this.isSaving = true;
 
-        const $form = this.$el;
         const formData = new FormData($form);
 
         // Let attachmentsHandler append labels
@@ -1325,14 +1345,13 @@ Alpine.data('saveDraftHandler', () => ({
             });
 
             if (response.ok) {
-                // Optional: show a success toast instead of full reload
                 Swal.fire({
                     icon: 'success',
                     title: 'Draft saved!',
                     showConfirmButton: false,
                     timer: 1000
                 }).then(() => {
-                    window.location.reload(); // or update UI dynamically
+                    window.location.reload();
                 });
             } else {
                 throw new Error('Server returned an error');
@@ -1341,10 +1360,11 @@ Alpine.data('saveDraftHandler', () => ({
             Swal.fire('Error', 'Failed to save draft', 'error');
             console.error(error);
         } finally {
-            this.isSaving = false; // Stop loading
+            this.isSaving = false;
         }
     }
 }));
+
 
 });
 </script>

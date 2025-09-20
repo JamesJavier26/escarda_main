@@ -95,6 +95,7 @@
                     <th class="text-center">Item #</th>
                     <th class="text-center">Qty</th>
                     <th class="text-center">Unit</th>
+                    <th class="text-left">Item Name</th>
                     <th class="text-left">Item Description</th>
                     <th class="text-center">Unit Price</th>
                     <th class="text-center">Extended Price</th>
@@ -114,6 +115,7 @@
                     <td>{{ $key+1 }}</td>
                     <td>{{ $pe_item->quantity }}</td>
                     <td>{{ $pe_item->unit->short_name }}</td>
+                    <td class="wrap-text"><strong>{{ $pe_item->item->name ?? 'Unnamed Item' }}</strong></td>
                     <td class="wrap-text">
                         {{ $pe_item->item_description }}<br>
                         <i>{{ $pe_item->pe_remarks }}</i><br>
@@ -158,14 +160,19 @@
 
                 {{-- Offers --}}
                 @if($hasOffers)
-                    <tr><td></td><td></td><td colspan="5" style="background:#f0f0f0;text-align:left;padding-left:100px;"><strong>List of Offers:</strong></td></tr>
+                    <tr><td></td><td></td><td colspan="6" style="background:#f0f0f0;text-align:left;padding-left:100px;"><strong>List of Offers:</strong></td></tr>
                     @foreach($offers as $i=>$offer)
                         @php $offerPrice = $offer->final_unit_price ?? $offer->unit_price; @endphp
                         <tr class="{{ $loop->last ? 'row-border-bottom':'' }}">
                             <td></td><td></td>
                             <td>{{ $offer->quantity }}</td>
                             <td>{{ $offer->unit->short_name }}</td>
-                            <td class="wrap-text">{{ $offer->item_description }}<br><i>{{ $offer->pe_remarks }}</i><br><span style="color:blue">{{ $offer->notes }}</span></td>
+                            <td class="wrap-text"><strong>{{ $offer->item->name ?? 'Unnamed Item' }}</strong></td>
+                            <td class="wrap-text">
+                                {{ $offer->item_description }}<br>
+                                <i>{{ $offer->pe_remarks }}</i><br>
+                                <span style="color:blue">{{ $offer->notes }}</span>
+                            </td>
                             <td class="text-center">
                                 @if($offer->discount_amount>0)
                                     <div>

@@ -226,6 +226,15 @@
                 </div>
 
                 <div class="space-y-4">
+                    <!-- Delivery Date -->
+                    <x-forms.input
+                        label="Delivery Date:"
+                        name="delivery_date"
+                        type="text"
+                        :value="old('delivery_date', $temporaryQuotation->delivery_date ?? '')"
+                    />
+
+                    <!-- Currency -->
                     <label for="currency_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                     <select name="currency_id" 
                         class="w-full px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -407,22 +416,27 @@
 
         <!-- Remarks & Attachments -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <div x-data="{ remarks: '{{ old('remarks', $temporaryQuotation->remarks ?? '') }}' }"
+                class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
                 <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Remarks</h2>
-                <textarea name="pe_remarks" rows="4"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                >{{ old('remarks') }}</textarea>
 
+                <textarea 
+                    x-model="remarks"
+                    rows="4"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                ></textarea>
+
+                <!-- Hidden input for form submission -->
+                <input type="hidden" name="remarks" :value="remarks">
             </div>
         </div>
-
         
         @hasrole('super-admin|admin|sales-representative')
             <div class="flex justify-between items-center mt-6">
 
                 {{-- Left Side Buttons --}}
                 <div class="flex space-x-4">
-                    <a href="{{ route('pricing-estimates.my') }}"
+                    <a href="{{ route('temporary_quotations.index') }}"
                     class="px-4 py-2 rounded-md shadow-sm text-sm font-medium
                             text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700
                             border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600
@@ -1153,7 +1167,7 @@ document.addEventListener('alpine:init', () => {
         async submitDraft() {
             const result = await Swal.fire({
                 title: 'Save Draft?',
-                text: 'Do you want to save this Pricing Estimate as a draft?',
+                text: 'Do you want to save this Temporary Quotation as a draft?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, Save',

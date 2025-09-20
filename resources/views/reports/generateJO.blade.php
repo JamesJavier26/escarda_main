@@ -197,24 +197,34 @@
             </tr>
         </table>
 
-        <table class="no-border" style="width: 100%;">
-            <tr class="row-border-bottom">
-                <td class="text-left" style="vertical-align:top; padding: 2px 0; height: 100px;">
-                    <strong>DELIVERY DETAILS:</strong> 
-                    {{ $jobOrder->delivery_details ?? $jobOrder->salesOrder->delivery_details ?? '—' }}
-                </td>
-            </tr>
-            <tr>
-                <td class="text-left" style="vertical-align:top; padding: 2px 0;">
-                    <strong>APPROVED DATE:</strong> 
-                    @if ($jobOrder->jo_status === 'approved')
-                        {{ optional($jobOrder->approval_date)->format('F d, Y') }}
-                    @else
-                        —
-                    @endif
-                </td>
-            </tr>
-        </table>
+    <table class="no-border" style="width: 100%;">
+        <tr class="row-border-bottom">
+            <td class="text-left" style="vertical-align:top; padding: 2px 0; height: 100px;">
+                <strong>DELIVERY DETAILS:</strong> 
+                {{ $jobOrder->delivery_details ?? $jobOrder->salesOrder->delivery_details ?? '—' }}
+            </td>
+        </tr>
+        <tr>
+            <td class="text-left" style="vertical-align:top; padding: 2px 0;">
+                <strong>APPROVED DATE:</strong> 
+                @if ($jobOrder->jo_status === 'approved')
+                    {{ optional($jobOrder->approval_date)->format('m/d/Y h:i:s A') }}
+                @else
+                    —
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="text-left" style="vertical-align:top; padding: 2px 0;">
+                <strong>APPROVED BY:</strong> 
+                @if ($jobOrder->jo_status === 'approved')
+                    {{ $jobOrder->approver?->username ?? '—' }}
+                @else
+                    —
+                @endif
+            </td>
+        </tr>
+    </table>
     </main>
 </body>
 </html>

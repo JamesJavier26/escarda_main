@@ -242,7 +242,7 @@
                 <tr>
                     <td class="text-center">{{ $comment->comment }}</td>
                     <td class="text-center">{{ $comment->created_at->format('F d, Y h:i:s') }}</td>
-                    <td class="text-center">J. Santos</td>
+                    <td class="text-center">{{ $comment->user ? $comment->user->username : 'Unknown User' }}</td>
                 </tr>
             @endforeach
             {{-- <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr> --}}

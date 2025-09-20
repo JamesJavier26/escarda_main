@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('delivery_date')->nullable();
             $table->longText('remarks')->nullable();
             $table->string('pe_status'); //pending, approved 
+            $table->text('revision_reason')->nullable()->after('status');
             $table->string('vat');
             $table->longText('pe_remarks')->nullable();
             $table->longText('sr_remarks')->nullable();

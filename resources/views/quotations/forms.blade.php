@@ -480,8 +480,6 @@
                     <i class="fas fa-paper-plane mr-2"></i> Export to Sales Order
                 </button>
             </form>
-
-
         </div>
     @endif
     @if($quotation->quote_status == 'rejected')

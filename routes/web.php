@@ -114,8 +114,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/job-orders/{job_order}/mark-delivered', [JobOrderController::class, 'markAsDelivered'])->name('job-orders.mark-delivered');
         Route::patch('/job-orders/{job_order}/approve', [JobOrderController::class, 'approve'])->name('job-orders.approve');
         Route::patch('/job-orders/{job_order}/cancel', [JobOrderController::class, 'cancel'])->name('job-orders.cancel');
-        Route::get('/job-orders/items/{id}/details', [JobOrderController::class, 'itemDetails'])
-                ->name('job-orders.items.details');
+        Route::get('/job-orders/items/{id}/details', [JobOrderController::class, 'itemDetails'])->name('job-orders.items.details');
 
         Route::get('/api/job-orders/search', [JobOrderController::class, 'search']);
         Route::get('/api/job-orders/{jobOrder}/items', [JobOrderController::class, 'getItems']);
@@ -238,6 +237,13 @@ Route::middleware(['auth'])->group(function () {
             $notification->update(['is_read' => true]);
             return response()->noContent();
         });
+        Route::post('/notifications/mark-all-read', function () {\App\Models\Notification::where('user_id', auth()->id())
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+
+            return response()->noContent();
+        });
+                
         Route::get('/test', function (\App\Models\Notification $notification){
 
         })->name('notifications.index');

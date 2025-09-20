@@ -42,7 +42,8 @@ class ProductionDetailEntryController extends Controller
             'overflow_weight_salang' => 'nullable|string|max:255',
             'actual_finish_product_weight' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
-            'unit_id' => 'nullable|exists:units,id', // <-- added validation for unit
+            'unit_id' => 'nullable|exists:units,id',
+            'qty_to_be_produced' => 'nullable|integer|min:1', // only required for the very first entry
         ]);
 
         if ($validator->fails()) {
@@ -54,27 +55,36 @@ class ProductionDetailEntryController extends Controller
 
         $validated = $validator->validated();
 
+        // 🔹 Determine the fixed qty_to_be_produced
         $firstEntry = $production_detail_report->entries()->orderBy('day_no')->first();
-        $originalQty = $firstEntry ? $firstEntry->qty_to_be_produced : ($request->input('qty_to_be_produced') ?? 0);
+        if ($firstEntry) {
+            $originalQty = $firstEntry->qty_to_be_produced;
+        } else {
+            $originalQty = $validated['qty_to_be_produced'] ?? 0;
+        }
 
-        $lastEntry = $production_detail_report->entries()->latest('day_no')->first();
-        $startingBalance = $lastEntry ? $lastEntry->remaining_balance : $originalQty;
-
-        $remainingBalance = max($startingBalance - $validated['daily_output'], 0);
-
-        // Create entry with required qty_to_be_produced
+        // 🔹 Create the new entry
         $entry = $production_detail_report->entries()->create(array_merge($validated, [
             'pressman_id' => auth()->id(),
-            'qty_to_be_produced' => $originalQty, // always include this
-            'remaining_balance' => $remainingBalance,
+            'qty_to_be_produced' => $originalQty,
+            'remaining_balance' => 0, // temp, will recompute below
         ]));
+
+        // 🔹 Recompute balances for ALL entries in order
+        $entries = $production_detail_report->entries()->orderBy('day_no')->get();
+        $remaining = $originalQty;
+
+        foreach ($entries as $e) {
+            $remaining = max($remaining - $e->daily_output, 0);
+            $e->remaining_balance = $remaining;
+            $e->save();
+        }
 
         return response()->json([
             'message' => 'Entry created successfully',
-            'entry' => $entry
+            'entry' => $entry->fresh()
         ], 201);
     }
-
 
     /**
      * Update an existing entry
@@ -100,7 +110,8 @@ class ProductionDetailEntryController extends Controller
             'overflow_weight_salang' => 'nullable|string|max:255',
             'actual_finish_product_weight' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
-            'unit_id' => 'nullable|exists:units,id', // <-- added validation for unit
+            'unit_id' => 'nullable|exists:units,id',
+            'qty_to_be_produced' => 'nullable|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -112,9 +123,10 @@ class ProductionDetailEntryController extends Controller
 
         $validated = $validator->validated();
 
+        // Update entry (without touching qty_to_be_produced)
         $production_detail_entry->update($validated);
 
-        // Recompute remaining_balance for this and all subsequent entries
+        // Recompute balances
         $entries = $production_detail_entry->productionDetailReport
             ->entries()
             ->orderBy('day_no')
@@ -141,10 +153,9 @@ class ProductionDetailEntryController extends Controller
     public function destroy(ProductionDetailEntry $production_detail_entry)
     {
         $report = $production_detail_entry->productionDetailReport;
-
         $production_detail_entry->delete();
 
-        // Recompute remaining_balance for all remaining entries
+        // Recompute balances
         $entries = $report->entries()->orderBy('day_no')->get();
         $originalQty = $entries->first()->qty_to_be_produced ?? 0;
         $remaining = $originalQty;
