@@ -3,7 +3,7 @@
         'name' => 'laraveldaily/starter-kit',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '439b2fe7cf7b0d76932e9f5306427672fe997eb7',
+        'reference' => 'abf02cb7d73ac699776ae57c1cdfdfa3051209d4',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -586,7 +586,7 @@
         'laraveldaily/starter-kit' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '439b2fe7cf7b0d76932e9f5306427672fe997eb7',
+            'reference' => 'abf02cb7d73ac699776ae57c1cdfdfa3051209d4',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

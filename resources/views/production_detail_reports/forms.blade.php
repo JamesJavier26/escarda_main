@@ -666,10 +666,12 @@
 
     <div class="flex space-x-2">
         <!-- Generate PDR Link (always visible) -->
-        <a href="{{ route('reports.pdr', $report->id) }}" target="_blank"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm inline-flex items-center">
-            <i class="fas fa-file-alt mr-1"></i> Generate PDR
-        </a>
+        @if ($editing)
+            <a href="{{ route('reports.pdr', $report->id) }}" target="_blank"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm inline-flex items-center">
+                <i class="fas fa-file-alt mr-1"></i> Generate PDR
+            </a>
+        @endif
 
         {{-- Submit Report button (only show if not completed + editing + balance is 0) --}}
         @if ($report->pdr_status !== 'completed' && $editing && $report->entries->isNotEmpty() && $report->entries->last()->remaining_balance === 0)
